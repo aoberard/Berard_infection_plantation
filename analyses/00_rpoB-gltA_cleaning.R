@@ -34,7 +34,7 @@ track_phyloseq <- function(physeq, step_name = NA, step_number = NA) {
 rpob_abundance <- data.table::fread(
   file = here::here("data", "raw-data", "diagnostic", "2026.03.20-rpoB.abundance.final.txt"))
 rpob_taxo <- data.table::fread(
-  file = here::here("data", "raw-data", "diagnostic", "2026.03.09.rpoB.taxonomy.final.blastn.clean.txt"))
+  file = here::here("data", "raw-data", "diagnostic", "2023.03.23-rpoB.taxonomy.final.blastn.clean.txt"))
 
 glta_abundance <-  data.table::fread(
   file = here::here("data", "raw-data", "diagnostic", "2026.03.20-gltA.abundance.final.txt"))

@@ -27,10 +27,13 @@ track_phyloseq <- function(physeq, step_name = NA, step_number = NA) {
   )
 }
 
+ranks <- c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+
+
 
 # Import data ----
 
-# Import mMetabarcoding data
+# Import Metabarcoding data
 rpob_abundance <- data.table::fread(
   file = here::here("data", "raw-data", "diagnostic", "2026.03.20-rpoB.abundance.final.txt"))
 rpob_taxo <- data.table::fread(
@@ -350,6 +353,17 @@ tracking_glta <- bind_rows(
   tracking_glta, track_phyloseq(physeq_glta, step_name = "After_merging_at_species_level", step_number = 7))
 
 
+#Remove tax columns not useful anymore
+tax_full <- as(tax_table(physeq_rpob), "matrix") 
+tax <- tax_full[, ranks]
+tax_table(physeq_rpob) <- tax_table(as.matrix(tax))
+
+tax_full <- as(tax_table(physeq_glta), "matrix") 
+tax <- tax_full[, ranks]
+tax_table(physeq_glta) <- tax_table(as.matrix(tax))
+
+
+
 ## Visualization of filters ----
 
 #Join tracking dataframes and make it tidy format
@@ -459,6 +473,13 @@ summary_indiv <- apply(comparison, 2, function(x) {
 
 summary_indiv <- as.data.frame(t(summary_indiv))
 summary_indiv$sample <- rownames(summary_indiv)
+summary_indiv$total <- summary_indiv$rpob_only +
+  summary_indiv$glta_only +
+  summary_indiv$shared
+
+summary_indiv$sample <- factor(
+  summary_indiv$sample,
+  levels = summary_indiv$sample[order(summary_indiv$shared, decreasing = TRUE)])
 
 summary_long <- summary_indiv %>%
   tidyr::pivot_longer(cols = c(rpob_only, glta_only, shared),
@@ -473,6 +494,10 @@ ggplot(summary_long, aes(x = sample, y = n, fill = category)) +
 
 
 ## Merging ----
+#Rename taxa in accordance to species (for merging)
+phyloseq::taxa_names(physeq_rpob) <- as.data.frame(tax_table(physeq_rpob)) %>% pull(Species)
+phyloseq::taxa_names(physeq_glta) <- as.data.frame(tax_table(physeq_glta)) %>% pull(Species)
+
 #Union merging
 physeq_merged <- phyloseq::merge_phyloseq(physeq_rpob, physeq_glta)
 

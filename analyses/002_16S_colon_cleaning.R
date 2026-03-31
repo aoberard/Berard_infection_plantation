@@ -30,35 +30,37 @@ track_phyloseq <- function(physeq, step_name = NA, step_number = NA) {
 ## List of rodents identified putative infectious agents ----
 #Beware, using this list should not replace prior exploration of the cluster present in the metabarcoding dataset
 putative_infectious_genra <- c("Bartonella",
-"Neoehrlichia" ,
-"Anaplasma" ,
-"Francisella", 
-"Rickettsia" ,
-"Orientia" ,
-"Chlamydia" ,
-"Mycoplasma",
-"Brevinema",
-"Leptospira", 
-"Borrelia",
-"Streptococcus",
-"Fusobacterium",
-"Neisseria",
-"Arcobacter",
-"Helicobacter",
-"Yersinia",
-"Rickettsiella",
-"Spiroplasma",
-"Coxiella",
-"Occidentia",
-"Brucella" ,
-"Ehrlichia",
-"Streptobacillus",
-"Pseudostreptobacillus",
-"Rodentibacter",
-"Treponema",
-"Pasteurella",
-"Campylobacter",
-"Mycobacterium")
+                               "Neoehrlichia" ,
+                               "Anaplasma" ,
+                               "Francisella", 
+                               "Rickettsia" ,
+                               "Orientia" ,
+                               "Chlamydia" ,
+                               "Mycoplasma",
+                               "Brevinema",
+                               "Leptospira", 
+                               "Borrelia",
+                               "Streptococcus",
+                               "Fusobacterium",
+                               "Neisseria",
+                               "Arcobacter",
+                               "Helicobacter",
+                               "Yersinia",
+                               "Rickettsiella",
+                               "Spiroplasma",
+                               "Coxiella",
+                               "Occidentia",
+                               "Brucella" ,
+                               "Ehrlichia",
+                               "Streptobacillus",
+                               "Pseudostreptobacillus",
+                               "Rodentibacter",
+                               "Treponema",
+                               "Pasteurella",
+                               "Campylobacter",
+                               "Mycobacterium",
+                               "Citrobacter",
+                               "Clostridium")
 
 putative_infectious_family <- c("Mycoplasmataceae")
 
@@ -66,6 +68,7 @@ putative_infectious_phylum <- c("Apicomplexa")
 
 
 ranks <- c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+
 
 # Import data ----
 
@@ -89,19 +92,18 @@ individuals <- read.delim(file = here::here("data", "raw-data", "20260320_BePrep
 
 ## Keep relevant samples  ----
 
-# Keep relevant sample type (Unsure we have only .SP (spleen) samples)
-s16_abundance %>% select(!stringr::str_subset(string = colnames(s16_abundance), pattern = ".SP$")) %>% colnames()
+# Keep relevant sample type (Unsure we have only .CO (colon) samples)
+s16_abundance %>% select(!stringr::str_subset(string = colnames(s16_abundance), pattern = ".CO$")) %>% colnames()
 s16_abundance <- s16_abundance %>% 
-  select(stringr::str_subset(string = colnames(s16_abundance), pattern = ".SP$"))
+  select(stringr::str_subset(string = colnames(s16_abundance), pattern = ".CO$"))
 
 # Make names concordant with individuals table
 s16_abundance <- s16_abundance %>%
-  rename_with(~ stringr::str_remove(., "\\.SP$"))
+  rename_with(~ stringr::str_remove(., "\\.CO$"))
 
 # Keep only BEPREP project samples
 s16_abundance <- s16_abundance %>%
   select(dplyr::any_of(individuals %>% dplyr::pull(numero_centre)))
-
 
 
 ## Generate phyloseq objects  ----
@@ -139,6 +141,7 @@ tax <- as(tax_table(physeq_s16), "matrix") %>%
   cbind(samples_sum = as.numeric(phyloseq::taxa_sums(physeq_s16)))
 tax_table(physeq_s16) <- tax_table(tax)
 
+
 #Initialize tracking table
 tracking_s16 <- track_phyloseq(physeq_s16, step_name = "initial", step_number = 0)
 
@@ -155,6 +158,7 @@ physeq_s16 <- phyloseq::prune_samples(
 tracking_s16 <- track_phyloseq(physeq_s16, step_name = "Beprep_samples_with_reads", step_number = 0)
 
 
+
 ## Remove clusters with 0 reads ----
 physeq_s16 <- phyloseq::prune_taxa(
   taxa = phyloseq::taxa_sums(physeq_s16) > 0,
@@ -169,7 +173,7 @@ tracking_s16 <- bind_rows(
 
 ## Remove clusters without affiliation ---- 
 physeq_s16 <- phyloseq::prune_taxa( 
-  taxa = as.vector(phyloseq::tax_table(physeq_s16)[, "Domain"]) != "no",
+  taxa = as.vector(phyloseq::tax_table(physeq_s16)[, "Domain"]) != "no data",
   x = physeq_s16)
 
 physeq_s16 <- phyloseq::prune_samples(
@@ -179,16 +183,16 @@ tracking_s16 <- bind_rows(
   tracking_s16, track_phyloseq(physeq_s16, step_name = "Removed_NA_clusters", step_number = 2))
 
 
-## Remove clusters that are not Bacteria or Apicomplexa ---- 
+## Remove clusters that are not Bacteria  ---- 
 physeq_s16 <- phyloseq::prune_taxa( 
-  taxa = as.vector(phyloseq::tax_table(physeq_s16)[, "Domain"]) %in% c("Bacteria", "Apicomplexa"),
+  taxa = as.vector(phyloseq::tax_table(physeq_s16)[, "Domain"]) %in% c("Bacteria"),
   x = physeq_s16)
 
 physeq_s16 <- phyloseq::prune_samples(
   x = physeq_s16,
   samples = sample_sums(physeq_s16) != 0)
 tracking_s16 <- bind_rows(
-  tracking_s16, track_phyloseq(physeq_s16, step_name = "Removed_not_Bacteria-Apicomplexa_clusters", step_number = 3))
+  tracking_s16, track_phyloseq(physeq_s16, step_name = "Removed_not_Bacteria_clusters", step_number = 3))
 
 
 ## Identify best affiliation level ---- 
@@ -260,6 +264,7 @@ tracking_s16 <- bind_rows(
   tracking_s16, track_phyloseq(physeq_s16, step_name = "Removed_above_genus_affiliation", step_number = 5))
 
 
+
 ## Remove clusters with reads below 0.001 % of total ---- 
 physeq_s16 <- phyloseq::prune_taxa(
   taxa = phyloseq::taxa_sums(physeq_s16) >= (sum(phyloseq::taxa_sums(physeq_s16)) * 0.00001),
@@ -293,155 +298,6 @@ tracking_s16 <- bind_rows(
 
 
 
-## Remove clusters that may not be infectious ----
-
-#At this step we are taking a look at species and genus kept in order to further
-#remove taxa that may be contaminants (from environment or microbiota)
-
-checked_genera_to_remove <- c("Campylobacter", 
-                              "Coxiella", 
-                              "Fusobacterium", 
-                              "Helicobacter",
-                              "Mycobacterium",
-                              "Neisseria",
-                              "Rickettsiella",
-                              "Rodentibacter",
-                              "Spiroplasma",
-                              "Streptococcus",
-                              "Treponema")
-
-physeq_s16 <- phyloseq::prune_taxa(
-  taxa = !(as.vector(phyloseq::tax_table(physeq_s16)[, "Genus"]) %in% checked_genera_to_remove),
-  x = physeq_s16
-)
-
-physeq_s16 <- phyloseq::prune_samples(
-  x = physeq_s16,
-  samples = sample_sums(physeq_s16) != 0)
-tracking_s16 <- bind_rows(
-  tracking_s16, track_phyloseq(physeq_s16, step_name = "Removed_ambiguous_infectious_clusters", step_number = 7))
-
-
-## Manual affiliation cleaning ----
-
-#Extract taxonomy matrix
-tax_full <- as(tax_table(physeq_s16), "matrix") 
-
-
-#Rename some affiliations
-tax_full[tax_full == "Pseudostreptobacillus"] <- "Streptobacillus"
-tax_full[tax_full == "Borreliella"] <- "Borrelia"
-tax_full[tax_full == "Borreliella afzelii"] <- "Borrelia afzelii"
-tax_full[tax_full == "Mycoplasma coccoides"] <- "Eperythrozoon coccoides"
-tax_full[tax_full == "Mycoplasma moatsii"] <- "Mesomycoplasma moatsii"
-
-
-#Improve  affiliations of clusters
-tax_full[tax_full[, "observation_name"] == "Cluster_3", "blast_perc_identity"] <- "99.2"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_5", "Species"] <- "Neoehrlichia mikurensis"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_11", "blast_perc_identity"] <- "91.24"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_23", "Species"] <- "Eperythrozoon coccoides"
-tax_full[tax_full[, "observation_name"] == "Cluster_23", "blast_perc_identity"] <- "98"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_109", "Species"] <- "Eperythrozoon coccoides"
-tax_full[tax_full[, "observation_name"] == "Cluster_109", "blast_perc_identity"] <- "94.8"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_137", "Species"] <- "Haemobartonella muris"
-tax_full[tax_full[, "observation_name"] == "Cluster_137", "blast_perc_identity"] <- "92.4"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_519", "Species"] <- "Haemobartonella muris"
-tax_full[tax_full[, "observation_name"] == "Cluster_519", "blast_perc_identity"] <- "94.8"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_334", "Species"] <- "Malacoplasma penetrans"
-tax_full[tax_full[, "observation_name"] == "Cluster_334", "blast_perc_identity"] <- "99.2"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_1370", "Species"] <- "Borrelia afzelii"
-tax_full[tax_full[, "observation_name"] == "Cluster_1370", "blast_perc_identity"] <- "99.6"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_5922", "Species"] <- "Eperythrozoon coccoides"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_6232", "Species"] <- "Eperythrozoon coccoides"
-
-
-# Identify best affiliation level again
-
-# Keep only ranks 
-tax <- tax_full[, ranks]
-
-# Reverse matrix to go from Species to Domain
-tax_rev <- tax[, rev(seq_len(ncol(tax))), drop = FALSE]
-ranks_rev <- rev(ranks)
-
-# Find first non-NA per row
-first_valid_index <- max.col(!is.na(tax_rev), ties.method = "first")
-
-# In case some rows contain only NA 
-all_na <- rowSums(!is.na(tax_rev)) == 0
-
-# Extract best taxa and level
-best_taxa <- tax_rev[cbind(seq_len(nrow(tax_rev)), first_valid_index)]
-best_taxa_level <- ranks_rev[first_valid_index]
-
-best_taxa[all_na] <- NA
-best_taxa_level[all_na] <- NA
-
-# Replace original rank columns with cleaned ones
-tax_full[, ranks] <- tax
-
-# REMOVE old best columns BEFORE cbind
-tax_full <- tax_full[, !colnames(tax_full) %in% c("best_taxa", "best_taxa_level"), drop = FALSE]
-
-# Insert new columns after last rank column
-last_rank_pos <- max(match(ranks, colnames(tax_full)))
-
-tax_final <- cbind(
-  tax_full[, 1:last_rank_pos, drop = FALSE],
-  best_taxa = best_taxa,
-  best_taxa_level = best_taxa_level,
-  tax_full[, (last_rank_pos + 1):ncol(tax_full), drop = FALSE]
-)
-
-#Drop rdp_taxo
-tax_final <- tax_final[, !colnames(tax_final) %in% c("rdp_tax_and_bootstrap"), drop = FALSE]
-
-# Back to phyloseq
-tax_table(physeq_s16) <- tax_table(as.matrix(tax_final))
-
-# 
-# physeq_s16@tax_table %>% as.data.frame() %>%
-# data.table::fwrite(file = "16s_tax_check.csv", sep = ";")
-# 
-# physeq_s16@otu_table %>% as.data.frame() %>%
-#   data.table::fwrite(file = "16s_abund_check.csv", sep = ";")
-# 
-
-
-
-## Agglomerate by best identified taxa ----
-physeq_s16 <- phyloseq::tax_glom(
-  physeq = physeq_s16,
-  taxrank = "best_taxa",
-  bad_empty = c("Multi-affiliation", NA, "NA", "unknown species", "", " ", "\t"),
-  NArm = TRUE)
-
-
-physeq_s16 <- phyloseq::prune_samples(
-  x = physeq_s16,
-  samples = sample_sums(physeq_s16) != 0)
-tracking_s16 <- bind_rows(
-  tracking_s16, track_phyloseq(physeq_s16, step_name = "Agglomerate_cluster_best_level", step_number = 8))
-
-
-#Remove tax columns not useful anymore
-tax_full <- as(tax_table(physeq_s16), "matrix") 
-tax <- tax_full[, c(ranks, "best_taxa")]
-tax_table(physeq_s16) <- tax_table(as.matrix(tax))
-
-
-
 ## Visualization of filters ----
 tracking_all <- tidyr::pivot_longer(data = tracking_s16, 
                                     cols = c("n_taxa", "n_samples", "total_reads"),
@@ -468,12 +324,4 @@ tracking_all %>%
   )
 
 
-# Convert to Presence / Absence data ----
-physeq_s16 <- phyloseq::transform_sample_counts(physeq_s16, function(x) ifelse(x > 0, 1, 0))
-
-
-
-# Save file  ----
-
-saveRDS(object = physeq_s16, file =  here::here("data", "derived-data", "pathos_cleaning", "phyloseq_s16.rds"))
-
+physeq_s16@tax_table %>% View()

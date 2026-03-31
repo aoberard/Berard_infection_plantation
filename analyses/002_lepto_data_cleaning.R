@@ -25,7 +25,8 @@ lepto_pcr <- lepto_pcr %>%
              .default  = NA
            ))
 
-# Save data
+
+# Save data ----
 lepto_pcr %>% 
   rename(numero_centre = ID_rodent) %>% 
   select(numero_centre, Leptospira) %>% 

@@ -30,4 +30,4 @@ lepto_pcr <- lepto_pcr %>%
 lepto_pcr %>% 
   rename(numero_centre = ID_rodent) %>% 
   select(numero_centre, Leptospira) %>% 
-  data.table::fwrite(file = here::here("data", "derived-data", "pathos_cleaning", "leptospira_pcr.csv"))
+  data.table::fwrite(file = here::here("data", "derived-data", "infectious_cleaning", "leptospira_pcr.csv"))

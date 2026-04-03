@@ -1,0 +1,19 @@
+Domain,Phylum,Class,Order,Family,Genus,Species,best_taxa
+Bacteria,Pseudomonadota,Alphaproteobacteria,Hyphomicrobiales,Rhizobiaceae,Bartonella,,Bartonella
+Bacteria,Pseudomonadota,Alphaproteobacteria,Rickettsiales,Anaplasmataceae,Ehrlichia,,Ehrlichia
+Bacteria,Spirochaetota,Spirochaetia,Spirochaetales,Spirochaetaceae,Borrelia,Borrelia afzelii,Borrelia afzelii
+Eukaryota,Apicomplexa,Conoidasida,Eucoccidiorida,Sarcocystidae,,,Sarcocystidae
+Bacteria,Bacillota,Bacilli,Mycoplasmatales,Mycoplasmataceae,Eperythrozoon,Eperythrozoon coccoides,Eperythrozoon coccoides
+Bacteria,Bacillota,Bacilli,Mycoplasmatales,Mycoplasmataceae,Eperythrozoon,Haemobartonella muris,Haemobartonella muris
+Bacteria,Bacillota,Bacilli,Mycoplasmatales,Mycoplasmataceae,Malacoplasma,Malacoplasma penetrans,Malacoplasma penetrans
+Bacteria,Pseudomonadota,Alphaproteobacteria,Rickettsiales,Anaplasmataceae,Neoehrlichia,Neoehrlichia mikurensis,Neoehrlichia mikurensis
+Bacteria,Fusobacteriota,Fusobacteriia,Fusobacteriales,Leptotrichiaceae,Streptobacillus,,Streptobacillus
+Bacteria,Bacillota,Bacilli,Mycoplasmatales,Mycoplasmataceae,Eperythrozoon,Haemo_2,Haemo_2
+Bacteria,Bacillota,Bacilli,Mycoplasmatales,Mycoplasmataceae,Metamycoplasma,Metamycoplasma sualvi,Metamycoplasma sualvi
+Bacteria,Bacillota,Bacilli,Mycoplasmatales,Mycoplasmataceae,Eperythrozoon,Haemo_3,Haemo_3
+Bacteria,Bacillota,Bacilli,Mycoplasmatales,Mycoplasmataceae,Eperythrozoon,Haemo_5,Haemo_5
+Bacteria,Bacillota,Bacilli,Mycoplasmatales,Mycoplasmataceae,Eperythrozoon,Haemo_4,Haemo_4
+Bacteria,Spirochaetota,Spirochaetia,Spirochaetales,Spirochaetaceae,Borrelia,Borrelia miyamotoi,Borrelia miyamotoi
+Bacteria,Bacillota,Bacilli,Mycoplasmatales,Mycoplasmataceae,Mycoplasmopsis,Mycoplasmopsis columbina,Mycoplasmopsis columbina
+Bacteria,Bacillota,Bacilli,Mycoplasmatales,Mycoplasmataceae,Mesomycoplasma,Mesomycoplasma moatsii,Mesomycoplasma moatsii
+Bacteria,Bacillota,Bacilli,Mycoplasmatales,Mycoplasmataceae,Mycoplasma,,Mycoplasma

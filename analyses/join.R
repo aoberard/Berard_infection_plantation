@@ -20,11 +20,11 @@ library("ggplot2")
 # Import data ----
 
 #Cleaned Metabarcoding phyloseq objects
-s16_phylo <- readRDS(file =  here::here("data", "derived-data", "pathos_cleaning", "phyloseq_s16.rds"))
-rpob_glta_phylo <- readRDS(file =  here::here("data", "derived-data", "pathos_cleaning", "phyloseq_rpob_glta.rds"))
+s16_phylo <- readRDS(file =  here::here("data", "derived-data", "infectious_cleaning", "phyloseq_s16.rds"))
+rpob_glta_phylo <- readRDS(file =  here::here("data", "derived-data", "infectious_cleaning", "phyloseq_rpob_glta.rds"))
 
 #Leptospira pcr data
-lepto <- data.table::fread(file = here::here("data", "derived-data", "pathos_cleaning", "leptospira_pcr.csv"))
+lepto <- data.table::fread(file = here::here("data", "derived-data", "infectious_cleaning", "leptospira_pcr.csv"))
 
 #Samples data
 individuals <- read.delim(file = here::here("data", "raw-data", "20260320_BePrep_samples.csv"), sep = ";")
@@ -146,16 +146,6 @@ infectious <- infectious %>%
     )
 
 
-# EXPLORATION TEMPO MYCOPLASMA
-
-# infectious <- infectious %>% 
-#   mutate(across(-numero_centre, ~ if_else(is.na(.), 0, .)))
-# 
-# infectious <- infectious %>% 
-#   left_join(individuals)
-
-
-
-#Goal a la fin tableau clean qui peut par la suite etre join a dataframe line var (pas travailler avec le foutoir ici - dans analyses ok)
-
-# Attention à garder NA si pas regarder pour X échantillons ou pas dispo ou je ne sais quoi
+# Write file ----
+data.table::fwrite(x = infectious,
+                   file = here::here("data", "derived-data", "infectious_cleaning", "infectious_data.csv"))

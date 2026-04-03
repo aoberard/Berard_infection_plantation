@@ -86,6 +86,9 @@ s16_taxo$V1 <- NULL
 #Samples data
 individuals <- read.delim(file = here::here("data", "raw-data", "20260320_BePrep_samples.csv"), sep = ";")
 
+#Mycoplasma sequences from genbank
+myco_genbank <- readxl::read_xlsx(path = here::here("data", "raw-data", "diagnostic", "20260402_mycoplasma_genbank_seq.xlsx"))
+
 
 # Data object creation  ----
 
@@ -373,36 +376,88 @@ tax_full[tax_full == "Mycoplasma coccoides"] <- "Eperythrozoon coccoides"
 tax_full[tax_full == "Mycoplasma moatsii"] <- "Mesomycoplasma moatsii"
 
 
+#Check Mycoplasma % sequence identity
+seqs_genbank <- myco_genbank$seq %>% 
+  as.character() %>% 
+  Biostrings::DNAStringSet()
+names(seqs_genbank) <- myco_genbank$name
+
+tax_mat  <- phyloseq::prune_taxa(
+  phyloseq::tax_table(physeq_s16)[, "Genus"] %in% c("Eperythrozoon"),
+  physeq_s16
+) %>% 
+  phyloseq::tax_table() %>% 
+  as.matrix() 
+
+seqs <- tax_mat[, "seed_sequence"] %>% 
+  as.character() %>% 
+  Biostrings::DNAStringSet()
+
+names(seqs) <- rownames(tax_mat)
+
+seqs <- c(seqs_genbank, seqs)
+seqs <- Biostrings::DNAStringSet(gsub("-", "", as.character(seqs)))
+
+alignment <- DECIPHER::AlignSeqs(seqs)
+dist_mat <- DECIPHER::DistanceMatrix(alignment, type = "matrix", correction = "none")
+hc <- hclust(as.dist(dist_mat), method = "average")
+plot(hc)
+groups <- cutree(hc, h = 0.03)
+
+split(names(groups), groups)
+
+
+
+
 #Improve  affiliations of clusters
-tax_full[tax_full[, "observation_name"] == "Cluster_3", "blast_perc_identity"] <- "99.2"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_5", "Species"] <- "Neoehrlichia mikurensis"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_7", "Species"] <- "Haemobartonella muris"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_11", "blast_perc_identity"] <- "91.24"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_23", "Species"] <- "Eperythrozoon coccoides"
-tax_full[tax_full[, "observation_name"] == "Cluster_23", "blast_perc_identity"] <- "98"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_109", "Species"] <- "Eperythrozoon coccoides"
-tax_full[tax_full[, "observation_name"] == "Cluster_109", "blast_perc_identity"] <- "94.8"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_137", "Species"] <- "Haemobartonella muris"
-tax_full[tax_full[, "observation_name"] == "Cluster_137", "blast_perc_identity"] <- "92.4"
-
-tax_full[tax_full[, "observation_name"] == "Cluster_519", "Species"] <- "Haemobartonella muris"
-tax_full[tax_full[, "observation_name"] == "Cluster_519", "blast_perc_identity"] <- "94.8"
-
 tax_full[tax_full[, "observation_name"] == "Cluster_334", "Species"] <- "Malacoplasma penetrans"
 tax_full[tax_full[, "observation_name"] == "Cluster_334", "blast_perc_identity"] <- "99.2"
 
 tax_full[tax_full[, "observation_name"] == "Cluster_1370", "Species"] <- "Borrelia afzelii"
 tax_full[tax_full[, "observation_name"] == "Cluster_1370", "blast_perc_identity"] <- "99.6"
 
+tax_full[tax_full[, "observation_name"] == "Cluster_3", "blast_perc_identity"] <- "99.2"
+
+tax_full[tax_full[, "observation_name"] == "Cluster_5", "Species"] <- "Neoehrlichia mikurensis"
+
+
+
+
+
+tax_full[tax_full[, "observation_name"] == "Cluster_23", "Species"] <- "Eperythrozoon coccoides"
+tax_full[tax_full[, "observation_name"] == "Cluster_23", "blast_perc_identity"] <- "98"
+
 tax_full[tax_full[, "observation_name"] == "Cluster_5922", "Species"] <- "Eperythrozoon coccoides"
 
 tax_full[tax_full[, "observation_name"] == "Cluster_6232", "Species"] <- "Eperythrozoon coccoides"
+
+
+
+
+
+
+
+
+
+
+tax_full[tax_full[, "observation_name"] == "Cluster_11", "blast_perc_identity"] <- "91.24"
+
+# tax_full[tax_full[, "observation_name"] == "Cluster_7", "Species"] <- "Haemobartonella muris"
+
+# tax_full[tax_full[, "observation_name"] == "Cluster_519", "Species"] <- "Haemobartonella muris"
+# tax_full[tax_full[, "observation_name"] == "Cluster_519", "blast_perc_identity"] <- "94.8"
+
+# tax_full[tax_full[, "observation_name"] == "Cluster_109", "Species"] <- "Eperythrozoon coccoides"
+# tax_full[tax_full[, "observation_name"] == "Cluster_109", "blast_perc_identity"] <- "94.8"
+# 
+# tax_full[tax_full[, "observation_name"] == "Cluster_137", "Species"] <- "Haemobartonella muris"
+# tax_full[tax_full[, "observation_name"] == "Cluster_137", "blast_perc_identity"] <- "92.4"
+
+
+
+
+
+
 
 
 # Identify best affiliation level again

@@ -34,7 +34,7 @@ individuals <- read.delim(file = here::here("data", "raw-data", "20260320_BePrep
 
 ## Generate markers tables ----
 
-#Rename taxa in accordance to best_taxa
+# #Rename taxa in accordance to best_taxa
 phyloseq::taxa_names(s16_phylo) <- as.data.frame(tax_table(s16_phylo)) %>% pull(best_taxa)
 
 #Pivot otu_tables
@@ -56,7 +56,7 @@ infectious <- individuals %>%
   left_join(s16, by = c("numero_centre"))
 
 #Adding rpoB and gltA data
-infectious <- infectious %>% 
+infectious <- infectious %>%
   left_join(barto, by = c("numero_centre"))
 
 #Replace NA by 0 in new data
@@ -115,29 +115,29 @@ infectious %>%
   pull()
 
 #Drop genus level Bartonella taxa
-infectious <- infectious %>% 
+infectious <- infectious %>%
   select(-Bartonella)
 
 
 #Specific diagnostic detection  join ----
 
 ## Leptospira PCR ----
-infectious <- infectious %>% 
+infectious <- infectious %>%
   left_join(lepto)
 
 #Are there NA for this specific diagnostic ?
-infectious %>% 
+infectious %>%
   filter(
     if_any(
       setdiff(names(lepto), "numero_centre"),
       is.na
     )
-  ) %>% 
+  ) %>%
   pull(numero_centre)
 
 #Make choice regarding NA samples for the specific taxa (keep as NA or else ?)
 #Here we make them 0 (because only two samples with low global prevalence)
-infectious <- infectious %>% 
+infectious <- infectious %>%
   mutate(
     across(
       all_of(setdiff(names(lepto), "numero_centre")),
@@ -146,15 +146,16 @@ infectious <- infectious %>%
     )
 
 
+# EXPLORATION TEMPO MYCOPLASMA
 
-
+# infectious <- infectious %>% 
+#   mutate(across(-numero_centre, ~ if_else(is.na(.), 0, .)))
+# 
+# infectious <- infectious %>% 
+#   left_join(individuals)
 
 
 
 #Goal a la fin tableau clean qui peut par la suite etre join a dataframe line var (pas travailler avec le foutoir ici - dans analyses ok)
 
 # Attention à garder NA si pas regarder pour X échantillons ou pas dispo ou je ne sais quoi
-
-
-#leptospira aussi !
-#lepto - considération de la souche ? ou juste description peut-être ici car trop rare pour mettre dans les analyses je pense ?

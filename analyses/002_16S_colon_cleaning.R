@@ -14,7 +14,6 @@ if (!require("phyloseq", quietly = TRUE))
 library("BiocManager")
 library("phyloseq")
 library("dplyr")
-library("ggplot2")
 
 #Function to track number of samples and reads at each 
 track_phyloseq <- function(physeq, step_name = NA, step_number = NA) {
@@ -195,12 +194,12 @@ tracking_s16 <- bind_rows(
   tracking_s16, track_phyloseq(physeq_s16, step_name = "Removed_not_Bacteria_clusters", step_number = 3))
 
 
-## Identify best affiliation level ---- 
+## Identify best affiliation level ----
 
 #Extract taxonomy matrix
-tax_full <- as(tax_table(physeq_s16), "matrix") 
+tax_full <- as(tax_table(physeq_s16), "matrix")
 
-#Keep only ranks 
+#Keep only ranks
 tax <- tax_full[, ranks]
 
 #Clean ambiguous annotations (make them NA)
@@ -213,7 +212,7 @@ ranks_rev <- rev(ranks)
 #Find first non-NA per row
 first_valid_index <- max.col(!is.na(tax_rev), ties.method = "first")
 
-#In case some rows contain only NA 
+#In case some rows contain only NA
 all_na <- rowSums(!is.na(tax_rev)) == 0
 
 #Extract best taxa and level
@@ -240,8 +239,8 @@ tax_final <- cbind(
 tax_table(physeq_s16) <- tax_table(tax_final)
 
 
-## Remove clusters that are affiliated above family level ---- 
-physeq_s16 <- phyloseq::prune_taxa( 
+## Remove clusters that are affiliated above family level ----
+physeq_s16 <- phyloseq::prune_taxa(
   taxa = as.vector(phyloseq::tax_table(physeq_s16)[, "best_taxa_level"]) %in% c("Family", "Genus", "Species"),
   x = physeq_s16)
 
@@ -252,8 +251,8 @@ tracking_s16 <- bind_rows(
   tracking_s16, track_phyloseq(physeq_s16, step_name = "Removed_above_family_affiliation", step_number = 4))
 
 
-## Remove clusters that are affiliated above genus level ---- 
-physeq_s16 <- phyloseq::prune_taxa( 
+## Remove clusters that are affiliated above genus level ----
+physeq_s16 <- phyloseq::prune_taxa(
   taxa = as.vector(phyloseq::tax_table(physeq_s16)[, "best_taxa_level"]) %in% c("Genus", "Species"),
   x = physeq_s16)
 
@@ -265,7 +264,7 @@ tracking_s16 <- bind_rows(
 
 
 
-## Remove clusters with reads below 0.001 % of total ---- 
+## Remove clusters with reads below 0.001 % of total ----
 physeq_s16 <- phyloseq::prune_taxa(
   taxa = phyloseq::taxa_sums(physeq_s16) >= (sum(phyloseq::taxa_sums(physeq_s16)) * 0.00001),
   x =  physeq_s16)
@@ -280,12 +279,12 @@ tracking_s16 <- bind_rows(
 ## Remove clusters that are not from putative infectious taxa  ----
 
 #At this step we are using a list of putative genera, family and phylum known to
-#contain infectious agents for rodents and/or humans. Groups containing opportunistic 
+#contain infectious agents for rodents and/or humans. Groups containing opportunistic
 #agents were not kept as most of them are natural components of environment and microbiota,
 #contamination could not be excluded
 
-physeq_s16 <- phyloseq::prune_taxa( 
-  taxa = as.vector(phyloseq::tax_table(physeq_s16)[, "Genus"]) %in% putative_infectious_genra | 
+physeq_s16 <- phyloseq::prune_taxa(
+  taxa = as.vector(phyloseq::tax_table(physeq_s16)[, "Genus"]) %in% putative_infectious_genra |
     as.vector(phyloseq::tax_table(physeq_s16)[, "Family"]) %in% putative_infectious_family |
     as.vector(phyloseq::tax_table(physeq_s16)[, "Phylum"]) %in% putative_infectious_phylum,
   x = physeq_s16)
@@ -299,14 +298,14 @@ tracking_s16 <- bind_rows(
 
 
 ## Visualization of filters ----
-tracking_all <- tidyr::pivot_longer(data = tracking_s16, 
+tracking_all <- tidyr::pivot_longer(data = tracking_s16,
                                     cols = c("n_taxa", "n_samples", "total_reads"),
                                     names_to = "parameter",
                                     values_to = "parameter_value")
 #Plot filtering steps
-tracking_all %>% 
+tracking_all %>%
   arrange(step_number) %>%
-  mutate(step_name = forcats::fct_inorder(step_name)) %>% 
+  mutate(step_name = forcats::fct_inorder(step_name)) %>%
   ggplot(aes(x = step_name, y = parameter_value, group = 1)) +
   geom_line(alpha = 0.7) +
   geom_point(size = 2) +

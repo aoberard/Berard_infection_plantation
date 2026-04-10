@@ -14,6 +14,7 @@ library("BiocManager")
 library("phyloseq")
 library("dplyr")
 library("ggplot2")
+library("ggraph")
 
 
 #Graphical parameters 
@@ -89,27 +90,27 @@ infected %>%
   summarise(across(all_of(names_infectious), sum))
 
 #List of infectious agents per species
-list_pathos_per_species <- list()
+list_infectious_per_species <- list()
 for (i in unique(infected$taxon_mamm)) {
-  list_pathos_per_species[[i]] <- infected %>%
+  list_infectious_per_species[[i]] <- infected %>%
     filter(taxon_mamm == i) %>%
     select(all_of(names_infectious)) %>%
     select(where(~ any(. > 0))) %>%
     colnames()
 }
-list_pathos_per_species
+list_infectious_per_species
 
 
-# Compute prevalence for every species
+### Prevalence per species ----
 
 #observed number of cases
 prev_df <- infected %>%
   tidyr::pivot_longer(
     cols = all_of(names_infectious),
-    names_to = "pathogen",
+    names_to = "infectious",
     values_to = "infected"
   ) %>%
-  group_by(taxon_mamm, pathogen) %>%
+  group_by(taxon_mamm, infectious) %>%
   summarise(
     n = n(),
     cases = sum(infected),
@@ -128,17 +129,17 @@ prev_df <- prev_df %>%
   ungroup() %>%
   select(-ci)
 
-#remove useless rodent species
+#remove rodent species without infectious agents
 prev_df <- prev_df %>% 
   filter(!taxon_mamm %in% c("Mus musculus", "Micromys minutus"))
 
-#Plot graph
+#Plot confidence interval of infectious agents across rodent species
 prev_df %>%
   mutate(
-    pathogen = as.factor(reorder(pathogen, cases)),
+    infectious = as.factor(reorder(infectious, cases)),
     taxon_mamm = as.factor(taxon_mamm)
   ) %>%
-  ggplot(aes(x = prevalence, y = pathogen, color = taxon_mamm)) +
+  ggplot(aes(x = prevalence, y = infectious, color = taxon_mamm)) +
   geom_point(
     position = position_dodge(width = 0.5),
     size = 2
@@ -152,10 +153,144 @@ prev_df %>%
   theme_bw()
 
 
+### Bipartite network ----
+
+#Choose data to use ▲
+bipartite_data <- infected %>% 
+  filter(if_any(all_of(names_infectious), ~ . > 0))  
+
+#Generate biadjacency matrix
+bimatrix <- bipartite_data %>% 
+  tibble::column_to_rownames(var = "numero_centre") %>% 
+  select(all_of(names_infectious)) %>% 
+  as.matrix
+
+#Order matrix 
+rodent_order <- hclust(dist(bimatrix))$order
+infectious_order <- hclust(dist(t(bimatrix)))$order
+bimatrix <- bimatrix[rodent_order, infectious_order]
+
+#Generate graph from biadjacency matrix using igraph
+bipartite_rodent <- bipartite_rodent <- igraph::graph_from_biadjacency_matrix(incidence = bimatrix ,
+                                                               directed = FALSE)
+
+#Wrap igraph object in tidygraph object
+tidy_bipart <- tidygraph::as_tbl_graph(bipartite_rodent)
+
+id_species <- bipartite_data %>%
+  select(numero_centre, taxon_mamm) %>%
+  distinct()
+
+tidy_bipart <- tidy_bipart %>% 
+  tidygraph::activate(nodes) %>% 
+  left_join(id_species, by = c("name" = "numero_centre")) %>% 
+  mutate(node_color = if_else(condition = type, true = "infectious", false = taxon_mamm))
+
+#Plot tidygraph object using ggraph
+ggraph(tidy_bipart, layout = "kk") +
+  geom_edge_link(alpha = 0.7, color = "grey80") +
+  geom_node_point(aes(color = node_color), size = 3) +
+  geom_node_text(
+    aes(label = ifelse(type, name, "")),
+    repel = TRUE,
+    size = 3
+  ) +
+  scale_color_manual(values = c(
+    infectious = "tomato",
+    common_rodent_palette
+  )) +
+  theme_void()
+
+
+ggraph(tidy_bipart, layout = "bipartite") +
+  geom_edge_link(alpha = 0.7, color = "grey80") +
+  geom_node_point(aes(color = node_color), size = 3) +
+  geom_node_text(
+    aes(label = ifelse(type, name, "")),
+    repel = TRUE,
+    size = 3
+  ) +
+  coord_polar() + 
+  scale_color_manual(values = c(
+    infectious = "tomato",
+    common_rodent_palette
+  )) +
+  theme_void()
+
+
+
+
+
+
+tidy_bipart_ord <- tidy_bipart %>%
+  tidygraph::activate(nodes) %>%
+  dplyr::group_by(type) %>%   
+  dplyr::mutate(
+    angle = seq(0, 2*pi, length.out = dplyr::n()),
+    radius = ifelse(type, 1, 2)  
+  ) %>%
+  dplyr::ungroup()
+
+ggraph(tidy_bipart_ord,
+       layout = "manual",
+       x = radius * cos(angle),
+       y = radius * sin(angle)) +
+  geom_edge_link(alpha = 0.6, color = "grey80") +
+  geom_node_point(aes(color = node_color, size = type)) +
+  scale_size_manual(values = c(2, 5)) +
+  geom_node_text(
+    data = tidy_bipart_ord %>%
+      tidygraph::activate(nodes) %>%
+      as_tibble() %>%
+      dplyr::mutate(
+        x = radius * cos(angle),
+        y = radius * sin(angle)
+      ) %>%
+      dplyr::filter(type),
+    aes(x = x, y = y, label = name),
+    repel = TRUE,
+    size = 3
+  ) +
+  scale_color_manual(values = c(
+    infectious = "tomato",
+    common_rodent_palette
+  )) +
+  
+  theme_void()
+
+
+
+
+
+
+#Quick version using bipartite
+bimatrix2 <- bipartite_data %>%
+  tidyr::pivot_longer(
+    cols = all_of(names_infectious),
+    names_to = "infectious",
+    values_to = "infected"
+  ) %>%
+  group_by(taxon_mamm, infectious) %>%
+  summarise(prevalence = mean(infected > 0), .groups = "drop") %>%
+  tidyr::pivot_wider(
+    names_from = infectious,
+    values_from = prevalence,
+    values_fill = 0
+  ) %>%
+  tibble::column_to_rownames("taxon_mamm") %>%
+  as.matrix()
+
+bipartite::plotweb(
+  bimatrix2,
+  horizontal = TRUE, sorting = "dec"
+)
+
+
 ## For A. sylvaticus ----
 
+### Generate essential subdataframes and vector ----
 
-# Filter out empty pathogen for Apodemus sylvaticus
+# Filter out empty infectious for Apodemus sylvaticus
 infected_apo <- infected %>%
   filter(taxon_mamm == "Apodemus sylvaticus") 
 
@@ -174,25 +309,80 @@ names_infectious_apo10 <- names(names_infectious_apo10[names_infectious_apo10 >=
 names_infectious_apo10
 
 
+### Prevalence visualizations ----
 
-infected_apo %>% 
+#### Prevalence variation across field session
+
+# Heatmap of most prevalent infectiouss across field_sessions-category
+df_pathos <- infected_apo %>% 
   tidyr::pivot_longer(
     cols = all_of(names_infectious_apo),
-    names_to = "pathogen",
+    names_to = "infectious",
     values_to = "infected"
   ) %>% 
-  group_by(pathogen, category, field_session) %>%
+  group_by(infectious, field_session) %>%
   summarise(
     n = n(),
     cases = sum(infected),
     prevalence = cases/n,
     .groups = "drop"
   ) %>% 
-  filter(pathogen %in% names_infectious_apo10,
+  filter(infectious %in% names_infectious_apo10) 
+
+matrix_pathos  <- df_pathos %>%
+  select(infectious, field_session, prevalence) %>%
+  tidyr::pivot_wider(names_from = field_session, values_from = prevalence) %>%
+  tibble::column_to_rownames("infectious") %>%
+  as.matrix()
+matrix_pathos <- matrix_pathos[, session_order, drop = FALSE]
+
+effectif <- df_pathos %>%
+  distinct(field_session, n) %>%
+  slice(match(session_order, field_session))
+
+col_ha = ComplexHeatmap::HeatmapAnnotation(
+  effectif = ComplexHeatmap::anno_barplot(
+    effectif$n,
+    bar_width = 1,
+    baseline = 0,
+    add_numbers = TRUE,
+    gp = grid::gpar(fill = cividis::cividis(2, begin = 0.2, end = 0.9)),
+    border = FALSE
+  )
+)
+
+ComplexHeatmap::Heatmap(
+  matrix_pathos,
+  name = "Prévalence",
+  top_annotation = col_ha,
+  col = cividis_palette <- cividis::cividis(2),
+  show_row_names = TRUE,
+  show_column_names = TRUE,
+  cluster_columns = FALSE,
+  show_column_dend = FALSE,
+  cluster_rows = TRUE
+)
+
+
+#Bubble plot of most prevalent infectiouss across field_sessions-category
+infected_apo %>% 
+  tidyr::pivot_longer(
+    cols = all_of(names_infectious_apo),
+    names_to = "infectious",
+    values_to = "infected"
+  ) %>% 
+  group_by(infectious, category, field_session) %>%
+  summarise(
+    n = n(),
+    cases = sum(infected),
+    prevalence = cases/n,
+    .groups = "drop"
+  ) %>% 
+  filter(infectious %in% names_infectious_apo10,
          prevalence > 0) %>% 
   mutate(category = forcats::fct_relevel(category, category_order),
          field_session = forcats::fct_relevel(field_session, session_order)) %>%
-  ggplot(mapping = aes(x = field_session, y = pathogen, color = category)) +
+  ggplot(mapping = aes(x = field_session, y = infectious, color = category)) +
   geom_point(aes(size = prevalence)) +
   scale_size_continuous(range = c(1, 10)) + 
   facet_grid(. ~ category) +
@@ -203,62 +393,21 @@ infected_apo %>%
     panel.grid.minor = element_blank()
   )
   
-  
-
-#pas sur que informatif à l'echelle de session :
-#essayer a l'echelle saison vu peu de données
-
-
-
-
+#Line plot of most prevalent infectious across field_sessions-category
 infected_apo %>% 
   tidyr::pivot_longer(
     cols = all_of(names_infectious_apo),
-    names_to = "pathogen",
+    names_to = "infectious",
     values_to = "infected"
   ) %>% 
-  group_by(pathogen, category, season) %>%
+  group_by(infectious, category, field_session) %>%
   summarise(
     n = n(),
     cases = sum(infected),
     prevalence = cases/n,
     .groups = "drop"
   ) %>% 
-  filter(pathogen %in% names_infectious_apo10,
-         prevalence > 0) %>% 
-  mutate(category = forcats::fct_relevel(category, category_order),
-         season = forcats::fct_relevel(season, season_order)) %>%
-  ggplot(mapping = aes(x = season, y = pathogen, color = category)) +
-  geom_point(aes(size = prevalence)) +
-  scale_size_continuous(range = c(1, 10)) + 
-  facet_grid(. ~ category) +
-  scale_color_manual(values = category_palette) +
-  theme_minimal(base_size = 14) +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid.minor = element_blank()
-  )
-
-
-
-
-
-#Peut-être plus informatif avec des lignes et des IC que avec ce truc much
-
-infected_apo %>% 
-  tidyr::pivot_longer(
-    cols = all_of(names_infectious_apo),
-    names_to = "pathogen",
-    values_to = "infected"
-  ) %>% 
-  group_by(pathogen, category, field_session) %>%
-  summarise(
-    n = n(),
-    cases = sum(infected),
-    prevalence = cases/n,
-    .groups = "drop"
-  ) %>% 
-  filter(pathogen %in% names_infectious_apo10) %>% 
+  filter(infectious %in% names_infectious_apo10) %>% 
   rowwise() %>%
   mutate(
     ci = list(prevalence::propCI(cases, n, method = "wilson")),
@@ -274,7 +423,7 @@ infected_apo %>%
     aes(group = category),
     linewidth = 1) +
   geom_point(size = 3) +
-  facet_wrap(~ pathogen, scales = "free_y") +
+  facet_wrap(~ infectious, scales = "free_y") +
   scale_color_manual(values = category_palette) +
   theme_minimal(base_size = 14) +
   theme(
@@ -285,20 +434,104 @@ infected_apo %>%
 
 
 
+#### Prevalence variation across season
+
+# Heatmap of most prevalent infectious across season-category
+df_pathos <- infected_apo %>% 
+  tidyr::pivot_longer(
+    cols = all_of(names_infectious_apo),
+    names_to = "infectious",
+    values_to = "infected"
+  ) %>% 
+  group_by(infectious, season) %>%
+  summarise(
+    n = n(),
+    cases = sum(infected),
+    prevalence = cases/n,
+    .groups = "drop"
+  ) %>% 
+  filter(infectious %in% names_infectious_apo10) 
+
+matrix_pathos  <- df_pathos %>%
+  select(infectious, season, prevalence) %>%
+  tidyr::pivot_wider(names_from = season, values_from = prevalence) %>%
+  tibble::column_to_rownames("infectious") %>%
+  as.matrix()
+matrix_pathos <- matrix_pathos[, season_order, drop = FALSE]
+
+effectif <- df_pathos %>%
+  distinct(season, n) %>%
+  slice(match(season_order, season))
+
+col_ha = ComplexHeatmap::HeatmapAnnotation(
+  effectif = ComplexHeatmap::anno_barplot(
+    effectif$n,
+    bar_width = 1,
+    baseline = 0,
+    add_numbers = TRUE,
+    gp = grid::gpar(fill = cividis::cividis(2, begin = 0.2, end = 0.9)),
+    border = FALSE
+  )
+)
+
+ComplexHeatmap::Heatmap(
+  matrix_pathos,
+  name = "Prévalence",
+  top_annotation = col_ha,
+  col = cividis_palette <- cividis::cividis(2),
+  show_row_names = TRUE,
+  show_column_names = TRUE,
+  cluster_columns = FALSE,
+  show_column_dend = FALSE,
+  cluster_rows = TRUE
+)
+
+
+#Bubble plot of most prevalent infectiouss across season-category
 infected_apo %>% 
   tidyr::pivot_longer(
     cols = all_of(names_infectious_apo),
-    names_to = "pathogen",
+    names_to = "infectious",
     values_to = "infected"
   ) %>% 
-  group_by(pathogen, category, season) %>%
+  group_by(infectious, category, season) %>%
+  summarise(
+    n = n(),
+    cases = sum(infected),
+    prevalence = cases/n,
+    .groups = "drop"
+  ) %>% 
+  filter(infectious %in% names_infectious_apo10,
+         prevalence > 0) %>% 
+  mutate(category = forcats::fct_relevel(category, category_order),
+         season = forcats::fct_relevel(season, season_order)) %>%
+  ggplot(mapping = aes(x = season, y = infectious, color = category)) +
+  geom_point(aes(size = prevalence)) +
+  scale_size_continuous(range = c(1, 10)) + 
+  facet_grid(. ~ category) +
+  scale_color_manual(values = category_palette) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
+
+
+#Confidence interval of prevalence for most prevalent infectious across season-category
+infected_apo %>% 
+  tidyr::pivot_longer(
+    cols = all_of(names_infectious_apo),
+    names_to = "infectious",
+    values_to = "infected"
+  ) %>% 
+  group_by(infectious, category, season) %>%
   summarise(
     n = n(),
     cases = sum(infected),
     prevalence = cases / n,
     .groups = "drop"
   ) %>% 
-  filter(pathogen %in% names_infectious_apo10) %>% 
+  filter(infectious %in% names_infectious_apo10) %>% 
   rowwise() %>%
   mutate(
     ci = list(prevalence::propCI(cases, n, method = "wilson")),
@@ -320,7 +553,7 @@ infected_apo %>%
     position = position_dodge(width = 0.5),
     size = 3
   ) +
-  facet_wrap(~ pathogen, scales = "free_y") +
+  facet_wrap(~ infectious, scales = "free_y") +
   scale_color_manual(values = category_palette) +
   theme_minimal(base_size = 14) +
   theme(
@@ -329,44 +562,110 @@ infected_apo %>%
   )
 
 
+### Bipartite networks ----
+
+#Choose data to use ▲
+bipartite_data_apo <- infected_apo %>% 
+  filter(if_any(all_of(names_infectious_apo10), ~ . > 0))  
+
+#Generate biadjacency matrix
+bimatrix_apo <- bipartite_data_apo %>% 
+  tibble::column_to_rownames(var = "numero_centre") %>% 
+  select(all_of(names_infectious_apo10)) %>% 
+  as.matrix
+
+#Generate graph from biadjacency matrix using igraph
+bipartite_apo <- bipartite_apo <- igraph::graph_from_biadjacency_matrix(incidence = bimatrix_apo ,
+                                                                              directed = FALSE)
+
+#Wrap igraph object in tidygraph object
+tidy_bipart_apo <- tidygraph::as_tbl_graph(bipartite_apo)
+
+id_category_apo <- bipartite_data_apo %>%
+  select(numero_centre, category) %>%
+  distinct()
+
+tidy_bipart_apo <- tidy_bipart_apo %>% 
+  tidygraph::activate(nodes) %>% 
+  left_join(id_category_apo, by = c("name" = "numero_centre")) %>% 
+  mutate(node_color = if_else(condition = type, true = "infectious", false = category)) 
+
+
+#Plot tidygraph object using ggraph
+ggraph(tidy_bipart_apo, layout = "auto") +
+  geom_edge_link(alpha = 0.7, color = "grey80") +
+  geom_node_point(aes(color = node_color), size = 3) +
+  geom_node_text(
+    aes(label = ifelse(type, name, "")),
+    repel = TRUE,
+    size = 3
+  ) +
+  scale_color_manual(values = c(
+    infectious = "tomato",
+    category_palette
+  )) +
+  theme_void()
+
+
+### Projection networks and else ----
+projection <- igraph::bipartite_projection(bipartite_apo)
+
+infect_netw <- projection$proj2
+
+indiv_netw <- projection$proj1
 
 
 
+#Wrap igraph object in tidygraph object
+tidy_bipart_infect <- tidygraph::as_tbl_graph(infect_netw)
+
+prev_apo <- infected_apo %>% 
+  tidyr::pivot_longer(
+    cols = all_of(names_infectious_apo),
+    names_to = "infectious",
+    values_to = "infected"
+  ) %>% 
+  group_by(infectious) %>%
+  summarise(
+    n = n(),
+    cases = sum(infected),
+    prevalence = cases/n,
+    .groups = "drop"
+  )
+
+tidy_bipart_infect <- tidy_bipart_infect %>% 
+  tidygraph::activate(nodes) %>% 
+  left_join(prev_apo, by = c("name" = "infectious"))
+
+#Plot tidygraph object using ggraph
+ggraph(tidy_bipart_infect, layout = "auto") +
+  geom_edge_arc(aes(width = weight), alpha = 0.4, color = "grey70", strength = 1) +
+  geom_node_point(aes(size = prevalence), color = "tomato")+
+  scale_size_continuous(range = c(2, 10)) +
+  geom_node_text(aes(label = name),
+                 repel = TRUE,
+                 size = 4) +
+  theme_void()
 
 
-
-# Plot richness
-# plot beta div
-
-
-
-
-
-
-#Prevalence variable
-#selon ?
-
-#nbr d'individus infectés variable (on regarde que la prevalence a chaque fois c'est bon wsh, c'est pas ça le "danger")
-# mais attention implique de standardiser data pour meme effort capture : + probleme c'est que c'est pas des vrais
-#abondances qu'on regarde mais du relatif - pas forcement grave là aussi on peut dire c'est relatif non ?
-#pour faire ça regarder les individus supprimés dans autre script quand retrait 4 eme nuit de piegeage
-#peut-être autre truc a check
-
-
-#réseaux co-occurences pathogenes?
-
-#coinfection representation ?
+# #More or less useless in current state :
+# tidy_bipart_indiv <- tidygraph::as_tbl_graph(indiv_netw)
+# 
+# tidy_bipart_indiv <- tidy_bipart_indiv %>% 
+#   tidygraph::activate(nodes) %>% 
+#   left_join(id_category_apo, by = c("name" = "numero_centre")) %>% 
+#   tidygraph::activate(edges) %>% 
+#   filter(weight >= 2) %>%  # keep only strong links
+#   tidygraph::activate(nodes) %>%
+#   filter(igraph::degree(.) > 0)
+# 
+# ggraph(tidy_bipart_indiv, layout = "auto") +
+#   geom_edge_link(aes(width = weight), alpha = 0.2, color = "grey70") +
+#   geom_node_point(aes(color = category), size = 5 ) +
+#   scale_color_manual(values = category_palette) +
+#   theme_void()
 
 
-
-# specificité hote 
-#table, reseau, heatmap
+# Write files ----
 
 
-#pour l'instant y'a pas : les variables des individus potentiellment a integrer : maturité sex, classe d'age, condition physique
-
-#pour les variables environnements : jamais regardé hobo
-
-#Peutetre truc a ajouter lié csi : nbr de campagnol site/session quand modelise prevalence pathos Apodemus
-
-#modifier pour que plus de mention de pathogen mais agents infectieux

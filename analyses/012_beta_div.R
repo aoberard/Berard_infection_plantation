@@ -14,6 +14,9 @@ category_palette <- c("pine_edge"          = "#3f826d",
                       "hedgerows"          = "#f2d0a4",
                       "broadleaved_forest" = "#a4a8d1")
 
+season_palette <- c("Spring" = "#ED6A5A",
+                    "Autumn" = "#6B4B3E")
+
 category_order <- c("pine_edge", "hedgerows", "broadleaved_forest")
 session_order <- c("Juin_2023", "Octobre_2023", "Juin_2024", "Septembre_2024", "Juin_2025")
 season_order <- c("Spring", "Autumn")
@@ -25,8 +28,8 @@ season_order <- c("Spring", "Autumn")
 
 inf <- data.table::fread(file = here::here("data", "derived-data", "asylvaticus_data", "asylvaticus_infectious.csv"))
 
-names_inf <- readRDS(file = here::here("data", "derived-data", "asylvaticus_data", "names_inf.rds"))
-names_inf10 <- readRDS(file = here::here("data", "derived-data", "asylvaticus_data", "names_inf10.rds"))
+names_inf <- readRDS(file = here::here("data", "derived-data", "asylvaticus_data", "names_infectious_apo.rds"))
+names_inf10 <- readRDS(file = here::here("data", "derived-data", "asylvaticus_data", "names_infectious_apo10.rds"))
 
 
 
@@ -37,7 +40,7 @@ names_inf10 <- readRDS(file = here::here("data", "derived-data", "asylvaticus_da
 #Subset community matrix
 m_inf <- inf %>%
   tibble::column_to_rownames(var = "numero_centre") %>%
-  select(all_of(names_inf10)) %>%                              #Only on 10% pathos
+  select(all_of(names_inf10)) %>%                              #Only on 10% infectious agent
   as.matrix()
 dim(m_inf)
 
@@ -60,7 +63,7 @@ m_jacc <- vegan::vegdist(m_inf_clean, method = "jaccard", binary = TRUE)
 ## Non-parametric permutation tests ----
 
 ### PERMANOVA ----
-vegan::adonis2(formula = m_jacc ~ season + poids ,
+vegan::adonis2(formula = m_jacc ~ category ,
                data = metadata_clean,
                permutations = 9999,
                by = "margin") 
@@ -74,7 +77,7 @@ vegan::adonis2(formula = m_jacc ~ season + poids ,
 
 ### BETADISPER ----
 vegan::betadisper(d = m_jacc, 
-                  group = metadata_clean$season) %>%
+                  group = metadata_clean$category) %>%
   vegan::permutest(permutations = 9999)
 
 
@@ -128,11 +131,11 @@ vegan::sppscores(dbrda) <- metadata_clean %>%
 dbrda$call
 vegan::vif.cca(dbrda)
 dbrda$anova
+anova(dbrda, by = "margin")
 summary(dbrda)
 
 round(vegan::RsquareAdj(mod_dbrda_full)$adj.r.squared, 2)
 round(vegan::RsquareAdj(dbrda)$adj.r.squared, 2)
-
 
 
 #Variance partitioning
@@ -257,7 +260,6 @@ ggplot(sites, aes(x = dbRDA1, y = dbRDA2)) +
                 label = var),
             size = 4, fontface = "bold",
             color = "black") +
-
   
   # geom_segment(data = species,
   #              aes(x = 0, y = 0, xend = dbRDA1, yend = dbRDA2),
@@ -277,14 +279,11 @@ ggplot(sites, aes(x = dbRDA1, y = dbRDA2)) +
     legend.background = element_blank(),
     legend.position = "bottom"
   ) +
+  scale_color_manual(values = season_palette)  +
+  scale_fill_manual(values = season_palette)  +
   coord_equal()
 
 
 ## PCoA ----
 
 #checker script lines variability à l'ancienne...
-
-
-#rien a voir mais en plus serait bien d'avoir figure avec tous les diff environnement entre categorie sur une fig
-#comme ça permettrait d'une pierre de coup d'extraire valeur axe acp apres serait jsutifié ?
-

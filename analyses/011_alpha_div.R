@@ -14,8 +14,6 @@ category_palette <- c("pine_edge"          = "#3f826d",
                       "hedgerows"          = "#f2d0a4",
                       "broadleaved_forest" = "#a4a8d1")
 
-
-
 season_palette <- c("Spring" = "#ED6A5A",
                     "Autumn" = "#6B4B3E")
 
@@ -56,55 +54,7 @@ inf_alpha <- inf %>%
 
 #Dataframe for GLM (no NA for explanatory variables)
 df_alpha <- inf_alpha %>% 
-  filter(!is.na(sexe))
-
-
-
-# GLM : richness variation ----
-#Global model specification
-if (exists("m_richness")) rm(m_richness)
-m_richness <- glmmTMB::glmmTMB(
-  rich ~ category * season + poids + sexe + (1 | numero_ligne),
-  data = inf_alpha,
-  family = poisson(link = "log"),
-  na.action = "na.fail",
-)
-performance::check_collinearity(m_richness)
-
-
-#Model selection
-model_selection <- MuMIn::dredge(m_richness, rank = "AICc")
-model_selection %>% filter(delta <= 2)
-
-#Chosen model specification
-if (exists("m_richness")) rm(m_richness)
-m_richness <- glmmTMB::glmmTMB(
-  rich ~ season + poids + sexe + (1 | numero_ligne),
-  data = inf_alpha,
-  family = poisson(link = "log"),
-  na.action = "na.fail",
-)
-
-#Best model validation
-DHARMa::simulateResiduals(m_richness) %>%
-  DHARMa::testResiduals()
-
-performance::check_overdispersion(x = m_richness)
-
-performance::check_collinearity(m_richness)
-
-
-#Best model look
-summary(m_richness)
-confint(m_richness)
-gtsummary::tbl_regression(m_richness)
-ggstats::ggcoef_model(m_richness)
-
-
-# a l'echelle des individus : plus de variable à inclure cf papier marie
-
-
-
+  filter(!is.na(sexe)) 
 
 
 
@@ -208,3 +158,49 @@ inf_alpha %>%
   ) +
   facet_wrap(.~season)
 
+
+
+# GLM : richness variation ----
+
+#Check effectifs
+df_alpha %>% 
+  group_by(category, season) %>% 
+  count()
+
+#Global model specification
+if (exists("m_richness")) rm(m_richness)
+m_richness <- glmmTMB::glmmTMB(
+  rich ~ category * season + poids + sexe + (1 | numero_ligne) + (1 | year),
+  data = df_alpha,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m_richness)
+
+#Model selection
+model_selection <- MuMIn::dredge(m_richness, rank = "AICc")
+model_selection %>% filter(delta <= 2)
+
+#Chosen model specification
+if (exists("m_richness")) rm(m_richness)
+m_richness <- glmmTMB::glmmTMB(
+  rich ~ season + poids + sexe + (1 | numero_ligne) + (1 | year),
+  data = df_alpha,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+
+#Chosen model validation
+DHARMa::simulateResiduals(m_richness) %>%
+  DHARMa::testResiduals()
+
+performance::check_overdispersion(x = m_richness)
+
+performance::check_collinearity(m_richness)
+
+
+#Chosen model look
+summary(m_richness)
+confint(m_richness)
+gtsummary::tbl_regression(m_richness)
+ggstats::ggcoef_model(m_richness)

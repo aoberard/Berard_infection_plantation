@@ -286,10 +286,11 @@ bipartite::plotweb(
 
 ### Generate essential subdataframes and vector ----
 
-# Filter out empty infectious for Apodemus sylvaticus
+#Keep only Apodemus sylvaticus individuals
 infected_apo <- infected %>%
   filter(taxon_mamm == "Apodemus sylvaticus") 
 
+#Filter out empty infectious for Apodemus sylvaticus
 infected_apo <- infected_apo %>% 
   select(-names(which(colSums(infected_apo[, ..names_infectious]) == 0)))
 
@@ -671,7 +672,8 @@ dir.create(
 )
 
 data.table::fwrite(x = infected_apo, 
-                   file = here::here("data", "derived-data", "asylvaticus_data", "asylvaticus_infectious.csv"))
+                   file = here::here("data", "derived-data", "asylvaticus_data", "asylvaticus_infectious.csv"),
+                   na = "NA")
 
 saveRDS(object = names_infectious_apo, file = here::here("data", "derived-data", "asylvaticus_data", "names_infectious_apo.rds"))
 saveRDS(object = names_infectious_apo10, file = here::here("data", "derived-data", "asylvaticus_data", "names_infectious_apo10.rds"))

@@ -507,4 +507,10 @@ physeq_merged <- phyloseq::transform_sample_counts(physeq_merged, function(x) if
 
 
 # Save file  ----
+dir.create(
+  here::here("data", "derived-data", "infectious_cleaning"),
+  recursive = TRUE,
+  showWarnings = FALSE
+)
+
 saveRDS(object = physeq_merged, file =  here::here("data", "derived-data", "infectious_cleaning", "phyloseq_rpob_glta.rds"))

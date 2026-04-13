@@ -27,6 +27,12 @@ lepto_pcr <- lepto_pcr %>%
 
 
 # Save data ----
+dir.create(
+  here::here("data", "derived-data", "infectious_cleaning"),
+  recursive = TRUE,
+  showWarnings = FALSE
+)
+
 lepto_pcr %>% 
   rename(numero_centre = ID_rodent) %>% 
   select(numero_centre, Leptospira) %>% 

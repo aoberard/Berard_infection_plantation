@@ -5,17 +5,9 @@ rm(list = ls())
 gc()
 
 # Library
-if (!require("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-if (!require("phyloseq", quietly = TRUE))
-  BiocManager::install("phyloseq")
-
-library("BiocManager")
-library("phyloseq")
 library("dplyr")
 library("ggplot2")
 library("ggraph")
-
 
 #Graphical parameters 
 category_palette <- c("pine_edge"          = "#3f826d",
@@ -30,6 +22,7 @@ common_rodent_palette <- c(
 category_order <- c("pine_edge", "hedgerows", "broadleaved_forest")
 session_order <- c("Juin_2023", "Octobre_2023", "Juin_2024", "Septembre_2024", "Juin_2025")
 season_order <- c("Spring", "Autumn")
+
 
 # Import data ----
 
@@ -68,6 +61,9 @@ infected <- infected %>%
       .groups = "drop"
     ), by = c("numero_ligne", "field_session"))
 
+#Ensure empty information are converted to NA
+infected <- infected %>%
+  mutate(across(where(is.character), ~na_if(., "")))
 
 
 # Exploration ----
@@ -666,6 +662,16 @@ ggraph(tidy_bipart_infect, layout = "auto") +
 #   theme_void()
 
 
+
 # Write files ----
+dir.create(
+  here::here("data", "derived-data", "asylvaticus_data"),
+  recursive = TRUE,
+  showWarnings = FALSE
+)
 
+data.table::fwrite(x = infected_apo, 
+                   file = here::here("data", "derived-data", "asylvaticus_data", "asylvaticus_infectious.csv"))
 
+saveRDS(object = names_infectious_apo, file = here::here("data", "derived-data", "asylvaticus_data", "names_infectious_apo.rds"))
+saveRDS(object = names_infectious_apo10, file = here::here("data", "derived-data", "asylvaticus_data", "names_infectious_apo10.rds"))

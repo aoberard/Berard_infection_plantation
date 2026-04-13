@@ -147,5 +147,10 @@ infectious <- infectious %>%
 
 
 # Write file ----
+dir.create(
+  here::here("data", "derived-data", "infectious_cleaning"),
+  recursive = TRUE,
+  showWarnings = FALSE
+)
 data.table::fwrite(x = infectious,
                    file = here::here("data", "derived-data", "infectious_cleaning", "infectious_data.csv"))

@@ -552,6 +552,10 @@ physeq_s16 <- phyloseq::transform_sample_counts(physeq_s16, function(x) ifelse(x
 
 
 # Save file  ----
-
+dir.create(
+  here::here("data", "derived-data", "infectious_cleaning"),
+  recursive = TRUE,
+  showWarnings = FALSE
+)
 saveRDS(object = physeq_s16, file =  here::here("data", "derived-data", "infectious_cleaning", "phyloseq_s16.rds"))
 

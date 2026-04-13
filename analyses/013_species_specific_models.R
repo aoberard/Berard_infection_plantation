@@ -57,10 +57,19 @@ df_nbinf$year <- relevel(as.factor(df_nbinf$year), ref = "2024")
 df_nbinf$season <- relevel(as.factor(df_nbinf$season), ref = "Autumn")
 df_nbinf$category <- relevel(as.factor(df_nbinf$category), ref = "pine_edge")
 
+#Dataset with joined category
+df_probainf_2 <- df_probainf %>% 
+  mutate(category =  
+           case_when(
+             category == "pine_edge" ~ "plantation",
+             category == "hedgerows" ~ "plantation",
+             .default = category
+           ))
+
+
 
 
 # GLM : individual infection probability ----
-
 
 ## Model : Bartonella taylorii  ----
 
@@ -259,7 +268,7 @@ df_probainf %>%
 if (exists("m_neoehr")) rm(m_neoehr)
 m_neoehr <- glmmTMB::glmmTMB(
   Neoehrlichia_mikurensis ~ category * season + poids + maturity + sexe + (1 | numero_ligne),
-  data = df_probainf,
+  data = df_probainf_2,
   family = binomial(link = "logit"),
   na.action = "na.fail",
 )
@@ -272,8 +281,8 @@ model_selection %>% filter(delta <= 2)
 #Selected model specification
 if (exists("m_neoehr")) rm(m_neoehr)
 m_neoehr <- glmmTMB::glmmTMB(
-  Neoehrlichia_mikurensis ~ category * season + poids + sexe + (1 | numero_ligne),
-  data = df_probainf,
+  Neoehrlichia_mikurensis ~ category + season + poids + sexe + (1 | numero_ligne),
+  data = df_probainf_2,
   family = binomial(link = "logit"),
   na.action = "na.fail",
 )
@@ -319,7 +328,7 @@ em_summary_neoehr %>%
     panel.grid.major.y = element_blank(),
     panel.grid.major.x = element_line(color = "gray90", linewidth = 0.5)
   ) +
-  facet_grid(season ~ .) +
+  #facet_grid(season ~ .) +
   guides(color = "none")
 
 
@@ -435,12 +444,95 @@ confint(m_haemo2)
 
 ## Model : Bartonella grahamii  ----
 
+
+
 ## Model : Neoehrlichia mikurensis  ----
+
+#Check effectifs
+ggstatsplot::gghistostats(data = df_nbinf,
+                          x = sum_Neoehrlichia_mikurensis,
+                          binwidth = 1)
+
+#Global model specification
+if (exists("m_nb_neoehr")) rm(m_nb_neoehr)
+m_nb_neoehr <- glmmTMB::glmmTMB(
+  sum_Neoehrlichia_mikurensis ~ category + season + (1 | numero_ligne),         #Interaction generate issues
+  data = df_nbinf,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m_nb_neoehr)
+
+#Model selection
+model_selection <- MuMIn::dredge(m_nb_neoehr, rank = "AICc")
+model_selection %>% filter(delta <= 2)
+
+#Selected model specification
+if (exists("m_nb_neoehr")) rm(m_nb_neoehr)
+m_nb_neoehr <- glmmTMB::glmmTMB(
+  sum_Neoehrlichia_mikurensis ~  season + (1 | numero_ligne),
+  data = df_nbinf,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+
+#Selected model validation
+DHARMa::simulateResiduals(m_nb_neoehr) %>%
+  DHARMa::testResiduals()
+
+performance::check_overdispersion(x = m_nb_neoehr)
+
+performance::check_collinearity(m_nb_neoehr)
+
+#Selected model look
+summary(m_nb_neoehr)
+confint(m_nb_neoehr)
+
 
 ## Model : Haemobartonella muris ----
 
-## Model : Haemo 2 ----
+#Check effectifs
+ggstatsplot::gghistostats(data = df_nbinf,
+                          x = sum_Haemobartonella_muris,
+                          binwidth = 1)
 
+#Global model specification
+if (exists("m_nb_haemomuris")) rm(m_nb_haemomuris)
+m_nb_haemomuris <- glmmTMB::glmmTMB(
+  sum_Haemobartonella_muris ~ category * season + (1 | numero_ligne),
+  data = df_nbinf,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m_nb_haemomuris)
+
+#Model selection
+model_selection <- MuMIn::dredge(m_nb_haemomuris, rank = "AICc")
+model_selection %>% filter(delta <= 2)
+
+#Selected model specification
+if (exists("m_nb_haemomuris")) rm(m_nb_haemomuris)
+m_nb_haemomuris <- glmmTMB::glmmTMB(
+  sum_Haemobartonella_muris ~ season + (1 | numero_ligne),
+  data = df_nbinf,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+
+#Selected model validation
+DHARMa::simulateResiduals(m_nb_haemomuris) %>%
+  DHARMa::testResiduals()
+
+performance::check_overdispersion(x = m_nb_haemomuris)
+
+performance::check_collinearity(m_nb_haemomuris)
+
+#Selected model look
+summary(m_nb_haemomuris)
+confint(m_nb_haemomuris)
+
+
+## Model : Haemo 2 ----
 
 #Check effectifs
 ggstatsplot::gghistostats(data = df_nbinf,
@@ -448,23 +540,39 @@ ggstatsplot::gghistostats(data = df_nbinf,
                           binwidth = 1)
 
 #Global model specification
-if (exists("m_haemo2")) rm(m_haemo2)
-m_haemo2 <- glmmTMB::glmmTMB(
-  Haemo_2 ~ category*season + poids + maturity + sexe + (1 | numero_ligne),
-  data = df_probainf,
-  family = binomial(link = "logit"),
+if (exists("m_nb_haemo2")) rm(m_nb_haemo2)
+m_nb_haemo2 <- glmmTMB::glmmTMB(
+  sum_Haemo_2 ~ category*season + (1 | numero_ligne),
+  data = df_nbinf,
+  family = poisson(link = "log"),
   na.action = "na.fail",
 )
-performance::check_collinearity(m_haemo2)
+performance::check_collinearity(m_nb_haemo2)
 
 #Model selection
-model_selection <- MuMIn::dredge(m_haemo2, rank = "AICc")
+model_selection <- MuMIn::dredge(m_nb_haemo2, rank = "AICc")
 model_selection %>% filter(delta <= 2)
 
 #Selected model specification
+if (exists("m_nb_haemo2")) rm(m_nb_haemo2)
+m_nb_haemo2 <- glmmTMB::glmmTMB(
+  sum_Haemo_2 ~ season + (1 | numero_ligne),
+  data = df_nbinf,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
 
+#Selected model validation
+DHARMa::simulateResiduals(m_nb_haemo2) %>%
+  DHARMa::testResiduals()
 
+performance::check_overdispersion(x = m_nb_haemo2)
 
+performance::check_collinearity(m_nb_haemo2)
+
+#Selected model look
+summary(m_nb_haemo2)
+confint(m_nb_haemo2)
 
 
 

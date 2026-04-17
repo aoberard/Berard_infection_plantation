@@ -88,7 +88,7 @@ m_barttaylo <- glmmTMB::glmmTMB(
   Bartonella_taylorii ~ category*season + poids + maturity + sexe + (1 | numero_ligne),
   data = df_probainf,
   family = binomial(link = "logit"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 performance::check_collinearity(m_barttaylo)
 
@@ -102,7 +102,7 @@ m_barttaylo <- glmmTMB::glmmTMB(
   Bartonella_taylorii ~ season + (1 | numero_ligne),
   data = df_probainf,
   family = binomial(link = "logit"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 
 #Selected model validation
@@ -133,7 +133,7 @@ m_bartbirt <- glmmTMB::glmmTMB(
   Bartonella_birtlesii ~ category*season + poids + maturity + sexe + (1 | numero_ligne),
   data = df_probainf,
   family = binomial(link = "logit"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 performance::check_collinearity(m_bartbirt)
 
@@ -147,7 +147,7 @@ m_bartbirt <- glmmTMB::glmmTMB(
   Bartonella_birtlesii ~ season + poids  + (1 | numero_ligne),
   data = df_probainf,
   family = binomial(link = "logit"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 
 #Selected model validation
@@ -178,7 +178,7 @@ m_ecocco <- glmmTMB::glmmTMB(
   Eperythrozoon_coccoides ~ category*season + poids + maturity + sexe + (1 | numero_ligne),
   data = df_probainf,
   family = binomial(link = "logit"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 performance::check_collinearity(m_ecocco)
 
@@ -192,7 +192,7 @@ m_ecocco <- glmmTMB::glmmTMB(
   Eperythrozoon_coccoides ~ poids + (1 | numero_ligne),
   data = df_probainf,
   family = binomial(link = "logit"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 
 #Selected model validation
@@ -223,7 +223,7 @@ m_bartgrah <- glmmTMB::glmmTMB(
   Bartonella_grahamii ~ category*season + poids + maturity + sexe + (1 | numero_ligne),
   data = df_probainf,
   family = binomial(link = "logit"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 performance::check_collinearity(m_bartgrah)
 
@@ -237,7 +237,7 @@ m_bartgrah <- glmmTMB::glmmTMB(
   Bartonella_grahamii ~ season + poids + (1 | numero_ligne),
   data = df_probainf,
   family = binomial(link = "logit"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 
 #Selected model validation
@@ -272,7 +272,7 @@ m_neoehr <- glmmTMB::glmmTMB(
   Neoehrlichia_mikurensis ~ category * season + poids + maturity + sexe + (1 | numero_ligne),
   data = df_probainf,
   family = binomial(link = "logit"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 performance::check_collinearity(m_neoehr)
 
@@ -286,7 +286,7 @@ m_neoehr <- glmmTMB::glmmTMB(
   Neoehrlichia_mikurensis ~ category + season + poids + sexe + (1 | numero_ligne),
   data = df_probainf,
   family = binomial(link = "logit"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 
 #Selected model validation
@@ -349,7 +349,7 @@ m_haemomuris <- glmmTMB::glmmTMB(
   Haemobartonella_muris ~ category*season + poids + maturity + sexe + (1 | numero_ligne),
   data = df_probainf,
   family = binomial(link = "logit"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 performance::check_collinearity(m_haemomuris)
 
@@ -363,7 +363,7 @@ m_haemomuris <- glmmTMB::glmmTMB(
   Haemobartonella_muris ~ season + poids + (1 | numero_ligne),
   data = df_probainf,
   family = binomial(link = "logit"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 
 #Selected model validation
@@ -393,7 +393,7 @@ m_haemo2 <- glmmTMB::glmmTMB(
   Haemo_2 ~ category*season + poids + maturity + sexe + (1 | numero_ligne),
   data = df_probainf,
   family = binomial(link = "logit"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 performance::check_collinearity(m_haemo2)
 
@@ -407,7 +407,7 @@ m_haemo2 <- glmmTMB::glmmTMB(
   Haemo_2 ~ season + poids + (1 | numero_ligne),
   data = df_probainf,
   family = binomial(link = "logit"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 
 #Selected model validation
@@ -446,7 +446,7 @@ m_nb_barttaylo <- glmmTMB::glmmTMB(
   sum_Bartonella_taylorii ~ category * season + (1 | numero_ligne), 
   data = df_nbinf,
   family =  poisson(link = "log"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 performance::check_collinearity(m_nb_barttaylo)
 
@@ -460,7 +460,7 @@ m_nb_barttaylo <- glmmTMB::glmmTMB(
   sum_Bartonella_taylorii ~ category * season + (1 | numero_ligne), 
   data = df_nbinf,
   family =  poisson(link = "log"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 
 #Selected model validation
@@ -489,7 +489,7 @@ m_nb_bartbirt <- glmmTMB::glmmTMB(
   sum_Bartonella_birtlesii ~ category * season + (1 | numero_ligne), 
   data = df_nbinf,
   family = glmmTMB::nbinom2(link = "log"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 performance::check_collinearity(m_nb_bartbirt)
 
@@ -503,7 +503,7 @@ m_nb_bartbirt <- glmmTMB::glmmTMB(
   sum_Bartonella_birtlesii ~ category + season + (1 | numero_ligne), 
   data = df_nbinf,
   family = glmmTMB::nbinom2(link = "log"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 
 #Selected model validation
@@ -533,7 +533,7 @@ m_nb_ecocco <- glmmTMB::glmmTMB(
   sum_Eperythrozoon_coccoides ~ category * season + (1 | numero_ligne), 
   data = df_nbinf,
   family = glmmTMB::nbinom2(link = "log"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 performance::check_collinearity(m_nb_ecocco)
 
@@ -547,7 +547,7 @@ m_nb_ecocco <- glmmTMB::glmmTMB(
   sum_Eperythrozoon_coccoides ~ category + (1 | numero_ligne), 
   data = df_nbinf,
   family = glmmTMB::nbinom2(link = "log"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 
 #Selected model validation
@@ -576,7 +576,7 @@ m_nb_bartgrah <- glmmTMB::glmmTMB(
   sum_Bartonella_grahamii ~ category * season + (1 | numero_ligne), 
   data = df_nbinf,
   family = poisson(link = "log"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 performance::check_collinearity(m_nb_bartgrah)
 
@@ -590,7 +590,7 @@ m_nb_bartgrah <- glmmTMB::glmmTMB(
   sum_Bartonella_grahamii ~ season + (1 | numero_ligne), 
   data = df_nbinf,
   family = poisson(link = "log"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 
 #Selected model validation
@@ -619,7 +619,7 @@ m_nb_neoehr <- glmmTMB::glmmTMB(
   sum_Neoehrlichia_mikurensis ~ category + season + (1 | numero_ligne),         #Interaction generate issues
   data = df_nbinf,
   family = poisson(link = "log"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 performance::check_collinearity(m_nb_neoehr)
 
@@ -633,7 +633,7 @@ m_nb_neoehr <- glmmTMB::glmmTMB(
   sum_Neoehrlichia_mikurensis ~  season + (1 | numero_ligne),
   data = df_nbinf,
   family = poisson(link = "log"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 
 #Selected model validation
@@ -662,7 +662,7 @@ m_nb_haemomuris <- glmmTMB::glmmTMB(
   sum_Haemobartonella_muris ~ category * season + (1 | numero_ligne),
   data = df_nbinf,
   family = poisson(link = "log"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 performance::check_collinearity(m_nb_haemomuris)
 
@@ -676,7 +676,7 @@ m_nb_haemomuris <- glmmTMB::glmmTMB(
   sum_Haemobartonella_muris ~ season + (1 | numero_ligne),
   data = df_nbinf,
   family = poisson(link = "log"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 
 #Selected model validation
@@ -705,7 +705,7 @@ m_nb_haemo2 <- glmmTMB::glmmTMB(
   sum_Haemo_2 ~ category*season + (1 | numero_ligne),
   data = df_nbinf,
   family = poisson(link = "log"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 performance::check_collinearity(m_nb_haemo2)
 
@@ -719,7 +719,7 @@ m_nb_haemo2 <- glmmTMB::glmmTMB(
   sum_Haemo_2 ~ season + (1 | numero_ligne),
   data = df_nbinf,
   family = poisson(link = "log"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 
 #Selected model validation
@@ -766,18 +766,13 @@ m_neoehr_brd <- glmmTMB::glmmTMB(
   Neoehrlichia_mikurensis ~ season + poids  + sexe + nb_clet + (1 | numero_ligne),
   data = df_probainf_3,
   family = binomial(link = "logit"),
-  na.action = "na.fail",
+  na.action = "na.fail"
 )
 performance::check_collinearity(m_neoehr_brd)
 
 #Model selection
 model_selection <- MuMIn::dredge(m_neoehr_brd, rank = "AICc")
 model_selection %>% filter(delta <= 2)
-
-
-
-
-
 
 
 

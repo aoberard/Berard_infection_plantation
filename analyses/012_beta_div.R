@@ -309,6 +309,9 @@ m_jacc %>%
 
 # TEST zone ----
 
+
+## Test glm ---- 
+
 #Import dataframe of pairwise distance for loiselle, spatial and time
 loiselle_pairwise <- data.table::fread(file = here::here("data", "raw-data", "pairwise_loiselle.csv"))
 
@@ -322,10 +325,6 @@ loiselle_pairwise <- loiselle_pairwise %>%
     ind1 = gsub("^.*_", "", ind1),
     ind2 = gsub("^.*_", "", ind2)
   )
-
-
-
-
 
 
 
@@ -372,22 +371,70 @@ copresence_relatedness_strd <- copresence_relatedness %>%
   ) %>%
   select(-ind_min, -ind_max)
 
-#Remove self_relatedness
+#Remove self_relatedness 
 copresence_relatedness_strd <- copresence_relatedness_strd %>%
   filter(ind1 != ind2)
 
-#Remove repeated pairs
+#Remove repeated pairs 
 copresence_relatedness_strd <- copresence_relatedness_strd %>% 
-  distinct(ind1, ind2, infectious_ag)
+  distinct()
 
 
 
 
 
 
-copresence_relatedness %>% count(shared, infectious_ag)
+copresence_relatedness_strd %>% count(shared, infectious_ag)
 
 
+copresence_relatedness_strd %>% 
+  filter(infectious_ag == "Haemo_2") %>% 
+  count(ind1) %>% 
+  pull() %>% 
+  sort()
+
+
+
+#test de conserver que les paires de trucs proches
+copresence_relatedness_strd_test <- copresence_relatedness_strd %>% 
+  filter(geo < 300) %>% 
+  mutate(dyad =  paste(pmin(ind1, ind2), pmax(ind1, ind2), sep = "_"))
+  
+
+
+
+# # model
+# bad_model <- glmmTMB::glmmTMB(
+#   shared ~ loiselle * infectious_ag + geo + 
+#     (1 | ind1) + (1 | ind2),
+#   family = binomial,
+#   data = copresence_relatedness_strd_test,
+#   na.action = "na.fail"
+# )
+# 
+# performance::check_collinearity(bad_model)
+# 
+# #Model selection
+# model_selection <- MuMIn::dredge(bad_model, rank = "AICc")
+# model_selection %>% filter(delta <= 2)
+# 
+# summary(bad_model)
+
+
+#using dyad as rando
+bad_model <- glmmTMB::glmmTMB(
+  shared ~ loiselle * infectious_ag + geo + 
+    (1 | ind1) + (1 | ind2) + (1 | dyad),
+  family = binomial,
+  data = copresence_relatedness_strd_test,
+  na.action = "na.fail"
+)
+
+performance::check_collinearity(bad_model)
+
+#Model selection
+model_selection <- MuMIn::dredge(bad_model, rank = "AICc")
+model_selection %>% filter(delta <= 2)
 
 
 
@@ -413,32 +460,57 @@ copresence_relatedness %>% count(shared, infectious_ag)
 
 
 
+## Test mantel ---- 
+
+#Import symetric matrix of loiselle
+loiselle_matrix <- data.table::fread(file = here::here("data", "raw-data", "loiselle_matrix_sym.csv"))
+
+loiselle_matrix <- loiselle_matrix %>% 
+  tibble::column_to_rownames("V1")
+
+
+loiselle_matrix <- loiselle_matrix %>% 
+  as.matrix()
+
+m_jacc_mat <- as.matrix(m_jacc)
+
+
+#Modify column and row names for loiselle
+colnames(loiselle_matrix) <- sub("^[^_]+_", "", colnames(loiselle_matrix))
+rownames(loiselle_matrix) <- sub("^[^_]+_", "", colnames(loiselle_matrix))
+
+
+#Keep only shared names among matrix
+common_ids <- intersect(rownames(loiselle_matrix), rownames(m_jacc_mat)) %>% 
+  sort()
+
+loiselle_sub <- loiselle_matrix[common_ids, common_ids]
+m_jacc_sub   <- m_jacc_mat[common_ids, common_ids]
+
+
+all(rownames(loiselle_sub) == rownames(m_jacc_sub))
+isSymmetric(loiselle_sub)
+isSymmetric(m_jacc_sub)
+diag(loiselle_sub)
+diag(m_jacc_sub)
+
+
+vegan::mantel(loiselle_sub, m_jacc_sub, 
+         method = "spearman", 
+         permutations = 9999)
+
+mantel.partial(mat_pathogenes, mat_genetique, mat_distance_spatiale)
 
 
 
 
+mantel.correlog {vegan}	
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# #Melt jaccard 
+# #Melt jaccard
 # m_jacc_dt <- m_jacc %>%
-#   as.matrix() %>% 
+#   as.matrix() %>%
 #   data.table::as.data.table(keep.rownames = TRUE)
 # 
 # m_jacc_melted <- data.table::melt(data = m_jacc_dt, id.vars = "rn")

@@ -66,6 +66,9 @@ df_probainf_2 <- df_probainf %>%
              .default = category
            ))
 
+#Dataset with only broadleaved forests
+df_probainf_3 <- df_probainf %>% 
+  filter(category == "broadleaved_forest")
 
 
 
@@ -141,7 +144,7 @@ model_selection %>% filter(delta <= 2)
 #Selected model specification
 if (exists("m_bartbirt")) rm(m_bartbirt)
 m_bartbirt <- glmmTMB::glmmTMB(
-  Bartonella_birtlesii ~ season + poids + (1 | numero_ligne),
+  Bartonella_birtlesii ~ season + poids  + (1 | numero_ligne),
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail",
@@ -158,7 +161,6 @@ performance::check_collinearity(m_bartbirt)
 #Selected model look
 summary(m_bartbirt)
 confint(m_bartbirt)
-
 
 
 
@@ -268,7 +270,7 @@ df_probainf %>%
 if (exists("m_neoehr")) rm(m_neoehr)
 m_neoehr <- glmmTMB::glmmTMB(
   Neoehrlichia_mikurensis ~ category * season + poids + maturity + sexe + (1 | numero_ligne),
-  data = df_probainf_2,
+  data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail",
 )
@@ -282,7 +284,7 @@ model_selection %>% filter(delta <= 2)
 if (exists("m_neoehr")) rm(m_neoehr)
 m_neoehr <- glmmTMB::glmmTMB(
   Neoehrlichia_mikurensis ~ category + season + poids + sexe + (1 | numero_ligne),
-  data = df_probainf_2,
+  data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail",
 )
@@ -433,17 +435,175 @@ confint(m_haemo2)
 
 ## Model : Bartonella taylorii  ----
 
+#Check effectifs
+ggstatsplot::gghistostats(data = df_nbinf,
+                          x = sum_Bartonella_taylorii,
+                          binwidth = 1)
 
+#Global model specification
+if (exists("m_nb_barttaylo")) rm(m_nb_barttaylo)
+m_nb_barttaylo <- glmmTMB::glmmTMB(
+  sum_Bartonella_taylorii ~ category * season + (1 | numero_ligne), 
+  data = df_nbinf,
+  family =  poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m_nb_barttaylo)
 
+#Model selection
+model_selection <- MuMIn::dredge(m_nb_barttaylo, rank = "AICc")
+model_selection %>% filter(delta <= 2)
 
+#Selected model specification
+if (exists("m_nb_barttaylo")) rm(m_nb_barttaylo)
+m_nb_barttaylo <- glmmTMB::glmmTMB(
+  sum_Bartonella_taylorii ~ category * season + (1 | numero_ligne), 
+  data = df_nbinf,
+  family =  poisson(link = "log"),
+  na.action = "na.fail",
+)
+
+#Selected model validation
+DHARMa::simulateResiduals(m_nb_barttaylo) %>%
+  DHARMa::testResiduals()
+
+performance::check_overdispersion(x = m_nb_barttaylo)
+
+performance::check_collinearity(m_nb_barttaylo)
+
+#Selected model look
+summary(m_nb_barttaylo)
+confint(m_nb_barttaylo)
 
 
 ## Model : Bartonella_birtlesii  ----
 
+#Check effectifs
+ggstatsplot::gghistostats(data = df_nbinf,
+                          x = sum_Bartonella_birtlesii,
+                          binwidth = 1)
+
+#Global model specification
+if (exists("m_nb_bartbirt")) rm(m_nb_bartbirt)
+m_nb_bartbirt <- glmmTMB::glmmTMB(
+  sum_Bartonella_birtlesii ~ category * season + (1 | numero_ligne), 
+  data = df_nbinf,
+  family = glmmTMB::nbinom2(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m_nb_bartbirt)
+
+#Model selection
+model_selection <- MuMIn::dredge(m_nb_bartbirt, rank = "AICc")
+model_selection %>% filter(delta <= 2)
+
+#Selected model specification
+if (exists("m_nb_bartbirt")) rm(m_nb_bartbirt)
+m_nb_bartbirt <- glmmTMB::glmmTMB(
+  sum_Bartonella_birtlesii ~ category + season + (1 | numero_ligne), 
+  data = df_nbinf,
+  family = glmmTMB::nbinom2(link = "log"),
+  na.action = "na.fail",
+)
+
+#Selected model validation
+DHARMa::simulateResiduals(m_nb_bartbirt) %>%
+  DHARMa::testResiduals()
+
+performance::check_overdispersion(x = m_nb_bartbirt)
+
+performance::check_collinearity(m_nb_bartbirt)
+
+#Selected model look
+summary(m_nb_bartbirt)
+confint(m_nb_bartbirt)
+
+
+
 ## Model : Eperythrozoon_coccoides  ----
+
+#Check effectifs
+ggstatsplot::gghistostats(data = df_nbinf,
+                          x = sum_Eperythrozoon_coccoides,
+                          binwidth = 1)
+
+#Global model specification
+if (exists("m_nb_ecocco")) rm(m_nb_ecocco)
+m_nb_ecocco <- glmmTMB::glmmTMB(
+  sum_Eperythrozoon_coccoides ~ category * season + (1 | numero_ligne), 
+  data = df_nbinf,
+  family = glmmTMB::nbinom2(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m_nb_ecocco)
+
+#Model selection
+model_selection <- MuMIn::dredge(m_nb_ecocco, rank = "AICc")
+model_selection %>% filter(delta <= 2)
+
+#Selected model specification
+if (exists("m_nb_ecocco")) rm(m_nb_ecocco)
+m_nb_ecocco <- glmmTMB::glmmTMB(
+  sum_Eperythrozoon_coccoides ~ category + (1 | numero_ligne), 
+  data = df_nbinf,
+  family = glmmTMB::nbinom2(link = "log"),
+  na.action = "na.fail",
+)
+
+#Selected model validation
+DHARMa::simulateResiduals(m_nb_ecocco) %>%
+  DHARMa::testResiduals()
+
+performance::check_overdispersion(x = m_nb_ecocco)
+
+performance::check_collinearity(m_nb_ecocco)
+
+#Selected model look
+summary(m_nb_ecocco)
+confint(m_nb_ecocco)
+
 
 ## Model : Bartonella grahamii  ----
 
+#Check effectifs
+ggstatsplot::gghistostats(data = df_nbinf,
+                          x = sum_Bartonella_grahamii,
+                          binwidth = 1)
+
+#Global model specification
+if (exists("m_nb_bartgrah")) rm(m_nb_bartgrah)
+m_nb_bartgrah <- glmmTMB::glmmTMB(
+  sum_Bartonella_grahamii ~ category * season + (1 | numero_ligne), 
+  data = df_nbinf,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m_nb_bartgrah)
+
+#Model selection
+model_selection <- MuMIn::dredge(m_nb_bartgrah, rank = "AICc")
+model_selection %>% filter(delta <= 2)
+
+#Selected model specification
+if (exists("m_nb_bartgrah")) rm(m_nb_bartgrah)
+m_nb_bartgrah <- glmmTMB::glmmTMB(
+  sum_Bartonella_grahamii ~ season + (1 | numero_ligne), 
+  data = df_nbinf,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+
+#Selected model validation
+DHARMa::simulateResiduals(m_nb_bartgrah) %>%
+  DHARMa::testResiduals()
+
+performance::check_overdispersion(x = m_nb_bartgrah)
+
+performance::check_collinearity(m_nb_bartgrah)
+
+#Selected model look
+summary(m_nb_bartgrah)
+confint(m_nb_bartgrah)
 
 
 ## Model : Neoehrlichia mikurensis  ----
@@ -573,6 +733,47 @@ performance::check_collinearity(m_nb_haemo2)
 #Selected model look
 summary(m_nb_haemo2)
 confint(m_nb_haemo2)
+
+
+
+
+
+
+
+
+
+
+# GLM : Neoehrlichia in broadleaved forests ----
+
+## Model : Neoehrlichia mikurensis  ----
+
+#Check effectifs
+df_probainf_3 %>% 
+  group_by(category, Neoehrlichia_mikurensis, season) %>% 
+  count()
+
+df_probainf_3 %>% 
+  group_by(category, season) %>% 
+  summarise(prev = mean(Neoehrlichia_mikurensis), n = n())  
+
+df_probainf_3$nb_clet %>% hist()
+df_probainf_3$nb_apo %>% hist()
+
+
+#Global model specification
+if (exists("m_neoehr_brd")) rm(m_neoehr_brd)
+m_neoehr_brd <- glmmTMB::glmmTMB(
+  Neoehrlichia_mikurensis ~ season + poids  + sexe + nb_clet + (1 | numero_ligne),
+  data = df_probainf_3,
+  family = binomial(link = "logit"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m_neoehr_brd)
+
+#Model selection
+model_selection <- MuMIn::dredge(m_neoehr_brd, rank = "AICc")
+model_selection %>% filter(delta <= 2)
+
 
 
 

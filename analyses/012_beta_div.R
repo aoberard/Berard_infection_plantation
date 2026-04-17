@@ -287,3 +287,176 @@ ggplot(sites, aes(x = dbRDA1, y = dbRDA2)) +
 ## PCoA ----
 
 #checker script lines variability à l'ancienne...
+
+
+
+
+
+
+
+#QUICK write matrix distance for MAPi : 
+m_jacc %>%
+  as.matrix() %>%
+  write.csv("m_jacc.csv", row.names = TRUE)
+
+
+
+
+
+
+
+
+
+# TEST zone ----
+
+#Import dataframe of pairwise distance for loiselle, spatial and time
+loiselle_pairwise <- data.table::fread(file = here::here("data", "raw-data", "pairwise_loiselle.csv"))
+
+#Rename loiselle value
+loiselle_pairwise <- loiselle_pairwise %>% 
+  rename(loiselle = value)
+
+#Remove pop id in ind id for loiselle
+loiselle_pairwise <- loiselle_pairwise %>%
+  mutate(
+    ind1 = gsub("^.*_", "", ind1),
+    ind2 = gsub("^.*_", "", ind2)
+  )
+
+
+
+
+
+
+
+#Infection matrix
+m_inf
+#or
+m_inf_clean
+rownames(m_inf_clean) #Only ones infected by at least one thing
+
+co_presence <- do.call(rbind, lapply(names_inf10, function(p){
+  
+  # vecteur pour un pathogène
+  v <- m_inf_clean[, p]                                #Matrix with only 
+  
+  # matrice de co-présence
+  copresence_matrix <- outer(v, v, "*")
+  
+  # melt en data.frame
+  df <- as.data.frame(as.table(copresence_matrix))
+  colnames(df) <- c("ind1", "ind2", "shared")
+  
+  # ajouter nom du pathogène
+  df$infectious_ag <- p
+  
+  return(df)
+}))
+  
+
+
+#Merge with Loiselle
+copresence_relatedness <- merge(x = loiselle_pairwise, y = co_presence, by = c("ind1", "ind2"))
+
+
+
+#Standardize the order of elements individuals in pairs (ind1 is always the "smaller" one from the pair)
+copresence_relatedness_strd <- copresence_relatedness %>% 
+  mutate(
+    ind_min = pmin(ind1, ind2),
+    ind_max = pmax(ind1, ind2)
+  ) %>%
+  mutate(
+    ind1 = ind_min,
+    ind2 = ind_max
+  ) %>%
+  select(-ind_min, -ind_max)
+
+#Remove self_relatedness
+copresence_relatedness_strd <- copresence_relatedness_strd %>%
+  filter(ind1 != ind2)
+
+#Remove repeated pairs
+copresence_relatedness_strd <- copresence_relatedness_strd %>% 
+  distinct(ind1, ind2, infectious_ag)
+
+
+
+
+
+
+copresence_relatedness %>% count(shared, infectious_ag)
+
+
+
+
+
+
+
+
+
+
+# test modelisation proximité selon proximité uwu 
+
+#Tronche chelou distribution de metrique jaccard :
+#soit modeliser variation apparentement en fonction de jacc (en gros faire l'inverse)
+#
+#soit modeliser part de shared pathogens avec poisson ? soit avec binomial (succes / tentative)
+#soit pour l'ensemble des pathogènes
+
+#soit pour l'ensemble des pathogènes x paires avec pathogen en effet aléatoire (OU FIXE?)
+#glmer(shared ~ relatedness + distance + (1|pathogen), family = binomial)
+
+#juste faut faire gaffe psk du coup faut bien controler pas trop de non indépendance etc là pfiou ça devient complicado
+
+#est ce que quand meme garder que ceux infecté par au moins un truc ?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# #Melt jaccard 
+# m_jacc_dt <- m_jacc %>%
+#   as.matrix() %>% 
+#   data.table::as.data.table(keep.rownames = TRUE)
+# 
+# m_jacc_melted <- data.table::melt(data = m_jacc_dt, id.vars = "rn")
+# 
+# #Prepare jaccard for join
+# colnames(m_jacc_melted) <- c("ind1", "ind2", "jacc")
+# m_jacc_melted
+# 
+# #Join to loiselle pairwise data
+# jacc_relatedness <- merge(x = loiselle_pairwise, y = m_jacc_melted, by = c("ind1", "ind2"))
+# 
+# 
+# 
+# 
+# jacc_relatedness %>%
+#   count(ind1) %>% View(  )
+# #y'a des ind1 tres peu representé
+# jacc_relatedness %>%
+#   count(ind2) %>% View(  )
+# 
+# jacc_relatedness$jacc %>% hist()

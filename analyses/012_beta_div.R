@@ -514,151 +514,39 @@ plot(mc)
 
 
 
-
-
-
 ## Mantel par classes de distance géographique ----
 
-# 1. Extraire les paires (triangle inférieur) avec leurs valeurs
-get_pairs <- function(mat, name) {
-  idx <- which(lower.tri(mat), arr.ind = TRUE)
-  data.frame(
-    ind1 = rownames(mat)[idx[, 1]],
-    ind2 = colnames(mat)[idx[, 2]],
-    value = mat[idx],
-    matrix = name
-  )
-}
+# Classes de distance en mètres
+breaks_m <- c(0, 100, 200, 1000, 2000, Inf)
+labels_m <- c("0-100m", "100-200m", "200-1km", "1-2km", ">2km")
 
-pairs_jacc   <- get_pairs(m_jacc_sub,      "jaccard")
-pairs_lois   <- get_pairs(loiselle_sub,    "loiselle")
-pairs_geo    <- get_pairs(dgeo_indiv_sub,  "geo")
+# Cor de Spearman par classe — même session uniquement
+cor_results <- jacc_relatedness %>%
+  #filter(field_session1 == field_session2) %>%                                                          #ONLY WITHIN SESSION HERE
+  mutate(dist_class = cut(geo, breaks = breaks_m, labels = labels_m, include.lowest = TRUE)) %>%
+  group_by(dist_class) %>%
+  filter(n() >= 5) %>%
+  summarise(
+    r_spearman = cor(jacc, loiselle, method = "spearman", use = "complete.obs"),
+    n_pairs    = n(),
+    .groups    = "drop"
+  ) %>%
+  mutate(dist_class = factor(dist_class, levels = labels_m))
 
-# 2. Assembler un data.frame de paires
-pairs_df <- data.frame(
-  ind1     = pairs_jacc$ind1,
-  ind2     = pairs_jacc$ind2,
-  jaccard  = pairs_jacc$value,
-  loiselle = pairs_lois$value,
-  geo_dist = pairs_geo$value  # en mètres (Lambert 93)
-)
+print(cor_results)
 
-# 3. Définir les classes de distance (à adapter selon ta distribution)
-# Visualiser d'abord la distribution des distances
-hist(pairs_df$geo_dist,
-     breaks = 50,
-     xlab = "Distance géographique (m)",
-     main = "Distribution des distances entre paires")
-
-# Définir les breaks (en mètres) — à ajuster selon l'histogramme
-breaks_m <- c(0, 50, 500, 1000, 2000, Inf)
-
-pairs_df$dist_class <- cut(
-  pairs_df$geo_dist,
-  breaks = breaks_m,
-  labels = c("0-100m", "100-500m", "500m-1km", "1-2km", ">2km"),
-  include.lowest = TRUE
-)
-
-# Vérifier combien de paires par classe — classes trop petites seront ignorées
-table(pairs_df$dist_class)
-
-# 4. Fonction pour reconstruire une matrice symétrique depuis des paires
-pairs_to_matrix <- function(pairs_df, value_col, ids) {
-  mat <- matrix(NA, nrow = length(ids), ncol = length(ids),
-                dimnames = list(ids, ids))
-  for (i in seq_len(nrow(pairs_df))) {
-    r <- pairs_df$ind1[i]; c <- pairs_df$ind2[i]
-    mat[r, c] <- pairs_df[[value_col]][i]
-    mat[c, r] <- pairs_df[[value_col]][i]
-  }
-  mat
-}
-
-# 5. Mantel subset
-mantel_subset <- function(mat1, mat2, ids_subset, permutations = 999, method = "spearman") {
-  
-  # Sous-matrices carrées pour les individus de la classe
-  m1 <- mat1[ids_subset, ids_subset]
-  m2 <- mat2[ids_subset, ids_subset]
-  
-  # Vecteurs du triangle inférieur uniquement (vraies paires de la classe)
-  v1 <- m1[lower.tri(m1)]
-  v2 <- m2[lower.tri(m2)]
-  
-  # Stat observée
-  r_obs <- cor(v1, v2, method = method)
-  
-  # Permutations : on permute les lignes/colonnes de m2 (approche Mantel standard)
-  r_perm <- replicate(permutations, {
-    perm_idx <- sample(length(ids_subset))
-    m2_perm  <- m2[perm_idx, perm_idx]
-    v2_perm  <- m2_perm[lower.tri(m2_perm)]
-    cor(v1, v2_perm, method = method)
-  })
-  
-  # P-value unilatérale (r observé >= distribution nulle)
-  p_val <- (sum(r_perm >= r_obs) + 1) / (permutations + 1)
-  
-  list(r = r_obs, p = p_val, r_perm = r_perm)
-}
-
-# Appliquer par classe de distance
-mantel_results <- lapply(levels(pairs_df$dist_class), function(cl) {
-  
-  sub_pairs   <- pairs_df[pairs_df$dist_class == cl, ]
-  n_pairs     <- nrow(sub_pairs)
-  ids_subset  <- unique(c(sub_pairs$ind1, sub_pairs$ind2))
-  
-  if (length(ids_subset) < 4 || n_pairs < 10) {
-    message(sprintf("Classe %s : pas assez de paires (%d) ou individus (%d), ignorée",
-                    cl, n_pairs, length(ids_subset)))
-    return(NULL)
-  }
-  
-  res <- mantel_subset(
-    mat1          = loiselle_sub,   # matrices complètes originales
-    mat2          = m_jacc_sub,     # on sous-sélectionne dedans
-    ids_subset    = ids_subset,
-    permutations  = 999,
-    method        = "spearman"
-  )
-  
-  data.frame(
-    dist_class  = cl,
-    n_pairs     = n_pairs,
-    n_individus = length(ids_subset),
-    r_mantel    = res$r,
-    p_value     = res$p
-  )
-})
-
-mantel_results <- do.call(rbind, Filter(Negate(is.null), mantel_results))
-
-
-# 6. Visualisation
-mantel_results$signif <- ifelse(mantel_results$p_value < 0.05, "*", "ns")
-mantel_results$dist_class <- factor(mantel_results$dist_class,
-                                    levels = levels(pairs_df$dist_class))
-
-print(mantel_results)
-
-ggplot(mantel_results, aes(x = dist_class, y = r_mantel)) +
-  geom_col(aes(fill = p_value < 0.05), width = 0.6) +
-  geom_text(aes(label = paste0(signif, "\nn=", n_pairs)),
-            vjust = -0.3, size = 3.5) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  scale_fill_manual(values = c("TRUE" = "#2196F3", "FALSE" = "#B0BEC5"),
-                    labels = c("TRUE" = "p < 0.05", "FALSE" = "ns"),
-                    name   = "Significativité") +
+# Plot
+ggplot(cor_results, aes(x = dist_class, y = r_spearman)) +
+  geom_col(fill = "#2196F3", width = 0.6) +
+  geom_text(aes(label = paste0("n=", n_pairs),
+                vjust = ifelse(r_spearman >= 0, -0.4, 1.2)),
+            size = 3.5, color = "grey30") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey40") +
   labs(
     x     = "Classe de distance géographique",
-    y     = "r de Mantel (Spearman)",
-    title = "Corrélation Jaccard ~ Kinship (Loiselle)\npar classe de distance géographique"
+    y     = "r de Spearman",
+    title = "Corrélation Jaccard ~ Kinship (Loiselle)\npar classe de distance — même session"
   ) +
   theme_bw(base_size = 13) +
   theme(axis.text.x = element_text(angle = 35, hjust = 1))
-
-
-
 

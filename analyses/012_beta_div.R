@@ -310,13 +310,14 @@ m_jacc %>%
 # TEST zone ----
 
 
-## Test glm ---- 
+
+## Test glm ----
 
 #Import dataframe of pairwise distance for loiselle, spatial and time
 loiselle_pairwise <- data.table::fread(file = here::here("data", "raw-data", "pairwise_loiselle.csv"))
 
 #Rename loiselle value
-loiselle_pairwise <- loiselle_pairwise %>% 
+loiselle_pairwise <- loiselle_pairwise %>%
   rename(loiselle = value)
 
 #Remove pop id in ind id for loiselle
@@ -327,6 +328,7 @@ loiselle_pairwise <- loiselle_pairwise %>%
   )
 
 
+### Co-presence model ----
 
 #Infection matrix
 m_inf
@@ -334,33 +336,31 @@ m_inf
 m_inf_clean
 rownames(m_inf_clean) #Only ones infected by at least one thing
 
+#Generate co_presence matrix
 co_presence <- do.call(rbind, lapply(names_inf10, function(p){
-  
+
   # vecteur pour un pathogène
-  v <- m_inf_clean[, p]                                #Matrix with only 
-  
+  v <- m_inf_clean[, p]                                #Matrix with only
+
   # matrice de co-présence
   copresence_matrix <- outer(v, v, "*")
-  
+
   # melt en data.frame
   df <- as.data.frame(as.table(copresence_matrix))
   colnames(df) <- c("ind1", "ind2", "shared")
-  
+
   # ajouter nom du pathogène
   df$infectious_ag <- p
-  
+
   return(df)
 }))
-  
-
 
 #Merge with Loiselle
 copresence_relatedness <- merge(x = loiselle_pairwise, y = co_presence, by = c("ind1", "ind2"))
 
 
-
 #Standardize the order of elements individuals in pairs (ind1 is always the "smaller" one from the pair)
-copresence_relatedness_strd <- copresence_relatedness %>% 
+copresence_relatedness_strd <- copresence_relatedness %>%
   mutate(
     ind_min = pmin(ind1, ind2),
     ind_max = pmax(ind1, ind2)
@@ -371,59 +371,27 @@ copresence_relatedness_strd <- copresence_relatedness %>%
   ) %>%
   select(-ind_min, -ind_max)
 
-#Remove self_relatedness 
+#Remove self_relatedness
 copresence_relatedness_strd <- copresence_relatedness_strd %>%
   filter(ind1 != ind2)
 
-#Remove repeated pairs 
-copresence_relatedness_strd <- copresence_relatedness_strd %>% 
+#Remove repeated pairs
+copresence_relatedness_strd <- copresence_relatedness_strd %>%
   distinct()
 
-
-
-
-
-
+#Small checks
 copresence_relatedness_strd %>% count(shared, infectious_ag)
 
 
-copresence_relatedness_strd %>% 
-  filter(infectious_ag == "Haemo_2") %>% 
-  count(ind1) %>% 
-  pull() %>% 
-  sort()
-
-
-
-#test de conserver que les paires de trucs proches
-copresence_relatedness_strd_test <- copresence_relatedness_strd %>% 
-  filter(geo < 300) %>% 
+#Doing linear model (which is likely wrong considering non-independance)
+#keeping only small distance things
+copresence_relatedness_strd_test <- copresence_relatedness_strd %>%
+  filter(geo < 300) %>%
   mutate(dyad =  paste(pmin(ind1, ind2), pmax(ind1, ind2), sep = "_"))
-  
 
-
-
-# # model
-# bad_model <- glmmTMB::glmmTMB(
-#   shared ~ loiselle * infectious_ag + geo + 
-#     (1 | ind1) + (1 | ind2),
-#   family = binomial,
-#   data = copresence_relatedness_strd_test,
-#   na.action = "na.fail"
-# )
-# 
-# performance::check_collinearity(bad_model)
-# 
-# #Model selection
-# model_selection <- MuMIn::dredge(bad_model, rank = "AICc")
-# model_selection %>% filter(delta <= 2)
-# 
-# summary(bad_model)
-
-
-#using dyad as rando
+#modelling and doing model selection
 bad_model <- glmmTMB::glmmTMB(
-  shared ~ loiselle * infectious_ag + geo + 
+  shared ~ (loiselle + infectious_ag + geo)^3 +
     (1 | ind1) + (1 | ind2) + (1 | dyad),
   family = binomial,
   data = copresence_relatedness_strd_test,
@@ -438,97 +406,259 @@ model_selection %>% filter(delta <= 2)
 
 
 
+### with jaccard ----
+
+#Melt jaccard
+m_jacc_dt <- m_jacc %>%
+  as.matrix() %>%
+  data.table::as.data.table(keep.rownames = TRUE)
+
+m_jacc_melted <- data.table::melt(data = m_jacc_dt, id.vars = "rn")
+
+#Prepare jaccard for join
+colnames(m_jacc_melted) <- c("ind1", "ind2", "jacc")
+m_jacc_melted
+
+#Join to loiselle pairwise data
+jacc_relatedness <- merge(x = loiselle_pairwise, y = m_jacc_melted, by = c("ind1", "ind2"))
 
 
+#Visualization
+jacc_relatedness %>% 
+  filter(field_session1 == field_session2) %>% 
+  filter(geo <100) %>% 
+  ggplot(aes(x = jacc, y = loiselle)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm")
 
-
-
-# test modelisation proximité selon proximité uwu 
-
-#Tronche chelou distribution de metrique jaccard :
-#soit modeliser variation apparentement en fonction de jacc (en gros faire l'inverse)
-#
-#soit modeliser part de shared pathogens avec poisson ? soit avec binomial (succes / tentative)
-#soit pour l'ensemble des pathogènes
-
-#soit pour l'ensemble des pathogènes x paires avec pathogen en effet aléatoire (OU FIXE?)
-#glmer(shared ~ relatedness + distance + (1|pathogen), family = binomial)
-
-#juste faut faire gaffe psk du coup faut bien controler pas trop de non indépendance etc là pfiou ça devient complicado
-
-#est ce que quand meme garder que ceux infecté par au moins un truc ?
 
 
 
 ## Test mantel ---- 
 
-#Import symetric matrix of loiselle
+#Import symmetric loiselle data
 loiselle_matrix <- data.table::fread(file = here::here("data", "raw-data", "loiselle_matrix_sym.csv"))
 
+#Make it a matrix object
 loiselle_matrix <- loiselle_matrix %>% 
   tibble::column_to_rownames("V1")
-
 
 loiselle_matrix <- loiselle_matrix %>% 
   as.matrix()
 
-m_jacc_mat <- as.matrix(m_jacc)
-
-
 #Modify column and row names for loiselle
 colnames(loiselle_matrix) <- sub("^[^_]+_", "", colnames(loiselle_matrix))
 rownames(loiselle_matrix) <- sub("^[^_]+_", "", colnames(loiselle_matrix))
+
+#Make jaccard distance object a matrix too
+m_jacc_mat <- as.matrix(m_jacc)
+
+
+#Generate a spatial distance matrix
+#Generate data with lambert coordinates for each individuals
+samp0g <- sf::st_as_sf(inf,
+                       coords = c("longitude_piege", "latitude_piege"),
+                       crs = 4326)
+samp1g <- sf::st_transform(samp0g, crs = "EPSG:2154")
+samp2g <- cbind(samp1g, sf::st_coordinates(samp1g))
+
+
+#Then generate the spatial distance matrix
+dgeo_indiv <- as.matrix(sf::st_distance(samp2g))
+dgeo_indiv <- units::drop_units(dgeo_indiv)
+colnames(dgeo_indiv) <- samp2g$numero_centre 
+rownames(dgeo_indiv) <- samp2g$numero_centre 
+
+
 
 
 #Keep only shared names among matrix
 common_ids <- intersect(rownames(loiselle_matrix), rownames(m_jacc_mat)) %>% 
   sort()
 
+
 loiselle_sub <- loiselle_matrix[common_ids, common_ids]
 m_jacc_sub   <- m_jacc_mat[common_ids, common_ids]
-
+dgeo_indiv_sub <- dgeo_indiv[common_ids, common_ids]
 
 all(rownames(loiselle_sub) == rownames(m_jacc_sub))
-isSymmetric(loiselle_sub)
-isSymmetric(m_jacc_sub)
-diag(loiselle_sub)
-diag(m_jacc_sub)
 
 
-vegan::mantel(loiselle_sub, m_jacc_sub, 
+#Mantel m_jacc - loiselle 
+vegan::mantel(m_jacc_sub, loiselle_sub, 
          method = "spearman", 
-         permutations = 9999)
+         permutations = 999)
 
-mantel.partial(mat_pathogenes, mat_genetique, mat_distance_spatiale)
+#Mantel m_jacc - dgeo
+vegan::mantel(m_jacc_sub, dgeo_indiv_sub, 
+              method = "spearman", 
+              permutations = 999)
+
+#Mantel partial test
+vegan::mantel.partial(m_jacc_sub, loiselle_sub, dgeo_indiv_sub)
+
+
+#Mantel correlogram
+mc <- vegan::mantel.correlog(D.eco = loiselle_sub, 
+                             D.geo = dgeo_indiv_sub,
+                             r.type = "spearman")
+
+plot(mc)
 
 
 
 
-mantel.correlog {vegan}	
 
 
 
-# #Melt jaccard
-# m_jacc_dt <- m_jacc %>%
-#   as.matrix() %>%
-#   data.table::as.data.table(keep.rownames = TRUE)
-# 
-# m_jacc_melted <- data.table::melt(data = m_jacc_dt, id.vars = "rn")
-# 
-# #Prepare jaccard for join
-# colnames(m_jacc_melted) <- c("ind1", "ind2", "jacc")
-# m_jacc_melted
-# 
-# #Join to loiselle pairwise data
-# jacc_relatedness <- merge(x = loiselle_pairwise, y = m_jacc_melted, by = c("ind1", "ind2"))
-# 
-# 
-# 
-# 
-# jacc_relatedness %>%
-#   count(ind1) %>% View(  )
-# #y'a des ind1 tres peu representé
-# jacc_relatedness %>%
-#   count(ind2) %>% View(  )
-# 
-# jacc_relatedness$jacc %>% hist()
+
+
+
+
+
+
+## Mantel par classes de distance géographique ----
+
+# 1. Extraire les paires (triangle inférieur) avec leurs valeurs
+get_pairs <- function(mat, name) {
+  idx <- which(lower.tri(mat), arr.ind = TRUE)
+  data.frame(
+    ind1 = rownames(mat)[idx[, 1]],
+    ind2 = colnames(mat)[idx[, 2]],
+    value = mat[idx],
+    matrix = name
+  )
+}
+
+pairs_jacc   <- get_pairs(m_jacc_sub,      "jaccard")
+pairs_lois   <- get_pairs(loiselle_sub,    "loiselle")
+pairs_geo    <- get_pairs(dgeo_indiv_sub,  "geo")
+
+# 2. Assembler un data.frame de paires
+pairs_df <- data.frame(
+  ind1     = pairs_jacc$ind1,
+  ind2     = pairs_jacc$ind2,
+  jaccard  = pairs_jacc$value,
+  loiselle = pairs_lois$value,
+  geo_dist = pairs_geo$value  # en mètres (Lambert 93)
+)
+
+# 3. Définir les classes de distance (à adapter selon ta distribution)
+# Visualiser d'abord la distribution des distances
+hist(pairs_df$geo_dist,
+     breaks = 50,
+     xlab = "Distance géographique (m)",
+     main = "Distribution des distances entre paires")
+
+# Définir les breaks (en mètres) — à ajuster selon l'histogramme
+breaks_m <- c(0, 50, 500, 1000, 2000, Inf)
+
+pairs_df$dist_class <- cut(
+  pairs_df$geo_dist,
+  breaks = breaks_m,
+  labels = c("0-100m", "100-500m", "500m-1km", "1-2km", ">2km"),
+  include.lowest = TRUE
+)
+
+# Vérifier combien de paires par classe — classes trop petites seront ignorées
+table(pairs_df$dist_class)
+
+# 4. Fonction pour reconstruire une matrice symétrique depuis des paires
+pairs_to_matrix <- function(pairs_df, value_col, ids) {
+  mat <- matrix(NA, nrow = length(ids), ncol = length(ids),
+                dimnames = list(ids, ids))
+  for (i in seq_len(nrow(pairs_df))) {
+    r <- pairs_df$ind1[i]; c <- pairs_df$ind2[i]
+    mat[r, c] <- pairs_df[[value_col]][i]
+    mat[c, r] <- pairs_df[[value_col]][i]
+  }
+  mat
+}
+
+# 5. Mantel subset
+mantel_subset <- function(mat1, mat2, ids_subset, permutations = 999, method = "spearman") {
+  
+  # Sous-matrices carrées pour les individus de la classe
+  m1 <- mat1[ids_subset, ids_subset]
+  m2 <- mat2[ids_subset, ids_subset]
+  
+  # Vecteurs du triangle inférieur uniquement (vraies paires de la classe)
+  v1 <- m1[lower.tri(m1)]
+  v2 <- m2[lower.tri(m2)]
+  
+  # Stat observée
+  r_obs <- cor(v1, v2, method = method)
+  
+  # Permutations : on permute les lignes/colonnes de m2 (approche Mantel standard)
+  r_perm <- replicate(permutations, {
+    perm_idx <- sample(length(ids_subset))
+    m2_perm  <- m2[perm_idx, perm_idx]
+    v2_perm  <- m2_perm[lower.tri(m2_perm)]
+    cor(v1, v2_perm, method = method)
+  })
+  
+  # P-value unilatérale (r observé >= distribution nulle)
+  p_val <- (sum(r_perm >= r_obs) + 1) / (permutations + 1)
+  
+  list(r = r_obs, p = p_val, r_perm = r_perm)
+}
+
+# Appliquer par classe de distance
+mantel_results <- lapply(levels(pairs_df$dist_class), function(cl) {
+  
+  sub_pairs   <- pairs_df[pairs_df$dist_class == cl, ]
+  n_pairs     <- nrow(sub_pairs)
+  ids_subset  <- unique(c(sub_pairs$ind1, sub_pairs$ind2))
+  
+  if (length(ids_subset) < 4 || n_pairs < 10) {
+    message(sprintf("Classe %s : pas assez de paires (%d) ou individus (%d), ignorée",
+                    cl, n_pairs, length(ids_subset)))
+    return(NULL)
+  }
+  
+  res <- mantel_subset(
+    mat1          = loiselle_sub,   # matrices complètes originales
+    mat2          = m_jacc_sub,     # on sous-sélectionne dedans
+    ids_subset    = ids_subset,
+    permutations  = 999,
+    method        = "spearman"
+  )
+  
+  data.frame(
+    dist_class  = cl,
+    n_pairs     = n_pairs,
+    n_individus = length(ids_subset),
+    r_mantel    = res$r,
+    p_value     = res$p
+  )
+})
+
+mantel_results <- do.call(rbind, Filter(Negate(is.null), mantel_results))
+
+
+# 6. Visualisation
+mantel_results$signif <- ifelse(mantel_results$p_value < 0.05, "*", "ns")
+mantel_results$dist_class <- factor(mantel_results$dist_class,
+                                    levels = levels(pairs_df$dist_class))
+
+print(mantel_results)
+
+ggplot(mantel_results, aes(x = dist_class, y = r_mantel)) +
+  geom_col(aes(fill = p_value < 0.05), width = 0.6) +
+  geom_text(aes(label = paste0(signif, "\nn=", n_pairs)),
+            vjust = -0.3, size = 3.5) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_fill_manual(values = c("TRUE" = "#2196F3", "FALSE" = "#B0BEC5"),
+                    labels = c("TRUE" = "p < 0.05", "FALSE" = "ns"),
+                    name   = "Significativité") +
+  labs(
+    x     = "Classe de distance géographique",
+    y     = "r de Mantel (Spearman)",
+    title = "Corrélation Jaccard ~ Kinship (Loiselle)\npar classe de distance géographique"
+  ) +
+  theme_bw(base_size = 13) +
+  theme(axis.text.x = element_text(angle = 35, hjust = 1))
+
+
+
+

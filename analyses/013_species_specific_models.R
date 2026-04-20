@@ -85,7 +85,7 @@ df_probainf %>%
 #Global model specification
 if (exists("m_barttaylo")) rm(m_barttaylo)
 m_barttaylo <- glmmTMB::glmmTMB(
-  Bartonella_taylorii ~ category*season + poids + maturity + sexe + (1 | numero_ligne),
+  Bartonella_taylorii ~ category*season + poids + sexe + nb_apo + (1 | numero_ligne) + (1 | year),
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"
@@ -99,7 +99,7 @@ model_selection %>% filter(delta <= 2)
 #Selected model specification
 if (exists("m_barttaylo")) rm(m_barttaylo)
 m_barttaylo <- glmmTMB::glmmTMB(
-  Bartonella_taylorii ~ season + (1 | numero_ligne),
+  Bartonella_taylorii ~ season + (1 | numero_ligne) + (1 | year),
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"
@@ -130,7 +130,7 @@ df_probainf %>%
 #Global model specification
 if (exists("m_bartbirt")) rm(m_bartbirt)
 m_bartbirt <- glmmTMB::glmmTMB(
-  Bartonella_birtlesii ~ category*season + poids + maturity + sexe + (1 | numero_ligne),
+  Bartonella_birtlesii ~ category*season + poids + sexe + nb_apo + (1 | numero_ligne) + (1 | year),
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"
@@ -144,7 +144,7 @@ model_selection %>% filter(delta <= 2)
 #Selected model specification
 if (exists("m_bartbirt")) rm(m_bartbirt)
 m_bartbirt <- glmmTMB::glmmTMB(
-  Bartonella_birtlesii ~ season + poids  + (1 | numero_ligne),
+  Bartonella_birtlesii ~ poids  + (1 | numero_ligne) + (1 | year),
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"
@@ -175,7 +175,7 @@ df_probainf %>%
 #Global model specification
 if (exists("m_ecocco")) rm(m_ecocco)
 m_ecocco <- glmmTMB::glmmTMB(
-  Eperythrozoon_coccoides ~ category*season + poids + maturity + sexe + (1 | numero_ligne),
+  Eperythrozoon_coccoides ~ category*season + poids + sexe + nb_apo + (1 | numero_ligne) ,
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"
@@ -189,7 +189,7 @@ model_selection %>% filter(delta <= 2)
 #Selected model specification
 if (exists("m_ecocco")) rm(m_ecocco)
 m_ecocco <- glmmTMB::glmmTMB(
-  Eperythrozoon_coccoides ~ poids + (1 | numero_ligne),
+  Eperythrozoon_coccoides ~ season + poids + nb_apo + (1 | numero_ligne), 
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"
@@ -204,7 +204,7 @@ performance::check_overdispersion(x = m_ecocco)
 performance::check_collinearity(m_ecocco)
 
 #Selected model look
-summary(m_ecocco)
+summary(m_ecocco)                                      #Seems like current model as a problem when year is added
 confint(m_ecocco)
 
 
@@ -220,7 +220,7 @@ df_probainf %>%
 #Global model specification
 if (exists("m_bartgrah")) rm(m_bartgrah)
 m_bartgrah <- glmmTMB::glmmTMB(
-  Bartonella_grahamii ~ category*season + poids + maturity + sexe + (1 | numero_ligne),
+  Bartonella_grahamii ~ category*season + poids + sexe + nb_apo + (1 | numero_ligne) + (1 | year),
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"
@@ -234,7 +234,7 @@ model_selection %>% filter(delta <= 2)
 #Selected model specification
 if (exists("m_bartgrah")) rm(m_bartgrah)
 m_bartgrah <- glmmTMB::glmmTMB(
-  Bartonella_grahamii ~ season + poids + (1 | numero_ligne),
+  Bartonella_grahamii ~ season + poids + (1 | numero_ligne) + (1 | year),
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"
@@ -269,7 +269,7 @@ df_probainf %>%
 #Global model specification
 if (exists("m_neoehr")) rm(m_neoehr)
 m_neoehr <- glmmTMB::glmmTMB(
-  Neoehrlichia_mikurensis ~ category * season + poids + maturity + sexe + (1 | numero_ligne),
+  Neoehrlichia_mikurensis ~ category + season + poids + sexe + nb_apo + (1 | numero_ligne) + (1 | year),
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"
@@ -283,7 +283,7 @@ model_selection %>% filter(delta <= 2)
 #Selected model specification
 if (exists("m_neoehr")) rm(m_neoehr)
 m_neoehr <- glmmTMB::glmmTMB(
-  Neoehrlichia_mikurensis ~ category + season + poids + sexe + (1 | numero_ligne),
+  Neoehrlichia_mikurensis ~ category + season + poids + sexe + (1 | numero_ligne) + (1 | year),
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"
@@ -346,7 +346,7 @@ df_probainf %>%
 #Global model specification
 if (exists("m_haemomuris")) rm(m_haemomuris)
 m_haemomuris <- glmmTMB::glmmTMB(
-  Haemobartonella_muris ~ category*season + poids + maturity + sexe + (1 | numero_ligne),
+  Haemobartonella_muris ~  category * season + poids + sexe + nb_apo + (1 | numero_ligne) + (1 | year),
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"
@@ -360,7 +360,7 @@ model_selection %>% filter(delta <= 2)
 #Selected model specification
 if (exists("m_haemomuris")) rm(m_haemomuris)
 m_haemomuris <- glmmTMB::glmmTMB(
-  Haemobartonella_muris ~ season + poids + (1 | numero_ligne),
+  Haemobartonella_muris ~ season + poids + (1 | numero_ligne) + (1 | year),
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"
@@ -390,7 +390,7 @@ df_probainf %>%
 #Global model specification
 if (exists("m_haemo2")) rm(m_haemo2)
 m_haemo2 <- glmmTMB::glmmTMB(
-  Haemo_2 ~ category*season + poids + maturity + sexe + (1 | numero_ligne),
+  Haemo_2 ~ category * season + poids + sexe + nb_apo + (1 | numero_ligne) ,
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"

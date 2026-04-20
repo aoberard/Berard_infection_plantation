@@ -27,7 +27,7 @@ rpob_glta_phylo <- readRDS(file =  here::here("data", "derived-data", "infectiou
 lepto <- data.table::fread(file = here::here("data", "derived-data", "infectious_cleaning", "leptospira_pcr.csv"))
 
 #Samples data
-individuals <- read.delim(file = here::here("data", "raw-data", "20260320_BePrep_samples.csv"), sep = ";")
+individuals <- read.delim(file = here::here("data", "raw-data", "dissected_indiv.csv"), sep = ",")
 
 
 # Metabarcoding objects join ----

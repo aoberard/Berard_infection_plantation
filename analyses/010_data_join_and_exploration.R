@@ -59,7 +59,11 @@ infected <- infected %>%
       nb_apo = sum(taxon_mamm == "Apodemus sylvaticus"),
       nb_clet = sum(taxon_mamm == "Clethrionomys glareolus"),
       .groups = "drop"
-    ), by = c("numero_ligne", "field_session"))
+    ), by = c("numero_ligne", "field_session")) %>%
+  mutate(
+    nb_apo = coalesce(nb_apo, 0),
+    nb_clet = coalesce(nb_clet, 0)
+  )
 
 #Ensure empty information are converted to NA
 infected <- infected %>%
@@ -643,25 +647,6 @@ ggraph(tidy_bipart_infect, layout = "auto") +
                  repel = TRUE,
                  size = 4) +
   theme_void()
-
-
-# #More or less useless in current state :
-# tidy_bipart_indiv <- tidygraph::as_tbl_graph(indiv_netw)
-# 
-# tidy_bipart_indiv <- tidy_bipart_indiv %>% 
-#   tidygraph::activate(nodes) %>% 
-#   left_join(id_category_apo, by = c("name" = "numero_centre")) %>% 
-#   tidygraph::activate(edges) %>% 
-#   filter(weight >= 2) %>%  # keep only strong links
-#   tidygraph::activate(nodes) %>%
-#   filter(igraph::degree(.) > 0)
-# 
-# ggraph(tidy_bipart_indiv, layout = "auto") +
-#   geom_edge_link(aes(width = weight), alpha = 0.2, color = "grey70") +
-#   geom_node_point(aes(color = category), size = 5 ) +
-#   scale_color_manual(values = category_palette) +
-#   theme_void()
-
 
 
 # Write files ----

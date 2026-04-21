@@ -81,7 +81,6 @@ df_probainf %>%
   group_by(category, Bartonella_taylorii) %>% 
   count()
 
-
 #Global model specification
 if (exists("m_barttaylo")) rm(m_barttaylo)
 m_barttaylo <- glmmTMB::glmmTMB(
@@ -125,7 +124,6 @@ confint(m_barttaylo)
 df_probainf %>% 
   group_by(category, Bartonella_birtlesii) %>% 
   count()
-
 
 #Global model specification
 if (exists("m_bartbirt")) rm(m_bartbirt)
@@ -204,7 +202,7 @@ performance::check_overdispersion(x = m_ecocco)
 performance::check_collinearity(m_ecocco)
 
 #Selected model look
-summary(m_ecocco)                                      #Seems like current model as a problem when year is added
+summary(m_ecocco)                                      
 confint(m_ecocco)
 
 
@@ -443,7 +441,7 @@ ggstatsplot::gghistostats(data = df_nbinf,
 #Global model specification
 if (exists("m_nb_barttaylo")) rm(m_nb_barttaylo)
 m_nb_barttaylo <- glmmTMB::glmmTMB(
-  sum_Bartonella_taylorii ~ category * season + (1 | numero_ligne), 
+  sum_Bartonella_taylorii ~ category * season + (1 | numero_ligne) + (1 | year) , 
   data = df_nbinf,
   family =  poisson(link = "log"),
   na.action = "na.fail"

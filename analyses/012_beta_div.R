@@ -14,8 +14,8 @@ category_palette <- c("pine_edge"          = "#3f826d",
                       "hedgerows"          = "#f2d0a4",
                       "broadleaved_forest" = "#a4a8d1")
 
-season_palette <- c("Spring" = "#ED6A5A",
-                    "Autumn" = "#6B4B3E")
+season_palette <- c("Spring" = "#7FBB7B",
+                    "Autumn" = "#9D695A")
 
 category_order <- c("pine_edge", "hedgerows", "broadleaved_forest")
 session_order <- c("Juin_2023", "Octobre_2023", "Juin_2024", "Septembre_2024", "Juin_2025")
@@ -211,68 +211,67 @@ nmds_jacc_plot
 
 ## db-RDA ----
 
-#Extracting scores
-scores_dbrda <- vegan::scores(dbrda,
-                              scaling = "sites") # BEWARE of scaling chosen
+# SCALING 1 : "sites" 
+# Interpretation: distances between sites preserved : focus on patterns between communities
+# What is represented:
+# - Site points: relative position of infracommunities within the constrained space
+# - Environmental arrows (biplot): direction and strength of environmental variables
+# - Ellipses: dispersion by group (season, category...)
+
+#Extracting scores at sites scale
+scores_sites <- vegan::scores(dbrda, scaling = "sites")
 
 #Community coordinates (individuals infracommunity)
-sites <- scores_dbrda$sites %>% 
-  as.data.frame()
+sites_s1 <- scores_sites$sites %>%
+  as.data.frame() %>%
+  mutate(
+    numero_centre = metadata_clean$numero_centre,
+    category = metadata_clean$category,
+    season = metadata_clean$season
+  )
 
-sites$numero_centre <- metadata_clean$numero_centre
-sites$category <- metadata_clean$category
-sites$season <- metadata_clean$season
+#Environnement variable coordinates
+env_s1 <- scores_sites$biplot %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("var")
 
-#Species coordinates (infectious agents)
-species <- scores_dbrda$species %>% 
-  as.data.frame()
-
-species$taxa <- rownames(species)
-
-#Variable coordinates
-env <- scores_dbrda$biplot %>% 
-  as.data.frame()
-env$var <- rownames(env)
-
-#Eigenvalues
+#Eigenvalues (%explained by axes)
 eig <- vegan::eigenvals(dbrda)
-var_explained <- eig / sum(eig)
-xlab <- paste0("dbRDA1 (", round(100 * var_explained[1], 1), "%)")
-ylab <- paste0("dbRDA2 (", round(100 * var_explained[2], 1), "%)")
+var_constr <- eig / sum(abs(eig)) 
+xlab_s1    <- paste0("dbRDA1 (", round(100 * var_constr[1], 1), "%)")
+ylab_s1    <- paste0("dbRDA2 (", round(100 * var_constr[2], 1), "%)")
 
+#R2ajusted
+r2adj <- vegan::RsquareAdj(dbrda)$adj.r.squared
 
-#Plot it
-ggplot(sites, aes(x = dbRDA1, y = dbRDA2)) +
+plot_scaling_sites <- ggplot(sites_s1, aes(x = dbRDA1, y = dbRDA2)) +
   stat_ellipse(
     geom = "polygon",
     aes(color = season, fill = season),
-    alpha = 0.1,
-    linewidth = 1.5
-  ) +  
-  geom_point(aes(color = season), size = 3) +
-  geom_segment(data = env,
-               aes(x = 0, y = 0, xend = dbRDA1, yend = dbRDA2),
-               arrow = arrow(type = "closed", length = unit(0.3, "cm")),
-               color = "black") +
-  
-  geom_text(data = env,
-            aes(x = dbRDA1 * 1.35, y = dbRDA2 * 1.35,
-                label = var),
-            size = 4, fontface = "bold",
-            color = "black") +
-  
-  # geom_segment(data = species,
-  #              aes(x = 0, y = 0, xend = dbRDA1, yend = dbRDA2),
-  #              arrow = arrow(type = "closed", length = unit(0.3, "cm")),
-  #              color = "red") +
-  # geom_text(data = species,
-  #           aes(x = dbRDA1 * 1.35, y = dbRDA2 * 1.35,
-  #               label = taxa),
-  #           size = 4, fontface = "bold",
-  #           color = "red") +
-  
-  labs(x = xlab, y = ylab) +
-  
+    alpha = 0.1, linewidth = 1.5
+  ) +
+  geom_point(aes(color = season, shape = category), size = 3) +
+  geom_segment(
+    data = env_s1,
+    aes(x = 0, y = 0, xend = dbRDA1, yend = dbRDA2),
+    arrow = arrow(type = "closed", length = unit(0.25, "cm")),
+    color = "black", linewidth = 0.8
+  ) +
+  geom_label(
+    data = env_s1,
+    aes(x = dbRDA1 * 1.25, y = dbRDA2 * 1.25, label = var),
+    size = 3.5, fontface = "bold", color = "black",
+    fill = alpha("white", 0.4), label.size = 0
+  ) +
+  annotate("text",
+           x = -Inf, y = Inf,
+           hjust = -0.1, vjust = 1.5,
+           label = paste0("R²adj = ", round(r2adj, 3)),
+           size = 4, fontface = "italic") +
+  labs(
+    title = "db-RDA (Scaling sites)",
+    x = xlab_s1, y = ylab_s1
+  ) +
   theme_classic(base_size = 12) +
   theme(
     panel.border = element_rect(colour="black", fill = NA, linewidth = 2),
@@ -282,6 +281,103 @@ ggplot(sites, aes(x = dbRDA1, y = dbRDA2)) +
   scale_color_manual(values = season_palette)  +
   scale_fill_manual(values = season_palette)  +
   coord_equal()
+
+
+# SCALING 2 : "species"
+# Interpretation: distances between species preserved : focus on species-environment associations
+# What is represented:
+# - Species arrows: infectious agents and their association with constrained axes
+# - Environmental arrows (biplot): direction of environmental variables
+# - Angle species-variable ≈ correlation between the species and the variable
+# - Site points: approximate positions only (not directly interpretable)
+
+#Extracting scores at species scale
+scores_sp <- vegan::scores(dbrda, scaling = "species")
+
+#Community coordinates (individuals infracommunity) — approximate positions
+sites_s2 <- scores_sp$sites %>%
+  as.data.frame() %>%
+  mutate(
+    numero_centre = metadata_clean$numero_centre,
+    category = metadata_clean$category,
+    season = metadata_clean$season
+  )
+
+#Species coordinates (infectious agents)
+species_s2 <- scores_sp$species %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("taxa")
+
+#Environment variable coordinates
+env_s2 <- scores_sp$biplot %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("var")
+
+#Eigenvalues (%explained by axes) — same as scaling 1
+xlab_s2 <- paste0("dbRDA1 (", round(100 * var_constr[1], 1), "%)")
+ylab_s2 <- paste0("dbRDA2 (", round(100 * var_constr[2], 1), "%)")
+
+#Rescaling factor to make sites and species readable on the same plot
+scale_sp <- max(abs(sites_s2[, c("dbRDA1", "dbRDA2")])) / max(abs(species_s2[, c("dbRDA1", "dbRDA2")])) * 0.7
+
+plot_scaling_species <- ggplot() +
+  geom_point(
+    data = sites_s2,
+    aes(x = dbRDA1, y = dbRDA2, color = season, shape = category),
+    size = 3, alpha = 0.3
+  ) +
+  geom_segment(
+    data = species_s2,
+    aes(x = 0, y = 0,
+        xend = dbRDA1 * scale_sp,
+        yend = dbRDA2 * scale_sp),
+    arrow = arrow(type = "closed", length = unit(0.25, "cm")),
+    color = "#c0392b", linewidth = 0.8
+  ) +
+  geom_label(
+    data = species_s2,
+    aes(x = dbRDA1 * scale_sp * 1.25,
+        y = dbRDA2 * scale_sp * 1.25,
+        label = taxa),
+    size = 3.5, fontface = "bold", color = "#c0392b",
+    fill = alpha("white", 0.4), label.size = 0
+  ) +
+  geom_segment(
+    data = env_s2,
+    aes(x = 0, y = 0, xend = dbRDA1, yend = dbRDA2),
+    arrow = arrow(type = "closed", length = unit(0.25, "cm")),
+    color = "black", linewidth = 0.8
+  ) +
+  geom_label(
+    data = env_s2,
+    aes(x = dbRDA1 * 1.25, y = dbRDA2 * 1.25, label = var),
+    size = 3.5, fontface = "bold", color = "black",
+    fill = alpha("white", 0.6), label.size = 0
+  ) +
+  annotate("text",
+           x = -Inf, y = Inf,
+           hjust = -0.1, vjust = 1.5,
+           label = paste0("R²adj = ", round(r2adj, 3)),
+           size = 4, fontface = "italic") +
+  labs(
+    title = "db-RDA (Scaling species)",
+    x = xlab_s2, y = ylab_s2
+  ) +
+  theme_classic(base_size = 12) +
+  theme(
+    panel.border      = element_rect(colour = "black", fill = NA, linewidth = 2),
+    legend.background = element_blank(),
+    legend.position   = "bottom"
+  ) +
+  scale_color_manual(values = season_palette) +
+  coord_equal()
+
+# Combined plot
+library(patchwork)
+plot_scaling_sites + plot_scaling_species +
+  plot_layout(guides = "collect") &
+  theme(legend.position = "bottom")
+
 
 
 ## PCoA ----
@@ -329,81 +425,81 @@ loiselle_pairwise <- loiselle_pairwise %>%
 
 
 ### Co-presence model ----
-
-#Infection matrix
-m_inf
-#or
-m_inf_clean
-rownames(m_inf_clean) #Only ones infected by at least one thing
-
-#Generate co_presence matrix
-co_presence <- do.call(rbind, lapply(names_inf10, function(p){
-
-  # vecteur pour un pathogène
-  v <- m_inf_clean[, p]                                #Matrix with only
-
-  # matrice de co-présence
-  copresence_matrix <- outer(v, v, "*")
-
-  # melt en data.frame
-  df <- as.data.frame(as.table(copresence_matrix))
-  colnames(df) <- c("ind1", "ind2", "shared")
-
-  # ajouter nom du pathogène
-  df$infectious_ag <- p
-
-  return(df)
-}))
-
-#Merge with Loiselle
-copresence_relatedness <- merge(x = loiselle_pairwise, y = co_presence, by = c("ind1", "ind2"))
-
-
-#Standardize the order of elements individuals in pairs (ind1 is always the "smaller" one from the pair)
-copresence_relatedness_strd <- copresence_relatedness %>%
-  mutate(
-    ind_min = pmin(ind1, ind2),
-    ind_max = pmax(ind1, ind2)
-  ) %>%
-  mutate(
-    ind1 = ind_min,
-    ind2 = ind_max
-  ) %>%
-  select(-ind_min, -ind_max)
-
-#Remove self_relatedness
-copresence_relatedness_strd <- copresence_relatedness_strd %>%
-  filter(ind1 != ind2)
-
-#Remove repeated pairs
-copresence_relatedness_strd <- copresence_relatedness_strd %>%
-  distinct()
-
-#Small checks
-copresence_relatedness_strd %>% count(shared, infectious_ag)
-
-
-#Doing linear model (which is likely wrong considering non-independance)
-#keeping only small distance things
-copresence_relatedness_strd_test <- copresence_relatedness_strd %>%
-  filter(geo < 300) %>%
-  mutate(dyad =  paste(pmin(ind1, ind2), pmax(ind1, ind2), sep = "_"))
-
-#modelling and doing model selection
-bad_model <- glmmTMB::glmmTMB(
-  shared ~ (loiselle + infectious_ag + geo)^3 +
-    (1 | ind1) + (1 | ind2) + (1 | dyad),
-  family = binomial,
-  data = copresence_relatedness_strd_test,
-  na.action = "na.fail"
-)
-
-performance::check_collinearity(bad_model)
-
-#Model selection
-model_selection <- MuMIn::dredge(bad_model, rank = "AICc")
-model_selection %>% filter(delta <= 2)
-
+# 
+# #Infection matrix
+# m_inf
+# #or
+# m_inf_clean
+# rownames(m_inf_clean) #Only ones infected by at least one thing
+# 
+# #Generate co_presence matrix
+# co_presence <- do.call(rbind, lapply(names_inf10, function(p){
+# 
+#   # vecteur pour un pathogène
+#   v <- m_inf_clean[, p]                                #Matrix with only
+# 
+#   # matrice de co-présence
+#   copresence_matrix <- outer(v, v, "*")
+# 
+#   # melt en data.frame
+#   df <- as.data.frame(as.table(copresence_matrix))
+#   colnames(df) <- c("ind1", "ind2", "shared")
+# 
+#   # ajouter nom du pathogène
+#   df$infectious_ag <- p
+# 
+#   return(df)
+# }))
+# 
+# #Merge with Loiselle
+# copresence_relatedness <- merge(x = loiselle_pairwise, y = co_presence, by = c("ind1", "ind2"))
+# 
+# 
+# #Standardize the order of elements individuals in pairs (ind1 is always the "smaller" one from the pair)
+# copresence_relatedness_strd <- copresence_relatedness %>%
+#   mutate(
+#     ind_min = pmin(ind1, ind2),
+#     ind_max = pmax(ind1, ind2)
+#   ) %>%
+#   mutate(
+#     ind1 = ind_min,
+#     ind2 = ind_max
+#   ) %>%
+#   select(-ind_min, -ind_max)
+# 
+# #Remove self_relatedness
+# copresence_relatedness_strd <- copresence_relatedness_strd %>%
+#   filter(ind1 != ind2)
+# 
+# #Remove repeated pairs
+# copresence_relatedness_strd <- copresence_relatedness_strd %>%
+#   distinct()
+# 
+# #Small checks
+# copresence_relatedness_strd %>% count(shared, infectious_ag)
+# 
+# 
+# #Doing linear model (which is likely wrong considering non-independance)
+# #keeping only small distance things
+# copresence_relatedness_strd_test <- copresence_relatedness_strd %>%
+#   filter(geo < 300) %>%
+#   mutate(dyad =  paste(pmin(ind1, ind2), pmax(ind1, ind2), sep = "_"))
+# 
+# #modelling and doing model selection
+# bad_model <- glmmTMB::glmmTMB(
+#   shared ~ (loiselle + infectious_ag + geo)^3 +
+#     (1 | ind1) + (1 | ind2) + (1 | dyad),
+#   family = binomial,
+#   data = copresence_relatedness_strd_test,
+#   na.action = "na.fail"
+# )
+# 
+# performance::check_collinearity(bad_model)
+# 
+# #Model selection
+# model_selection <- MuMIn::dredge(bad_model, rank = "AICc")
+# model_selection %>% filter(delta <= 2)
+# 
 
 
 ### with jaccard ----

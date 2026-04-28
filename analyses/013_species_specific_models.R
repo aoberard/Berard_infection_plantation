@@ -14,8 +14,12 @@ category_palette <- c("pine_edge"          = "#3f826d",
                       "hedgerows"          = "#f2d0a4",
                       "broadleaved_forest" = "#a4a8d1")
 
-season_palette <- c("Spring" = "#ED6A5A",
-                    "Autumn" = "#6B4B3E")
+season_palette <- c("Spring" = "#7FBB7B",
+                    "Autumn" = "#9D695A")
+
+category_shapes <- c("pine_edge" = 17,
+                     "hedgerows" = 16,
+                     "broadleaved_forest" = 15)
 
 category_order <- c("pine_edge", "hedgerows", "broadleaved_forest")
 session_order <- c("Juin_2023", "Octobre_2023", "Juin_2024", "Septembre_2024", "Juin_2025")
@@ -90,6 +94,8 @@ m_barttaylo <- glmmTMB::glmmTMB(
   na.action = "na.fail"
 )
 performance::check_collinearity(m_barttaylo)
+performance::check_convergence(m_barttaylo)
+
 
 #Model selection
 model_selection <- MuMIn::dredge(m_barttaylo, rank = "AICc")
@@ -273,6 +279,7 @@ m_neoehr <- glmmTMB::glmmTMB(
   na.action = "na.fail"
 )
 performance::check_collinearity(m_neoehr)
+performance::check_convergence(m_neoehr)
 
 #Model selection
 model_selection <- MuMIn::dredge(m_neoehr, rank = "AICc")
@@ -292,6 +299,8 @@ DHARMa::simulateResiduals(m_neoehr) %>%
   DHARMa::testResiduals()
 
 performance::check_overdispersion(x = m_neoehr)
+
+performance::check_convergence(m_neoehr)
 
 performance::check_collinearity(m_neoehr)
 
@@ -455,7 +464,7 @@ model_selection %>% filter(delta <= 2)
 #Selected model specification
 if (exists("m_nb_barttaylo")) rm(m_nb_barttaylo)
 m_nb_barttaylo <- glmmTMB::glmmTMB(
-  sum_Bartonella_taylorii ~ category * season + (1 | numero_ligne), 
+  sum_Bartonella_taylorii ~ category * season + (1 | numero_ligne) , 
   data = df_nbinf,
   family =  poisson(link = "log"),
   na.action = "na.fail"

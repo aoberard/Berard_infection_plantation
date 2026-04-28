@@ -14,8 +14,8 @@ category_palette <- c("pine_edge"          = "#3f826d",
                       "hedgerows"          = "#f2d0a4",
                       "broadleaved_forest" = "#a4a8d1")
 
-season_palette <- c("Spring" = "#ED6A5A",
-                    "Autumn" = "#6B4B3E")
+season_palette <- c("Spring" = "#7FBB7B",
+                    "Autumn" = "#9D695A")
 
 
 category_order <- c("pine_edge", "hedgerows", "broadleaved_forest")

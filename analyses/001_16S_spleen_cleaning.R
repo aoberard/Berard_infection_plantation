@@ -84,7 +84,7 @@ rownames(s16_taxo) <- s16_taxo$V1
 s16_taxo$V1 <- NULL
 
 #Samples data
-individuals <- read.delim(file = here::here("data", "raw-data", "20260320_BePrep_samples.csv"), sep = ";")
+individuals <- read.delim(file = here::here("data", "raw-data", "dissected_indiv.csv"), sep = ",")
 
 # #Mycoplasma sequences from genbank
 # myco_genbank <- readxl::read_xlsx(path = here::here("data", "raw-data", "diagnostic", "20260402_mycoplasma_genbank_seq.xlsx"))
@@ -375,7 +375,7 @@ tax_full[tax_full == "Borreliella afzelii"] <- "Borrelia afzelii"
 tax_full[tax_full == "Mycoplasma coccoides"] <- "Eperythrozoon coccoides"
 tax_full[tax_full == "Mycoplasma moatsii"] <- "Mesomycoplasma moatsii"
 
-# 
+ 
 # #Check Mycoplasma % sequence identity
 # seqs_genbank <- myco_genbank$seq %>% 
 #   as.character() %>% 

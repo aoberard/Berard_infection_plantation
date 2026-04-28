@@ -1,0 +1,108 @@
+I#################################################################
+# Script 1 Function to apply the association screening approach # 
+# Created by Patrick Gasqui (2013/12/31)			#
+#################################################################
+library(boot)
+#
+FctTestScreenENV <- function(tabx) {
+  xNS    <- 5000
+  xNH    <- dim(tabx)[[1]]
+  xNG    <- dim(tabx)[[2]]
+  xpv <- apply(tabx,2,sum)/xNH
+  xNC    <- 2**xNG
+# Data structuring for a multinomial with NC combinations 
+  DatXMul <- array(rep(0,xNC*xNG),c(xNC,xNG))
+  for ( k in 1:xNG ) {
+    k1 <- 2**(xNG-k)
+    k2 <- 2**(k-1)
+    DatXMul[,k] <- rep( c(rep(1,k1),rep(0,k1)) ,k2) }
+  #
+  DatFMul <- rep(0,xNC)
+  for ( k in 1:xNC ) {
+    x <- 0
+    for ( j in 1:xNG ) {
+      if ( DatXMul[k,j] == 1 ) {
+        x <- x+(10**(xNG-j)) } }
+    DatFMul[k] <- x }
+# Calculation of prevalence of combinations under H0 
+  xpvcomb <- rep(0.0,xNC)
+  for ( i in 1:xNC ) {
+    x <- 1.0
+    for (  j in 1:xNG ) {
+      if ( DatXMul[i,j] == 1 ) {
+        x <- x*(xpv[j]) } else {
+        x <- x*(1.0-xpv[j]) } }
+    xpvcomb[i] <- x }
+# Calculation of theoretical sample sizes for each combination
+  xeffEstcomb <- xpvcomb*xNH
+# Calculation of observed sample size for each combination
+  taby <- array(rep(0,xNH*xNC),c(xNH,xNC))
+  for ( i in 1:xNH ) {
+    x <- 0
+    for ( j in 1:xNG ) {
+      if ( tabx[i,j] == 1 ) {
+        x <- x+(10**(xNG-j)) } }
+    z <- (1:xNC)[(DatFMul==x)]
+    taby[i,z] <- 1 }    
+  xeffObscomb <- apply(taby,2,sum)
+# Statistic of the screening under H0
+  xresCountH0Qinf <- rep(0.0,xNC)
+  xresCountH0Qsup <- rep(0.0,xNC)
+  xresCountH0 <- array(rep(0.0,xNC*xNS),c(xNC,xNS))
+ # Simulation of kth dataset
+  for ( k in 1:xNS ) {
+    xdata <- t(rmultinom(xNH, 1, prob=xpvcomb))
+    # Recuperation of sample sizes for each combination
+    xresCountH0[,k] <- apply(xdata,2,sum) }
+# Calculation of 95% CI of the statistic under H0
+# [ Confidence Envelopes for Curves ]
+  ConfianceGlobal <- 0.95	
+  resenv <- envelope(mat = t(xresCountH0), level = ConfianceGlobal)
+  xresCountH0Qsup <- resenv$overall[1,]
+  xresCountH0Qinf <- resenv$overall[2,]
+# Calculation of P-value
+#######################################################################################################################################
+# WARNING : We work with discrete data (i.e. many values are identical) so the calculation of the p-value should be used with caution #
+#######################################################################################################################################
+  xresScr <- rep(0,xNC)
+  xresPvalue <- rep(0,xNC)							# WARNING : the calculation of the p-value should be used with caution
+  minPvalue0 <- 1.00								# WARNING : the calculation of the p-value should be used with caution
+  minPvalue1 <- 0.05								# WARNING : the calculation of the p-value should be used with caution
+  for ( i in 1:xNC ) {
+    xobs <- xeffObscomb[i]
+    x <- xresCountH0[i,]
+    if ( (xobs > xresCountH0Qsup[i])  ) { 
+       xresScr[i] <- 1 
+       xresPvalue[i] <- length(x[(x>=xobs)])*2.0/xNS				# WARNING : the calculation of the p-value should be used with caution
+       if ( xresPvalue[i] < minPvalue1 ) { minPvalue1 <- xresPvalue[i] }	# WARNING : the calculation of the p-value should be used with caution
+       }
+    if ( (xobs < xresCountH0Qinf[i])  ) { 
+       xresScr[i] <- 1 
+       xresPvalue[i] <- length(x[(x<=xobs)])*2.0/xNS				# WARNING : the calculation of the p-value should be used with caution
+       if ( xresPvalue[i] < minPvalue1 ) { minPvalue1 <- xresPvalue[i] }	# WARNING : the calculation of the p-value should be used with caution
+       }
+    if ( xresScr[i] == 0 ) {							# WARNING : the calculation of the p-value should be used with caution
+       if ( xobs < median(x) ) {						# WARNING : the calculation of the p-value should be used with caution
+         xresPvalue[i] <- length(x[(x<=xobs)])*2.0/xNS  			# WARNING : the calculation of the p-value should be used with caution
+         if ( xresPvalue[i] > 1.0 ) xresPvalue[i] <- xresPvalue[i]/2.0	# WARNING : the calculation of the p-value should be used with caution
+         if ( xresPvalue[i] < minPvalue0 ) { minPvalue0 <- xresPvalue[i] }	# WARNING : the calculation of the p-value should be used with caution
+         } else {								# WARNING : the calculation of the p-value should be used with caution
+         xresPvalue[i] <- length(x[(x>=xobs)])*2.0/xNS           		# WARNING : the calculation of the p-value should be used with caution
+         if ( xresPvalue[i] > 1.0 ) xresPvalue[i] <- xresPvalue[i]/2.0	# WARNING : the calculation of the p-value should be used with caution
+         if ( xresPvalue[i] < minPvalue0 ) { minPvalue0 <- xresPvalue[i] }	# WARNING : the calculation of the p-value should be used with caution
+         } }									# WARNING : the calculation of the p-value should be used with caution
+    }
+  resScr <- sum(xresScr)
+  if ( resScr != 0 ) {
+    resTest <- list(resScr,
+	minPvalue1,								# WARNING : the calculation of the p-value should be used with caution
+	DatFMul,xresScr,
+	xresPvalue,								# WARNING : the calculation of the p-value should be used with caution
+	xeffObscomb,xresCountH0Qsup,xresCountH0Qinf) } else {
+    resTest <- list(resScr,
+	minPvalue0,								# WARNING : the calculation of the p-value should be used with caution
+	DatFMul,xresScr,
+	xresPvalue,								# WARNING : the calculation of the p-value should be used with caution
+	xeffObscomb,xresCountH0Qsup,xresCountH0Qinf) }
+  resTest
+  }

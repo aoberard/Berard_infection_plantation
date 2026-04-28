@@ -294,7 +294,7 @@ bipartite::plotweb(
 infected_apo <- infected %>%
   filter(taxon_mamm == "Apodemus sylvaticus") 
 
-#Filter out empty infectious for Apodemus sylvaticus
+#Filter out empty infectious agents column for Apodemus sylvaticus
 infected_apo <- infected_apo %>% 
   select(-names(which(colSums(infected_apo[, ..names_infectious]) == 0)))
 
@@ -647,6 +647,150 @@ ggraph(tidy_bipart_infect, layout = "auto") +
                  repel = TRUE,
                  size = 4) +
   theme_void()
+
+
+### SCA screening ----
+
+#First check observed combination effectifs using UpsetR package
+UpSetR::upset(infected_apo %>% 
+                select(all_of(names_infectious_apo10)))
+
+#Source the SCA function
+source(file = here::here("R", "FctTestScreenENV.txt"))
+
+#Generate matrix for use in screening
+m_infectious <- infected_apo %>% 
+  tibble::column_to_rownames(var = "numero_centre") %>% 
+  select(all_of(names_infectious_apo10)) %>% 
+  as.matrix()
+  
+#Indicator showing whether the number of hosts is sufficient for the number of infectious agents combinations considered
+ifelse(nrow(m_infectious) < (2^ncol(m_infectious)),
+       "Not enough hosts for the number of combinations", 
+       "Sufficient number of hosts")
+
+# Run screening
+ResSCRENV <- FctTestScreenENV(m_infectious)
+
+### --- Reconstruct combination labels --- ###
+
+agent_names <- colnames(m_infectious)   # infectious agent names
+nG <- length(agent_names)               # number of agents
+nC <- length(ResSCRENV[[3]])            # number of combinations (2^nG)
+
+
+combo_codes <- ResSCRENV[[3]]            # numeric codes (decimal representation of binary pattern)
+
+#The original function builds DatXMul: each row is a combination, each column is an agent (1/0)
+#We rebuild it here identically to decode each combination correctly
+DatXMul <- array(rep(0, nC * nG), c(nC, nG))
+for (k in 1:nG) {
+  k1 <- 2^(nG - k)
+  k2 <- 2^(k - 1)
+  DatXMul[, k] <- rep(c(rep(1, k1), rep(0, k1)), k2)
+}
+#Now decode each row of DatXMul into a readable label
+decode_combo_from_matrix <- function(row_bits, agent_names) {
+  active <- agent_names[row_bits == 1]
+  if (length(active) == 0) return("None")
+  paste(active, collapse = " + ")
+}
+combo_labels <- apply(DatXMul, 1, decode_combo_from_matrix, agent_names = agent_names)
+
+#Build data frame for ggplot
+df_plot <- data.frame(
+  index       = seq_len(nC),
+  combo_code  = combo_codes,
+  combo_label = combo_labels,
+  yobs        = ResSCRENV[[6]],
+  ysup        = ResSCRENV[[7]],
+  yinf        = ResSCRENV[[8]],
+  outside_env = ResSCRENV[[4]],
+  pvalue      = ResSCRENV[[5]]
+) %>%
+  mutate(
+    status = case_when(
+      outside_env == 1 & yobs > ysup ~ "Over-represented",
+      outside_env == 1 & yobs < yinf ~ "Under-represented",
+      TRUE ~ "Within envelope"
+    ),
+    combo_label = forcats::fct_reorder(combo_label, index)
+  )
+
+# Print significant combinations
+df_plot %>%
+  filter(outside_env == 1) %>%
+  select(combo_label, yobs, yinf, ysup, pvalue, status) %>%
+  arrange(pvalue) %>%
+  print()
+
+
+colour_status <- c(
+  "Over-represented"  = "#E74C3C",   # red
+  "Under-represented" = "#3498DB",   # blue
+  "Within envelope"   = "#7F8C8D"    # grey
+)
+
+p_sca <- ggplot(df_plot, aes(x = as.factor(combo_code))) +
+  geom_linerange(
+    aes(ymin = yinf, ymax = ysup),
+    color = "grey70", linewidth = 0.8
+  ) +
+  geom_errorbar(
+    aes(ymin = yinf, ymax = ysup),
+    width = 0.4, color = "grey50", linewidth = 0.5
+  ) +
+  #Observed points coloured by status
+  geom_point(
+    aes(y = yobs, color = status, size = status)
+  ) +
+  
+  #Labels only  combinations outside the envelope
+  ggrepel::geom_label_repel(
+    data = filter(df_plot, outside_env == 1),
+    aes(
+      y     = yobs,
+      label = paste0(combo_label, "\np = ", round(pvalue, 4)),
+      color = status
+    ),
+    size          = 2,
+    nudge_y       = max(df_plot$ysup) * 0.12,
+    box.padding   = 0.5,
+    segment.color = "grey40",
+    fontface      = "bold",
+    show.legend   = FALSE
+  ) +
+  
+  scale_color_manual(values = colour_status, name = "Status") +
+  scale_size_manual(
+    values = c("Over-represented" = 3, "Under-represented" = 3, "Within envelope" = 2),
+    name   = "Status"
+  ) +
+  labs(
+    title    = "Association Screening",
+    x = "Combination code",
+    y = "Count"
+    ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position  = "bottom",
+    axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5),
+    plot.title       = element_text(face = "bold"),
+    plot.caption     = element_text(size = 8, color = "grey40"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor   = element_blank()
+  )
+p_sca
+
+
+
+
+
+
+
+
+
+
 
 
 # Write files ----

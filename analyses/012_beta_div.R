@@ -17,6 +17,10 @@ category_palette <- c("pine_edge"          = "#3f826d",
 season_palette <- c("Spring" = "#7FBB7B",
                     "Autumn" = "#9D695A")
 
+category_shapes <- c("pine_edge" = 17,
+                     "hedgerows" = 16,
+                     "broadleaved_forest" = 15)
+
 category_order <- c("pine_edge", "hedgerows", "broadleaved_forest")
 session_order <- c("Juin_2023", "Octobre_2023", "Juin_2024", "Septembre_2024", "Juin_2025")
 season_order <- c("Spring", "Autumn")
@@ -54,7 +58,9 @@ metadata_clean <- inf[kept_rows, ]
 rm(kept_rows)
 
 #Generate Jaccard matrix
-m_jacc <- vegan::vegdist(m_inf_clean, method = "jaccard", binary = TRUE)
+m_jacc <- vegan::vegdist(m_inf_clean, 
+                         method = "jaccard", 
+                         binary = TRUE)
 
 
 
@@ -65,29 +71,41 @@ m_jacc <- vegan::vegdist(m_inf_clean, method = "jaccard", binary = TRUE)
 ### PERMANOVA ----
 vegan::adonis2(formula = m_jacc ~ category ,
                data = metadata_clean,
-               permutations = 9999,
+               permutations = 999,
                by = "margin") 
 
+vegan::adonis2(formula = m_jacc ~ season ,
+               data = metadata_clean,
+               permutations = 999,
+               by = "margin") 
+
+vegan::adonis2(formula = m_jacc ~ poids  ,
+               data = metadata_clean,
+               permutations = 999,
+               by = "margin") 
+
+vegan::adonis2(formula = m_jacc ~ sexe  ,
+               data = metadata_clean,
+               permutations = 999,
+               by = "margin") 
+
+vegan::adonis2(formula = m_jacc ~ nb_apo ,
+               data = metadata_clean,
+               permutations = 999,
+               by = "margin") 
 
 
 #Post-hoc tests
 
 
-
-
 ### BETADISPER ----
 vegan::betadisper(d = m_jacc, 
                   group = metadata_clean$category) %>%
-  vegan::permutest(permutations = 9999)
+  vegan::permutest(permutations = 999)
 
-
-
-
-
-
-
-
-
+vegan::betadisper(d = m_jacc, 
+                  group = metadata_clean$season) %>%
+  vegan::permutest(permutations = 999)
 
 
 
@@ -108,7 +126,7 @@ mod_dbrda_0 <- vegan::dbrda(
 mod_dbrda_full <- vegan::dbrda(
   formula = metadata_clean %>% 
     select(all_of(names_inf10))
-  ~ category * season + poids + sexe,
+  ~ category * season + poids + sexe + nb_apo,
   data = metadata_clean,
   distance = "jaccard", 
   binary = TRUE
@@ -145,13 +163,7 @@ varpart <- vegan::varpart(Y = m_jacc,
 plot(varpart, bg=3:4)
 
 
-# test posthoc capscale : multiconstrained package BiodiversityR
-
-
-
-
-
-
+# Posthoc dbrda : multiconstrained package BiodiversityR
 
 
 
@@ -165,7 +177,7 @@ nmds_jacc <- vegan::metaMDS(
   distance = "jaccard",
   k = 2,
   autotransform = FALSE,
-  binary =
+  binary = TRUE
 )
 
 cat(paste0(
@@ -180,33 +192,70 @@ cat(paste0(
 
 vegan::stressplot(nmds_jacc)
 # Extract scores
-nmds_jacc_point <- vegan::scores(nmds_jacc)$sites %>%
+nmdspoint <- vegan::scores(nmds_jacc)$sites %>%
   as_tibble(rownames = "numero_centre")
-nmds_jacc_variable <- vegan::scores(nmds_jacc)$species %>%
+nmdsvariable <- vegan::scores(nmds_jacc)$species %>%
   as_tibble(rownames = "species")
 
-nmds_jacc_plot <- nmds_jacc_point %>% 
+
+#filter species by contribution to dispersion 
+fit <- vegan::envfit(nmds_jacc, m_inf_clean, permutations = 999)
+sig_sp <- names(which(fit$vectors$pvals < 0.05))
+nmdsvariable <- nmdsvariable %>%
+  filter(species %in% sig_sp)
+
+#Generate point data containing metadata
+nmdspoint_plot <- nmdspoint %>%
   left_join(metadata_clean) %>%
-  mutate(category = forcats::fct_relevel(category, category_order)) %>%
-  ggplot(aes(x = NMDS1, y = NMDS2, color = as.factor(category))) +
-  geom_jitter(width = 0.05, height = 0.05, size = 1.5, alpha = 0.5) +  
-  stat_ellipse(show.legend = FALSE, linewidth = 2) +
-  geom_text(data = nmds_jacc_variable, 
-            aes(x = NMDS1, y = NMDS2, label = species), 
-            inherit.aes = FALSE,
-            colour = "grey20") +
-  scale_color_manual(values = category_palette)  +
-  theme_minimal(base_size = 14) +
+  mutate(category = factor(category))
+
+#Plot nMDS
+nmds_jacc_plot <- ggplot() +
+  stat_ellipse(
+    data = nmdspoint_plot,
+    aes(x = NMDS1, y = NMDS2, color = category),
+    linewidth = 1.5, show.legend = FALSE) +
+  
+  geom_jitter(data = nmdspoint_plot,
+              aes(x = NMDS1, y = NMDS2, color = category, shape = category),
+              width = 0.05, 
+              height = 0.05, 
+              size = 1.5, 
+              alpha = 0.5) +  
+  
+  ggrepel::geom_text_repel(
+    data = nmdsvariable,
+    aes(x = NMDS1, y = NMDS2, label = species),
+    color = "grey40", size = 2.5, fontface = "italic",
+    box.padding = 0.3, max.overlaps = 20
+  ) +
+  
+  scale_color_manual(values = category_palette) +
+  scale_shape_manual(values = category_shapes) +
+  labs(
+    x = "NMDS1", y = "NMDS2"
+  ) +
+  theme_classic(base_size = 14) +
   theme(
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 1.5),
+    panel.background = element_rect(fill = NA),
+    plot.background = element_rect(fill = NA, color = NA),
+    axis.title = element_text(size = 13, face = "bold", color = "grey30"),
+    axis.text = element_text(size = 11, color = "grey30"),
+    axis.ticks = element_line(color = "black"),
     legend.position = "bottom",
-    legend.title = element_text(size = 13, face = "bold"),
-    legend.text = element_text(size = 12),
-    panel.grid = element_blank(),
-    axis.title = element_text(size = 14, face = "bold"),
-    axis.text = element_text(size = 12, color = "black")
+    legend.title = element_blank(),
+    legend.text = element_text(size = 11),
+    legend.background = element_blank(),
+    aspect.ratio = 1,
+    panel.grid = element_blank()
   ) +
   coord_equal()
 nmds_jacc_plot
+
+
+
+
 
 
 ## db-RDA ----
@@ -246,9 +295,8 @@ r2adj <- vegan::RsquareAdj(dbrda)$adj.r.squared
 
 plot_scaling_sites <- ggplot(sites_s1, aes(x = dbRDA1, y = dbRDA2)) +
   stat_ellipse(
-    geom = "polygon",
-    aes(color = season, fill = season),
-    alpha = 0.1, linewidth = 1.5
+    aes(color = season),
+    linewidth = 1.5, show.legend = FALSE
   ) +
   geom_point(aes(color = season, shape = category), size = 3) +
   geom_segment(
@@ -382,21 +430,101 @@ plot_scaling_sites + plot_scaling_species +
 
 ## PCoA ----
 
-#checker script lines variability à l'ancienne...
+#Generate PCoA
+PCOA_jacc_inf<- vegan::wcmdscale(m_jacc, eig = TRUE)
 
+#Check proportion of variance explained by each axis
+var_explained <- round(100 * PCOA_jacc_inf$eig / sum(PCOA_jacc_inf$eig), 2)
+print(var_explained)
 
+tibble(
+  Axis = seq_along(var_explained),
+  Variance = var_explained
+) %>%
+  ggplot(aes(x = Axis, y = Variance)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = paste0(Variance, "%")), vjust = -0.5, size = 3) +
+  labs(
+    x = "PCoA Axis",
+    y = "Variance Explained (%)",
+    title = "Scree Plot - PCoA"
+  ) +
+  theme_minimal(base_size = 12)
 
+#Extract PCoA scores for plotting
+pcoapoint <- PCOA_jacc_inf$points %>%
+  as_tibble(rownames = "numero_centre") %>% 
+  left_join(metadata_clean) %>% 
+  rename(PCoA1 = Dim1, PCoA2 = Dim2)  %>%
+  mutate(category = factor(category))
 
+#envfit arrows (correlation between axis and their abundances)
+fit <- vegan::envfit(
+  pcoapoint[, c("PCoA1", "PCoA2")],
+  m_inf_clean,
+  permutations = 999
+)
 
+spec_df <- as.data.frame(fit$vectors$arrows) %>%
+  tibble::rownames_to_column(var = "species") %>%
+  mutate(
+    r    = fit$vectors$r,
+    pval = fit$vectors$pvals,
+    p_adj = p.adjust(pval, method = "fdr")
+  )
 
+#Significativity filter
+sig_spec <- spec_df %>%
+  filter(p_adj < 0.05) %>%
+  mutate(
+    PCoA1 = PCoA1 * r,
+    PCoA2 = PCoA2 * r
+  )
 
-#QUICK write matrix distance for MAPi : 
-m_jacc %>%
-  as.matrix() %>%
-  write.csv("m_jacc.csv", row.names = TRUE)
+#Plot PCoA
+pcoa_plot <- ggplot() +
+  geom_hline(yintercept = 0, color = "grey60", linewidth = 0.5, linetype = "dashed") +
+  geom_vline(xintercept = 0, color = "grey60", linewidth = 0.5, linetype = "dashed") +
+  stat_ellipse(
+    data = pcoapoint,
+    aes(x = PCoA1, y = PCoA2, color = category),
+    linewidth = 1.5, show.legend = FALSE) +
+  geom_point(
+    data = pcoapoint,
+    aes(x = PCoA1, y = PCoA2, color = category, shape = category),
+    size = 3) +
+  geom_segment(
+    data = sig_spec,
+    aes(x = 0, y = 0, xend = PCoA1, yend = PCoA2),
+    arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
+    color = "grey40", linewidth = 0.6)  +
+  ggrepel::geom_text_repel(
+    data = sig_spec,
+    aes(x = PCoA1, y = PCoA2, label = species),
+    color = "grey40", size = 3, fontface = "italic",
+    box.padding = 0.3, max.overlaps = 20) +
+  scale_color_manual(values = category_palette) +
+  scale_shape_manual(values = category_shapes) +
+  labs(
+    x = paste0("PCoA1 (", var_explained[1], "%)"),
+    y = paste0("PCoA2 (", var_explained[2], "%)")) +
+  theme_classic(base_size = 14) +
+  theme(
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 1.5),
+    panel.background = element_rect(fill = NA),
+    plot.background = element_rect(fill = NA, color = NA),
+    axis.title = element_text(size = 13, face = "bold", color = "grey30"),
+    axis.text = element_text(size = 11, color = "grey30"),
+    axis.ticks = element_line(color = "black"),
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 11),
+    legend.background = element_blank(),
+    aspect.ratio = 1,
+    panel.grid = element_blank()) +
+  coord_equal()
 
-
-
+pcoa_plot
 
 
 
@@ -404,6 +532,12 @@ m_jacc %>%
 
 
 # TEST zone ----
+
+#QUICK write matrix distance for MAPi : 
+m_jacc %>%
+  as.matrix() %>%
+  write.csv("m_jacc.csv", row.names = TRUE)
+
 
 
 

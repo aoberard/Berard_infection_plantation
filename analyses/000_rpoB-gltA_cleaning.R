@@ -57,7 +57,7 @@ glta_taxo$V1 <- NULL
 
 
 #Samples data
-individuals <- read.delim(file = here::here("data", "raw-data", "20260320_BePrep_samples.csv"), sep = ";")
+individuals <- read.delim(file = here::here("data", "raw-data", "dissected_indiv.csv"), sep = ",")
 
 
 # Data object creation  ----

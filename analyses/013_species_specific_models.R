@@ -55,14 +55,14 @@ df_nbinf <- df_probainf %>%
 #Choose reference levels
 df_probainf$year <- relevel(as.factor(df_probainf$year), ref = "2024")
 df_probainf$season <- relevel(as.factor(df_probainf$season), ref = "Autumn")
-df_probainf$category <- relevel(as.factor(df_probainf$category), ref = "pine_edge")
+df_probainf$category <- relevel(as.factor(df_probainf$category), ref = "hedgerows")
 
 df_nbinf$year <- relevel(as.factor(df_nbinf$year), ref = "2024")
 df_nbinf$season <- relevel(as.factor(df_nbinf$season), ref = "Autumn")
-df_nbinf$category <- relevel(as.factor(df_nbinf$category), ref = "pine_edge")
+df_nbinf$category <- relevel(as.factor(df_nbinf$category), ref = "hedgerows")
 
 #Dataset with joined category
-df_probainf_2 <- df_probainf %>% 
+df_probainf2 <- df_probainf %>% 
   mutate(category =  
            case_when(
              category == "pine_edge" ~ "plantation",

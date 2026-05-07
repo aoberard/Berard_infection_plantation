@@ -52,11 +52,32 @@ inf_alpha <- inf %>%
   select(-all_of(names_inf))
 
 
-#Dataframe for GLM (no NA for explanatory variables)
+#Dataframes for GLM (no NA for explanatory variables)
 df_alpha <- inf_alpha %>% 
   filter(!is.na(sexe)) 
 
+df_alpha2 <- df_alpha %>% 
+  mutate(category =  
+           case_when(
+             category == "pine_edge" ~ "plantation",
+             category == "hedgerows" ~ "plantation",
+             .default = category
+           ))
 
+
+#Choose reference levels
+df_alpha$year <- relevel(as.factor(df_alpha$year), ref = "2024")
+df_alpha$season <- relevel(as.factor(df_alpha$season), ref = "Autumn")
+df_alpha$category <- relevel(as.factor(df_alpha$category), ref = "hedgerows")
+
+#Dataset with joined category
+df_alpha2 <- df_alpha %>% 
+  mutate(category =  
+           case_when(
+             category == "pine_edge" ~ "plantation",
+             category == "hedgerows" ~ "plantation",
+             .default = category
+           ))
 
 # Visualization ----
 
@@ -162,6 +183,8 @@ inf_alpha %>%
 
 # GLM : richness variation ----
 
+## All category ----
+
 #Check effectifs
 df_alpha %>% 
   group_by(category, season) %>% 
@@ -170,7 +193,7 @@ df_alpha %>%
 #Global model specification
 if (exists("m_richness")) rm(m_richness)
 m_richness <- glmmTMB::glmmTMB(
-  rich ~ category * season + poids + sexe + (1 | numero_ligne) + (1 | year),
+  rich ~ category * season + poids + sexe + maturity + nb_apo + (1 | numero_ligne) + (1 | year),
   data = df_alpha,
   family = poisson(link = "log"),
   na.action = "na.fail",
@@ -204,3 +227,86 @@ summary(m_richness)
 confint(m_richness)
 gtsummary::tbl_regression(m_richness)
 ggstats::ggcoef_model(m_richness)
+
+#Marginal means contrast
+em_rich <- emmeans::emmeans(m_richness, ~  category | season  , type = "response")
+emmeans::contrast(em_rich, "pairwise", adjust = "Tukey")
+emmeans::contrast(em_rich, "pairwise", adjust = "Tukey") %>% confint()
+
+em_summary_rich <- as.data.frame(em_rich)
+
+
+em_summary_rich %>%
+  mutate(
+    category = forcats::fct_rev(forcats::fct_relevel(category, category_order))
+  ) %>%
+  ggplot(aes(x = rate, y = category, color = category)) +
+  geom_point(size = 4.5) +
+  geom_segment(aes(x = asymp.LCL, xend = asymp.UCL, y = category, yend = category), linewidth = 1.5) +
+  scale_color_manual(values = category_palette) +
+  theme_minimal(base_size = 16) +
+  labs(
+    x = "Estimated number of infectious",
+    y = "Habitat category",
+  ) +
+  theme(
+    axis.text = element_text(color = "gray20", size = 11),
+    axis.title = element_text(color = "gray20", size = 12),
+    strip.text = element_text(color = "gray20", size = 12),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.major.x = element_line(color = "gray90", linewidth = 0.5)
+  ) +
+  facet_grid(season ~ .) +
+  guides(color = "none")
+
+
+
+
+## Regrouped plantations ----
+
+#Check effectifs
+df_alpha2 %>% 
+  group_by(category, season) %>% 
+  count()
+
+#Global model specification
+if (exists("m_richness2")) rm(m_richness2)
+m_richness2 <- glmmTMB::glmmTMB(
+  rich ~ category * season + poids + sexe + maturity + (1 | numero_ligne) + (1 | year),
+  data = df_alpha2,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m_richness2)
+
+#Model selection
+model_selection <- MuMIn::dredge(m_richness2, rank = "AICc")
+model_selection %>% filter(delta <= 2)
+
+
+#Chosen model specification
+if (exists("m_richness2")) rm(m_richness2)
+m_richness2 <- glmmTMB::glmmTMB(
+  rich ~ category + season + poids + sexe + (1 | numero_ligne) + (1 | year),
+  data = df_alpha2,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+
+#Chosen model validation
+DHARMa::simulateResiduals(m_richness2) %>%
+  DHARMa::testResiduals()
+
+performance::check_overdispersion(x = m_richness2)
+
+performance::check_collinearity(m_richness2)
+
+
+#Chosen model look
+summary(m_richness2)
+confint(m_richness2)
+gtsummary::tbl_regression(m_richness2)
+ggstats::ggcoef_model(m_richness2)
+
+

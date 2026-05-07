@@ -785,14 +785,6 @@ p_sca
 
 
 
-
-
-
-
-
-
-
-
 # Write files ----
 dir.create(
   here::here("data", "derived-data", "asylvaticus_data"),

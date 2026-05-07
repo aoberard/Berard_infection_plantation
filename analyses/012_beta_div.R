@@ -97,7 +97,6 @@ vegan::adonis2(formula = m_jacc ~ nb_apo ,
 
 #Post-hoc tests
 
-
 ### BETADISPER ----
 vegan::betadisper(d = m_jacc, 
                   group = metadata_clean$category) %>%
@@ -126,7 +125,7 @@ mod_dbrda_0 <- vegan::dbrda(
 mod_dbrda_full <- vegan::dbrda(
   formula = metadata_clean %>% 
     select(all_of(names_inf10))
-  ~ category * season + poids + sexe + nb_apo,
+  ~ category * season + scale(poids) + maturity + sexe + scale(nb_apo),
   data = metadata_clean,
   distance = "jaccard", 
   binary = TRUE
@@ -309,7 +308,7 @@ plot_scaling_sites <- ggplot(sites_s1, aes(x = dbRDA1, y = dbRDA2)) +
     data = env_s1,
     aes(x = dbRDA1 * 1.25, y = dbRDA2 * 1.25, label = var),
     size = 3.5, fontface = "bold", color = "black",
-    fill = alpha("white", 0.4), label.size = 0
+    fill = alpha("white", 0.4), linewidth = 0
   ) +
   annotate("text",
            x = -Inf, y = Inf,
@@ -388,7 +387,7 @@ plot_scaling_species <- ggplot() +
         y = dbRDA2 * scale_sp * 1.25,
         label = taxa),
     size = 3.5, fontface = "bold", color = "#c0392b",
-    fill = alpha("white", 0.4), label.size = 0
+    fill = alpha("white", 0.4), linewidth = 0
   ) +
   geom_segment(
     data = env_s2,
@@ -400,7 +399,7 @@ plot_scaling_species <- ggplot() +
     data = env_s2,
     aes(x = dbRDA1 * 1.25, y = dbRDA2 * 1.25, label = var),
     size = 3.5, fontface = "bold", color = "black",
-    fill = alpha("white", 0.6), label.size = 0
+    fill = alpha("white", 0.6), linewidth = 0
   ) +
   annotate("text",
            x = -Inf, y = Inf,

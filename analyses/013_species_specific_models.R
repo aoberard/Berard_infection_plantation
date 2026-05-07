@@ -88,7 +88,7 @@ df_probainf %>%
 #Global model specification
 if (exists("m_barttaylo")) rm(m_barttaylo)
 m_barttaylo <- glmmTMB::glmmTMB(
-  Bartonella_taylorii ~ category*season + poids + sexe + nb_apo + (1 | numero_ligne) + (1 | year),
+  Bartonella_taylorii ~ category * season + poids + sexe + maturity + nb_apo + (1 | numero_ligne) + (1 | year),
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"
@@ -115,7 +115,7 @@ DHARMa::simulateResiduals(m_barttaylo) %>%
   DHARMa::testResiduals()
 
 performance::check_overdispersion(x = m_barttaylo)
-
+performance::check_convergence(m_barttaylo)
 performance::check_collinearity(m_barttaylo)
 
 #Selected model look
@@ -134,7 +134,7 @@ df_probainf %>%
 #Global model specification
 if (exists("m_bartbirt")) rm(m_bartbirt)
 m_bartbirt <- glmmTMB::glmmTMB(
-  Bartonella_birtlesii ~ category*season + poids + sexe + nb_apo + (1 | numero_ligne) + (1 | year),
+  Bartonella_birtlesii ~ category * season + poids + sexe + maturity + nb_apo + (1 | numero_ligne) + (1 | year),
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"
@@ -159,7 +159,7 @@ DHARMa::simulateResiduals(m_bartbirt) %>%
   DHARMa::testResiduals()
 
 performance::check_overdispersion(x = m_bartbirt)
-
+performance::check_convergence(m_bartbirt)
 performance::check_collinearity(m_bartbirt)
 
 #Selected model look
@@ -179,7 +179,7 @@ df_probainf %>%
 #Global model specification
 if (exists("m_ecocco")) rm(m_ecocco)
 m_ecocco <- glmmTMB::glmmTMB(
-  Eperythrozoon_coccoides ~ category*season + poids + sexe + nb_apo + (1 | numero_ligne) ,
+  Eperythrozoon_coccoides ~ category * season + poids + sexe + maturity + nb_apo + (1 | numero_ligne),
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"
@@ -204,7 +204,7 @@ DHARMa::simulateResiduals(m_ecocco) %>%
   DHARMa::testResiduals()
 
 performance::check_overdispersion(x = m_ecocco)
-
+performance::check_convergence(m_ecocco)
 performance::check_collinearity(m_ecocco)
 
 #Selected model look

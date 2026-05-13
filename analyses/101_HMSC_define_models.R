@@ -28,8 +28,9 @@ if(!dir.exists(modelDir)) {
 load(here::here(dataDir, "allData.RData"))
 
 
-# Explore data ----
+# Data check ----
 
+## Exploration ----
 #Here done previously but always make sure no strong collinearity exists among explanatory variables used in models ! 
 #Data exploration is highly advised also, notably in case some variables have weird distributions (too influential outliers p.ex)
 #Or if levels in qualitative variables from X does not contain enough rows (and maybe they should regrouped)
@@ -48,14 +49,14 @@ table(Tm$direct_transmission)
 table(Tm$tick_transmission)
 
 
+## Safeguards ----
 
-#Just make sure matrix X, Y, and the studyDesign and locations.xy dataframes/matrix have aligned row names
+#Just make sure matrix X, Y and the studyDesign dataframe have aligned row names
 stopifnot(
   identical(rownames(X), rownames(Y)),
-  identical(rownames(X), rownames(studyDesign)),
-  identical(rownames(X), rownames(locations.xy))
+  identical(rownames(X), rownames(studyDesign))
 )
-message("Row names of X, Y, studyDesign and locations.xy are aligned.")
+message("Row names of X, Y and studyDesign are aligned.")
 
 
 #Also make sure all species in Y are present in Tm
@@ -68,6 +69,23 @@ stopifnot(
   identical(rownames(Tm), colnames(Y))
   )
 message("All species in Y are present in T, and T has been reordered to match Y.")
+
+
+#And make sure locations.xy match the studyDesign location
+
+#Check uniqueness of row names
+stopifnot(!anyDuplicated(rownames(locations.xy)))
+
+#Check that all studyDesign locations are represented
+stopifnot(all(as.character(studyDesign$location) %in% rownames(locations.xy)))
+
+#Reorder to match the factor levels 
+locations.xy <- locations.xy[levels(studyDesign$location), , drop = FALSE]
+
+#Final check
+stopifnot(identical(rownames(locations.xy), levels(studyDesign$location)))
+message("Matrix location.xy has been reordered to match studyDesign 'location' levels")
+
 
 
 # Set up the models ----
@@ -86,46 +104,24 @@ TrFormula = ~ direct_transmission + tick_transmission + flea_transmission
 #Define unstructured random effect at spatiotemporal unit
 rL.year <- Hmsc::HmscRandomLevel(units = levels(studyDesign$year))
 rL.mission <- Hmsc::HmscRandomLevel(units = levels(studyDesign$mission))
-rL.site <- Hmsc::HmscRandomLevel(units = levels(studyDesign$site))
+rL.location <- Hmsc::HmscRandomLevel(units = levels(studyDesign$location))
 
 
 #Define unstructured random effect at spatiotemporal unit
 rL.ind <- Hmsc::HmscRandomLevel(units = levels(studyDesign$individual))
 
-
-#Define location spatial random effect
-#Add a tiny jitter to duplicated coordinates only (as sData locations must be unique)
-dup <- duplicated(locations.xy) | duplicated(locations.xy, fromLast = TRUE)
-
-locations.xy[dup, ] <- locations.xy[dup, ] +
-  matrix(
-    rnorm(sum(dup) * 2, mean = 0, sd = 0.01),  # 1 cm SD
-    ncol = 2
-  )
-
-# Check that all coordinates are now unique
-stopifnot(!anyDuplicated(locations.xy))
-
-rL.location = HmscRandomLevel(sData = locations.xy)
-
-# For another example, you may define location as a spatial random effect
-# rL.location = HmscRandomLevel(sData = locations.xy)
-# Here locations.xy would be a matrix (one row per unique location)
-# where row names are the levels of studyDesign$location,
-# and the columns are the xy-coordinates
-# For another example, you may define the sample = sampling unit = row of matrix Y
-# as a random effect, in case you are interested in co-occurrences at that level
-# rL.sample = HmscRandomLevel(units = levels(studyDesign$sample))
+#Define studyDesign "location" spatial random effect
+rL.location.xy = HmscRandomLevel(sData = locations.xy, sMethod = "Full")
 
 
 ## Phylogenetic tree ----
+#I think only ultrametric tree are pertinent for HMSC (all leaves at same distances from root)
 
 #Construction of a simple taxonomical tree as proxy for phylogenetic tree
-
 taxonomicTree <- ape::as.phylo(~ domain / phylum / class / order / family / genus / names, 
                                data = Tm)
-
-
+taxonomicTree$edge.length <- rep(1, length(taxonomicTree$edge))
+plot(taxonomicTree, cex = 0.5)
 
 
 ## Candidate models specification ----
@@ -138,7 +134,12 @@ m.null <- Hmsc::Hmsc(Y = Y,
                      studyDesign = studyDesign, 
                      # TrData = Tm,
                      # TrFormula = TrFormula,
-                     ranLevels = list(site = rL.site, mission = rL.mission, individual = rL.ind))
+                     # phyloTree = taxonomicTree,
+                     ranLevels = list(
+                       location = rL.location, 
+                       mission = rL.mission, 
+                       individual = rL.ind
+                       ))
 
 m.host <- Hmsc::Hmsc(Y = Y,
                       distr = "probit", 
@@ -147,7 +148,12 @@ m.host <- Hmsc::Hmsc(Y = Y,
                       studyDesign = studyDesign, 
                       # TrData = Tm,
                       # TrFormula = TrFormula,
-                      ranLevels = list(site = rL.site, mission = rL.mission, individual = rL.ind))
+                      # phyloTree = taxonomicTree,
+                      ranLevels = list(
+                        location = rL.location, 
+                        mission = rL.mission,
+                        individual = rL.ind
+                        ))
 
 
 #Check models structure

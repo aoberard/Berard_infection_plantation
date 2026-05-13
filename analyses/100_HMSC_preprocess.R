@@ -39,6 +39,9 @@ namesrandom <- c( "year", "field_session", "numero_ligne", "numero_centre")
 data_hmsc <- inf %>%
   mutate(across(where(is.character), as.factor))
 
+traits <- traits %>% 
+  mutate(across(where(is.character), as.factor))
+
 ##Convert numeric columns that should be treated as factors 
 #numero_ligne
 data_hmsc <- data_hmsc %>%
@@ -131,25 +134,21 @@ rownames(Tm) <- Tm$names
 studyDesign <- data_hmsc %>% 
   select(all_of(namesrandom)) %>% 
   rename( individual = numero_centre,
-          site = numero_ligne,
+          location = numero_ligne,
           mission = field_session)
 
 rownames(studyDesign) <- studyDesign$individual 
 
 
+
 ## Random effect (spatial) matrix ----
+
+#Defined at the studyDesign chosen "location" scale
 locations.xy <- data_hmsc %>%
-  select(numero_centre, longitude_piege, latitude_piege) %>%
-  sf::st_as_sf(
-    coords = c("longitude_piege", "latitude_piege"),
-    crs = 4326
-  ) %>%
-  sf::st_transform(2154) %>%
-  sf::st_coordinates() %>%
+  select(numero_ligne, longitude_lambert93, latitude_lambert93) %>%
+  distinct() %>% 
+  tibble::column_to_rownames(var = "numero_ligne") %>% 
   as.matrix()
-
-rownames(locations.xy) <- data_hmsc$numero_centre
-
 
 
 # Save objects ----

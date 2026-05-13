@@ -16,6 +16,10 @@ inf <- data.table::fread(file = here::here("data", "derived-data", "asylvaticus_
 names_inf <- readRDS(file = here::here("data", "derived-data", "asylvaticus_data", "names_infectious_apo.rds"))
 names_inf10 <- readRDS(file = here::here("data", "derived-data", "asylvaticus_data", "names_infectious_apo10.rds"))
 
+#Infectious agents traits
+traits <- readxl::read_excel(path = here::here("data", "raw-data", "20260513_agents_traits.xlsx"))
+
+
 
 # Parameter choice  ----
 
@@ -98,7 +102,7 @@ data_hmsc %>%
 
 # Matrix setup ----
 
-## Y matrix ----
+## Y table ----
 Y <- data_hmsc %>% 
   tibble::column_to_rownames("numero_centre") %>% 
   select(all_of(namesagent))
@@ -110,12 +114,17 @@ prev.out <- (colSums(Y)/nrow(Y))*100
 prev.out %>% sort()
 
 
-## X matrix ----
+## X table ----
 X <- data_hmsc %>% 
   tibble::column_to_rownames("numero_centre") %>% 
   select(all_of(namesvar))
 
-## T matrix ----
+
+## T table ----
+Tm <- traits %>% 
+  as.data.frame()
+
+rownames(Tm) <- Tm$names
 
 
 ## Random effect (study design) data frame ----
@@ -127,14 +136,20 @@ studyDesign <- data_hmsc %>%
 
 rownames(studyDesign) <- studyDesign$individual 
 
-#of possible use if want to add spatial random effect
-# data_hmsc %>% 
-#   select(numero_centre, longitude_piege, latitude_piege) %>%  
-#   sf::st_as_sf(
-#     coords = c("longitude_piege", "latitude_piege"),
-#     crs = "EPSG:2154",
-#     remove = FALSE
-#     )
+
+## Random effect (spatial) matrix ----
+locations.xy <- data_hmsc %>%
+  select(numero_centre, longitude_piege, latitude_piege) %>%
+  sf::st_as_sf(
+    coords = c("longitude_piege", "latitude_piege"),
+    crs = 4326
+  ) %>%
+  sf::st_transform(2154) %>%
+  sf::st_coordinates() %>%
+  as.matrix()
+
+rownames(locations.xy) <- data_hmsc$numero_centre
+
 
 
 # Save objects ----
@@ -147,6 +162,8 @@ if (!dir.exists(dirpath)) {
 
 save(Y,
      X,
+     Tm,
      studyDesign,
+     locations.xy,
      data_hmsc,
      file = here::here(dirpath, "allData.RData"))

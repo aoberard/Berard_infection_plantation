@@ -1,42 +1,39 @@
-# Set the base directory using your favorite method
-# setwd("...")
-
-##################################################################################################
-# INPUT AND OUTPUT OF THIS SCRIPT (BEGINNING)
-##################################################################################################
-#	INPUT. the Fitted models.
-
-#	OUTPUT. Predictions over environmental gradients (for highest RUN of S2) in the file
-# "results/predictions.pdf".
-##################################################################################################
-# INPUT AND OUTPUT OF THIS SCRIPT (END)
-##################################################################################################
+# Script parameters ----
 
 
-##################################################################################################
-# MAKE THE SCRIPT REPRODUCIBLE (BEGINNING)
-##################################################################################################
+#	INPUT: the Fitted models.
+
+#	OUTPUT: Predictions over environmental gradients (for highest RUN of S2) in the file
+# "results/prediction/predictions.pdf".
+
+
+# Remove saved elements (clean workspace)
+rm(list = ls())
+gc()
+
+# Load libraries
+library("dplyr")
+library("Hmsc")
+library("ggplot2")
+
+# Make script reproducible
 set.seed(1)
-##################################################################################################
-## MAKE THE SCRIPT REPRODUCIBLE (END)
-##################################################################################################
 
 
-##################################################################################################
-# SETTING COMMONLY ADJUSTED PARAMETERS TO NULL WHICH CORRESPONDS TO DEFAULT CHOICE (BEGINNING)
-##################################################################################################
+
+
+## Prediction parameters ----
+
+#Setting Default parameter (Null implies default)
+
 species.list = NULL #one example species shown for each model,
 #selected as prevalence closest to 0.5 (probit models) or most abundant species (other models)
 trait.list = NULL #community weighted mean shown for all traits
 env.list = NULL #predictions constructed over all environmental gradients
-##################################################################################################
-# SETTING COMMONLY ADJUSTED PARAMETERS TO NULL WHICH CORRESPONDS TO DEFAULT CHOICE (END)
-##################################################################################################
 
-##################################################################################################
-# CHANGE DEFAULT OPTIONS BY REMOVING COMMENT AND SETTING VALUE (BEGINNING)
-# NOTE THAT THIS IS THE ONLY SECTION OF THE SCRIPT THAT YOU TYPICALLY NEED TO MODIFY
-##################################################################################################
+#Change default parameters by removing comments and setting value
+#Typically only section of the script that nee to be modified     ▲
+
 #use species.list to select which species are used as examples for which predictions are shown
 #species.list should be a list of length the number of models. 
 #for each element provide either 0 (use default) or a vector of species indices
@@ -58,30 +55,27 @@ env.list = NULL #predictions constructed over all environmental gradients
 #env.list = list()
 #env.list[[1]] = 0
 #env.list[[2]] = c("tree","decay")
-##################################################################################################
-# CHANGE DEFAULT OPTIONS BY REMOVING COMMENT AND SETTING VALUE (END)
-# NOTE THAT THIS IS THE ONLY SECTION OF THE SCRIPT THAT YOU TYPICALLY NEED TO MODIFY
-##################################################################################################
-
-##################################################################################################
-# SET DIRECTORIES (BEGINNING)
-##################################################################################################
-localDir = "."
-modelDir = file.path(localDir, "models")
-resultDir = file.path(localDir, "results")
-if (!dir.exists(resultDir)) dir.create(resultDir)
-##################################################################################################
-# SET DIRECTORIES (END)
-##################################################################################################
 
 
-library(Hmsc)
-library(ggplot2)
+# Load saved elements ----
 
-samples_list = c(5,250,250,250,250,250)
-thin_list = c(1,1,10,100,1000,10000)
+#Setting directories
+dataDir <- here::here("data", "derived-data", "hmsc_out")
+modelDir <- file.path(dataDir, "models")
+resultDir <- file.path(dataDir, "results", "prediction")
+
+if(!dir.exists(resultDir)) {
+  dir.create(resultDir, recursive = TRUE)
+}
+
+#Loading fitting parameters
+load(file = here::here(modelDir, "fitting_parameters.RData"))
+
+
+
+# Execute prediction ----
+
 nst = length(thin_list)
-nChains = 4
 
 for (Lst in nst:1) {
   thin = thin_list[Lst]

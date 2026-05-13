@@ -132,9 +132,9 @@ m.null <- Hmsc::Hmsc(Y = Y,
                      XData = X,
                      XFormula = XFormula.null,
                      studyDesign = studyDesign, 
-                     # TrData = Tm,
-                     # TrFormula = TrFormula,
-                     # phyloTree = taxonomicTree,
+                     TrData = Tm,
+                     TrFormula = TrFormula,
+                     phyloTree = taxonomicTree,
                      ranLevels = list(
                        location = rL.location, 
                        mission = rL.mission, 
@@ -146,9 +146,9 @@ m.host <- Hmsc::Hmsc(Y = Y,
                       XData = X,
                       XFormula = XFormula.host,
                       studyDesign = studyDesign, 
-                      # TrData = Tm,
-                      # TrFormula = TrFormula,
-                      # phyloTree = taxonomicTree,
+                      TrData = Tm,
+                      TrFormula = TrFormula,
+                      phyloTree = taxonomicTree,
                       ranLevels = list(
                         location = rL.location, 
                         mission = rL.mission,
@@ -160,17 +160,19 @@ m.host <- Hmsc::Hmsc(Y = Y,
 m.null
 m.host
 head(m.host$X) #factor should be subdivided into levels Boolean variables
+head(m.host$TrData)
 
-# Combining and saving models ----
+head(m.host$XScaled) #continuous variables (within Y, X and T) are automatically scaled in hmsc for default priors
+head(m.host$TrScaled)
+
+
+
+# Combining models ----
 models = list(m.null,
               m.host)
 
 names(models) = c("nullmodel",
                   "hostmodel")
-
-save(models, file = here::here(modelDir, "unfitted_models.RData"))
-
-
 
 # Test run ----
 #Just to see if would fit without errors (before doing real fitting procedure)
@@ -178,3 +180,7 @@ for(i in 1:length(models)){
  print(i)
  sampleMcmc(models[[i]], samples = 2)
 }
+
+
+# Saving models ----
+save(models, file = here::here(modelDir, "unfitted_models.RData"))

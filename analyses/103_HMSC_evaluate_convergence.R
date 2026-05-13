@@ -1,66 +1,63 @@
-# Set the base directory using your favorite method
-# setwd("...")
+# Script parameters ----
 
-##################################################################################################
-# INPUT AND OUTPUT OF THIS SCRIPT (BEGINNING)
-##################################################################################################
-#	INPUT. Fitted models
 
-#	OUTPUT. MCMC convergence statistics for selected model parameters,
-# illustrated (for all RUNs performed thus far in S3) in the file "results/MCMC_convergence.pdf",
+#	INPUT : Fitted models
+
+#	OUTPUT : MCMC convergence statistics for selected model parameters,
+# illustrated (for all RUNs performed thus far in S3) in the file "results/convergence/MCMC_convergence.pdf",
 # and the text file "results/MCMC_convergence.txt".
-##################################################################################################
-# INPUT AND OUTPUT OF THIS SCRIPT (END)
-##################################################################################################
 
 
-##################################################################################################
-# MAKE THE SCRIPT REPRODUCIBLE (BEGINNING)
-##################################################################################################
+# Remove saved elements (clean workspace)
+rm(list = ls())
+gc()
+
+# Load libraries
+library("dplyr")
+library("Hmsc")
+library("colorspace")
+library("vioplot")
+
+# Make script reproducible
 set.seed(1)
-##################################################################################################
-## MAKE THE SCRIPT REPRODUCIBLE (END)
-##################################################################################################
 
 
-##################################################################################################
-# SETTING COMMONLY ADJUSTED PARAMETERS TO NULL WHICH CORRESPONDS TO DEFAULT CHOICE (BEGINNING)
-##################################################################################################
+## Evaluation parameters ----
+
+#Setting Default parameter (Null implies default)
 showBeta = NULL #Default: showBeta = TRUE, convergence shown for beta-parameters
 showGamma = NULL #Default: showGamma = FALSE, convergence not shown for gamma-parameters
 showOmega = NULL #Default: showOmega = FALSE, convergence not shown for Omega-parameters
 maxOmega = NULL #Default: convergence of Omega shown for 50 randomly selected species pairs
 showRho = NULL #Default: showRho = FALSE, convergence not shown for rho-parameters
 showAlpha = NULL #Default: showAlpha = FALSE, convergence not shown for alpha-parameters
-##################################################################################################
-# SETTING COMMONLY ADJUSTED PARAMETERS TO NULL WHICH CORRESPONDS TO DEFAULT CHOICE (END)
-##################################################################################################
 
-##################################################################################################
-# CHANGE DEFAULT OPTIONS BY REMOVING COMMENT AND SETTING VALUE (BEGINNING)
-# NOTE THAT THIS IS THE ONLY SECTION OF THE SCRIPT THAT YOU TYPICALLY NEED TO MODIFY
-##################################################################################################
+#Change default parameters by removing comments and setting value
+#Typically only section of the script that nee to be modified     ▲
 showBeta = TRUE
 showGamma = TRUE
 showOmega = TRUE
 maxOmega = 100
 showRho = TRUE
 showAlpha = TRUE
-##################################################################################################
-# CHANGE DEFAULT OPTIONS BY REMOVING COMMENT AND SETTING VALUE (END)
-# NOTE THAT THIS IS THE ONLY SECTION OF THE SCRIPT THAT YOU TYPICALLY NEED TO MODIFY
-##################################################################################################
 
-##################################################################################################
-# SET DIRECTORIES (BEGINNING)
-##################################################################################################
-localDir = "."
-modelDir = file.path(localDir, "models")
-resultDir = file.path(localDir, "results")
-if (!dir.exists(resultDir)) dir.create(resultDir)
-##################################################################################################
-# SET DIRECTORIES (END)
-##################################################################################################
+
+# Load saved elements ----
+
+#Setting directories
+dataDir <- here::here("data", "derived-data", "hmsc_out")
+modelDir <- file.path(dataDir, "models")
+resultDir <- file.path(dataDir, "results", "convergence")
+
+if(!dir.exists(resultDir)) {
+  dir.create(resultDir, recursive = TRUE)
+}
+
+#Loading fitting parameters
+load(file = here::here(modelDir, "fitting_parameters.RData"))
+
+
+# Execute convergence evaluation ----
 
 if(is.null(showBeta)) showBeta = TRUE
 if(is.null(showGamma)) showGamma = FALSE
@@ -69,17 +66,10 @@ if(is.null(maxOmega)) maxOmega = 50
 if(is.null(showRho)) showRho = FALSE
 if(is.null(showAlpha)) showAlpha = FALSE
 
-library(Hmsc)
-library(colorspace)
-library(vioplot)
-
-samples_list = c(5,250,250,250,250,250)
-thin_list = c(1,1,10,100,1000,10000)
 nst = length(thin_list)
-nChains = 4
 
 text.file = file.path(resultDir,"/MCMC_convergence.txt")
-cat("MCMC Convergennce statistics\n\n",file=text.file,sep="")
+cat("MCMC Convergence statistics\n\n",file=text.file,sep="")
 
 ma.beta = NULL
 na.beta = NULL
@@ -92,6 +82,7 @@ na.alpha = NULL
 ma.rho = NULL
 na.rho = NULL
 Lst = 1
+
 while(Lst <= nst){
   thin = thin_list[Lst]
   samples = samples_list[Lst]

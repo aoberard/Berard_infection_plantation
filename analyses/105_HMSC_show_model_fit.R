@@ -1,65 +1,44 @@
-# Set the base directory using your favorite method
-# setwd("...")
+# Script parameters ----
 
-##################################################################################################
-# INPUT AND OUTPUT OF THIS SCRIPT (BEGINNING)
-##################################################################################################
-#	INPUT. Model fits.
+
+#	INPUT: Model fits.
 
 #	OUTPUT. Model fits illustrated (for highest RUN of S4) in the file "results/model_fit.pdf".
-##################################################################################################
-# INPUT AND OUTPUT OF THIS SCRIPT (END)
-##################################################################################################
 
 
+# Remove saved elements (clean workspace)
+rm(list = ls())
+gc()
 
-##################################################################################################
-# MAKE THE SCRIPT REPRODUCIBLE (BEGINNING)
-##################################################################################################
+# Load libraries
+library("dplyr")
+library("Hmsc")
+
+# Make script reproducible
 set.seed(1)
-##################################################################################################
-## MAKE THE SCRIPT REPRODUCIBLE (END)
-##################################################################################################
+
+
+# Load saved elements ----
+
+#Setting directories
+dataDir <- here::here("data", "derived-data", "hmsc_out")
+modelDir <- file.path(dataDir, "models")
+resultDir <- file.path(dataDir, "results", "model_fit")
+
+if(!dir.exists(resultDir)) {
+  dir.create(resultDir, recursive = TRUE)
+}
+
+#Loading fitting parameters
+load(file = here::here(modelDir, "fitting_parameters.RData"))
+
+#Loading model fit parameters
+load(here::here(modelDir, "nfolds_parameter.RData"))
 
 
 
-##################################################################################################
-# SETTING COMMONLY ADJUSTED PARAMETERS TO NULL WHICH CORRESPONDS TO DEFAULT CHOICE (BEGINNING)
-##################################################################################################
-nfolds = NULL #Default: two-fold cross-validation
-##################################################################################################
-# SETTING COMMONLY ADJUSTED PARAMETERS TO NULL WHICH CORRESPONDS TO DEFAULT CHOICE (END)
-##################################################################################################
-
-##################################################################################################
-# CHANGE DEFAULT OPTIONS BY REMOVING COMMENT AND SETTING VALUE (BEGINNING)
-# NOTE THAT THIS IS THE ONLY SECTION OF THE SCRIPT THAT YOU TYPICALLY NEED TO MODIFY
-##################################################################################################
-#nfolds = 10 #change the number of CV-folds
-##################################################################################################
-# CHANGE DEFAULT OPTIONS BY REMOVING COMMENT AND SETTING VALUE (END)
-# NOTE THAT THIS IS THE ONLY SECTION OF THE SCRIPT THAT YOU TYPICALLY NEED TO MODIFY
-##################################################################################################
-
-##################################################################################################
-# SET DIRECTORIES (BEGINNING)
-##################################################################################################
-localDir = "."
-modelDir = file.path(localDir, "models")
-resultDir = file.path(localDir, "results")
-if (!dir.exists(resultDir)) dir.create(resultDir)
-##################################################################################################
-# SET DIRECTORIES (END)
-##################################################################################################
-
-if(is.null(nfolds)) nfolds = 2
-
-library(Hmsc)
-
-samples_list = c(5,250,250,250,250,250)
-thin_list = c(1,1,10,100,1000,10000)
+# Execute model fit plotting ----
 nst = length(thin_list)
-nChains = 4
 
 for (Lst in nst:1) {
   thin = thin_list[Lst]

@@ -3,7 +3,7 @@
 #	INPUT. the Fitted models.
 
 # OUTPUT: Parameter estimates illustrated (for highest RUN of among fitted models) in the file
-# "results/parameter_estimates.pdf", the text file "results/parameter_estimates.txt", 
+# "results/parameter_estimates.pdf", the text file "results/parameters/parameter_estimates.txt", 
 # as well as given numerically in multiple csv files (one per parameter type) named 
 # "results/parameter_estimates_[parameter_name].csv".
 
@@ -28,14 +28,11 @@ set.seed(1)
 #Setting directories
 dataDir <- here::here("data", "derived-data", "hmsc_out")
 modelDir <- file.path(dataDir, "models")
-resultDir = file.path(dataDir, "results")
+resultDir <- file.path(dataDir, "results", "parameters")
 
 if(!dir.exists(resultDir)) {
   dir.create(resultDir, recursive = TRUE)
 }
-
-#Loading fitted models
-load(file = here::here(modelDir, "fitting_parameters.RData"))
 
 #Loading fitting parameters
 load(file = here::here(modelDir, "fitting_parameters.RData"))
@@ -43,6 +40,7 @@ load(file = here::here(modelDir, "fitting_parameters.RData"))
 
 #Select models on which to run the script (unless previously other models were filtered out ?) 
 # models <- models$XXXXX
+#not this way definetely, as for is loading by itself
 
 
 
@@ -88,7 +86,7 @@ show.sp.names.omega = NULL #Default: species names shown in beta plot if there a
 
 #use show.sp.names.beta to choose to show / not show species names in betaPlot
 #if given, show.sp.names.beta should be a vector with length equalling number of models
-#show.sp.names.beta = c(TRUE,FALSE)
+show.sp.names.beta = c(TRUE, TRUE)
 
 #use plotTree to choose to plot / not plot the tree in betaPlot
 #if given, plotTree should be a vector with length equalling number of models

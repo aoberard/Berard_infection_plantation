@@ -39,8 +39,6 @@ namesrandom <- c( "year", "field_session", "numero_ligne", "numero_centre")
 data_hmsc <- inf %>%
   mutate(across(where(is.character), as.factor))
 
-traits <- traits %>% 
-  mutate(across(where(is.character), as.factor))
 
 ##Convert numeric columns that should be treated as factors 
 #numero_ligne
@@ -101,6 +99,12 @@ data_hmsc <- data_hmsc %>%
 data_hmsc %>%
   select(any_of(c(namesagent, namesvar, namesrandom))) %>%
   str()
+
+
+## Traits dataframe modification ----
+traits <- traits %>% 
+  mutate(across(all_of(colnames(traits)), as.factor))
+
 
 
 # Matrix setup ----

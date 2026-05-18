@@ -1,4 +1,4 @@
-MCMC Convergennce statistics
+MCMC Convergence statistics
 
 
 C:/Users/berardal/Documents/Aloïs/BePrep/03_Papier_pathogenes/Analyse/Berard_pathos_community/data/derived-data/hmsc_out/models/models_thin_1_samples_250_chains_4.Rdata
@@ -9,112 +9,222 @@ nullmodel
 
 beta
 
-Min.   :1.075  
-1st Qu.:1.084  
-Median :1.112  
-Mean   :1.121  
-3rd Qu.:1.138  
-Max.   :1.218  
+Min.   :1.013  
+1st Qu.:1.051  
+Median :1.071  
+Mean   :1.164  
+3rd Qu.:1.171  
+Max.   :1.561  
 
 gamma
 
-Min.   :0.9995  
-1st Qu.:0.9999  
-Median :1.0009  
-Mean   :1.0010  
-3rd Qu.:1.0020  
-Max.   :1.0026  
+Min.   :1.000  
+1st Qu.:1.007  
+Median :1.011  
+Mean   :1.011  
+3rd Qu.:1.015  
+Max.   :1.021  
 
 rho
 
-1.024869
+1.007389
 
 omega
 
 
 location
 
-Min.   :1.016  
-1st Qu.:1.070  
-Median :1.094  
-Mean   :1.097  
-3rd Qu.:1.130  
-Max.   :1.180  
+Min.   :1.008  
+1st Qu.:1.047  
+Median :1.070  
+Mean   :1.080  
+3rd Qu.:1.103  
+Max.   :1.198  
 
-mission
+year
 
-Min.   :1.009  
-1st Qu.:1.050  
-Median :1.091  
-Mean   :1.112  
-3rd Qu.:1.182  
-Max.   :1.226  
+Min.   :0.9989  
+1st Qu.:1.0102  
+Median :1.0165  
+Mean   :1.0250  
+3rd Qu.:1.0329  
+Max.   :1.1140  
 
 individual
 
-Min.   :1.047  
-1st Qu.:1.077  
-Median :1.130  
-Mean   :1.147  
-3rd Qu.:1.172  
-Max.   :1.409  
+Min.   :1.005  
+1st Qu.:1.065  
+Median :1.125  
+Mean   :1.228  
+3rd Qu.:1.322  
+Max.   :2.568  
 
 hostmodel
 
 
 beta
 
-Min.   :1.000  
-1st Qu.:1.007  
-Median :1.012  
-Mean   :1.029  
-3rd Qu.:1.032  
-Max.   :1.231  
+Min.   :0.9991  
+1st Qu.:1.0123  
+Median :1.0253  
+Mean   :1.0316  
+3rd Qu.:1.0462  
+Max.   :1.0963  
 
 gamma
 
-Min.   :0.9985  
-1st Qu.:1.0004  
-Median :1.0023  
-Mean   :1.0031  
-3rd Qu.:1.0053  
-Max.   :1.0097  
+Min.   :0.999  
+1st Qu.:1.001  
+Median :1.003  
+Mean   :1.006  
+3rd Qu.:1.011  
+Max.   :1.026  
 
 rho
 
-1.002051
+1.021885
 
 omega
 
 
 location
 
-Min.   :1.011  
-1st Qu.:1.043  
-Median :1.076  
-Mean   :1.082  
-3rd Qu.:1.104  
-Max.   :1.221  
+Min.   :1.003  
+1st Qu.:1.040  
+Median :1.075  
+Mean   :1.096  
+3rd Qu.:1.103  
+Max.   :1.475  
 
-mission
+year
 
-Min.   :1.027  
-1st Qu.:1.059  
-Median :1.067  
-Mean   :1.088  
-3rd Qu.:1.104  
-Max.   :1.310  
+Min.   :1.005  
+1st Qu.:1.022  
+Median :1.041  
+Mean   :1.051  
+3rd Qu.:1.071  
+Max.   :1.219  
 
 individual
 
-Min.   :1.026  
-1st Qu.:1.064  
-Median :1.118  
-Mean   :1.134  
-3rd Qu.:1.187  
-Max.   :1.322  
+Min.   :1.027  
+1st Qu.:1.069  
+Median :1.131  
+Mean   :1.160  
+3rd Qu.:1.215  
+Max.   :1.654  
 
-C:/Users/berardal/Documents/Aloïs/BePrep/03_Papier_pathogenes/Analyse/Berard_pathos_community/data/derived-data/hmsc_out/models/models_thin_10_samples_250_chains_4.Rdata
+habitatmodel
+
+
+beta
+
+Min.   :1.005  
+1st Qu.:1.022  
+Median :1.038  
+Mean   :1.047  
+3rd Qu.:1.064  
+Max.   :1.199  
+
+gamma
+
+Min.   :1.002  
+1st Qu.:1.008  
+Median :1.017  
+Mean   :1.018  
+3rd Qu.:1.027  
+Max.   :1.039  
+
+rho
+
+1.028357
+
+omega
+
+
+location
+
+Min.   :1.010  
+1st Qu.:1.066  
+Median :1.112  
+Mean   :1.150  
+3rd Qu.:1.187  
+Max.   :1.516  
+
+year
+
+Min.   :1.004  
+1st Qu.:1.038  
+Median :1.048  
+Mean   :1.063  
+3rd Qu.:1.073  
+Max.   :1.313  
+
+individual
+
+Min.   :1.017  
+1st Qu.:1.081  
+Median :1.134  
+Mean   :1.165  
+3rd Qu.:1.213  
+Max.   :1.538  
+
+habitat&hostmodel
+
+
+beta
+
+Min.   :1.001  
+1st Qu.:1.016  
+Median :1.032  
+Mean   :1.045  
+3rd Qu.:1.062  
+Max.   :1.204  
+
+gamma
+
+Min.   :0.9996  
+1st Qu.:1.0070  
+Median :1.0126  
+Mean   :1.0164  
+3rd Qu.:1.0229  
+Max.   :1.0608  
+
+rho
+
+1.046783
+
+omega
+
+
+location
+
+Min.   :1.005  
+1st Qu.:1.032  
+Median :1.055  
+Mean   :1.066  
+3rd Qu.:1.088  
+Max.   :1.267  
+
+year
+
+Min.   :1.006  
+1st Qu.:1.022  
+Median :1.037  
+Mean   :1.059  
+3rd Qu.:1.078  
+Max.   :1.233  
+
+individual
+
+Min.   :1.015  
+1st Qu.:1.075  
+Median :1.121  
+Mean   :1.147  
+3rd Qu.:1.193  
+Max.   :1.547  
+
+C:/Users/berardal/Documents/Aloïs/BePrep/03_Papier_pathogenes/Analyse/Berard_pathos_community/data/derived-data/hmsc_out/models/models_thin_100_samples_250_chains_4.Rdata
 
 
 nullmodel
@@ -123,79 +233,189 @@ nullmodel
 beta
 
 Min.   :1.000  
-1st Qu.:1.008  
-Median :1.020  
-Mean   :1.022  
-3rd Qu.:1.025  
-Max.   :1.068  
+1st Qu.:1.001  
+Median :1.003  
+Mean   :1.003  
+3rd Qu.:1.005  
+Max.   :1.007  
 
 gamma
 
-Min.   :1.000  
-1st Qu.:1.001  
-Median :1.002  
-Mean   :1.002  
-3rd Qu.:1.003  
-Max.   :1.004  
+Min.   :1.003  
+1st Qu.:1.006  
+Median :1.010  
+Mean   :1.009  
+3rd Qu.:1.014  
+Max.   :1.015  
 
 rho
 
-1.002315
+0.9999814
 
 omega
 
 
 location
 
-Min.   :1.000  
-1st Qu.:1.002  
-Median :1.004  
-Mean   :1.007  
-3rd Qu.:1.008  
-Max.   :1.036  
+Min.   :0.9992  
+1st Qu.:1.0031  
+Median :1.0061  
+Mean   :1.0086  
+3rd Qu.:1.0100  
+Max.   :1.0425  
 
-mission
+year
 
-Min.   :1.004  
-1st Qu.:1.010  
-Median :1.016  
-Mean   :1.016  
-3rd Qu.:1.020  
-Max.   :1.028  
+Min.   :0.9984  
+1st Qu.:1.0041  
+Median :1.0072  
+Mean   :1.0081  
+3rd Qu.:1.0112  
+Max.   :1.0281  
 
 individual
 
-Min.   :0.9996  
-1st Qu.:1.0048  
-Median :1.0138  
-Mean   :1.0217  
-3rd Qu.:1.0280  
-Max.   :1.0973  
+Min.   :0.9995  
+1st Qu.:1.0016  
+Median :1.0048  
+Mean   :1.0051  
+3rd Qu.:1.0066  
+Max.   :1.0256  
 
 hostmodel
 
 
 beta
 
-Min.   :0.9981  
-1st Qu.:0.9999  
-Median :1.0024  
-Mean   :1.0039  
-3rd Qu.:1.0050  
-Max.   :1.0218  
+Min.   :0.9979  
+1st Qu.:1.0000  
+Median :1.0016  
+Mean   :1.0020  
+3rd Qu.:1.0032  
+Max.   :1.0107  
 
 gamma
 
 Min.   :0.9987  
-1st Qu.:1.0003  
-Median :1.0015  
-Mean   :1.0015  
-3rd Qu.:1.0028  
-Max.   :1.0040  
+1st Qu.:1.0012  
+Median :1.0029  
+Mean   :1.0031  
+3rd Qu.:1.0049  
+Max.   :1.0093  
 
 rho
 
-0.9990412
+1.000828
+
+omega
+
+
+location
+
+Min.   :0.9982  
+1st Qu.:1.0012  
+Median :1.0045  
+Mean   :1.0051  
+3rd Qu.:1.0085  
+Max.   :1.0206  
+
+year
+
+Min.   :0.9989  
+1st Qu.:1.0056  
+Median :1.0120  
+Mean   :1.0265  
+3rd Qu.:1.0280  
+Max.   :1.2712  
+
+individual
+
+Min.   :1.000  
+1st Qu.:1.006  
+Median :1.014  
+Mean   :1.020  
+3rd Qu.:1.019  
+Max.   :1.136  
+
+habitatmodel
+
+
+beta
+
+Min.   :0.9978  
+1st Qu.:0.9994  
+Median :1.0006  
+Mean   :1.0011  
+3rd Qu.:1.0020  
+Max.   :1.0095  
+
+gamma
+
+Min.   :0.9988  
+1st Qu.:1.0001  
+Median :1.0013  
+Mean   :1.0024  
+3rd Qu.:1.0029  
+Max.   :1.0114  
+
+rho
+
+1.015212
+
+omega
+
+
+location
+
+Min.   :0.9982  
+1st Qu.:1.0021  
+Median :1.0047  
+Mean   :1.0062  
+3rd Qu.:1.0077  
+Max.   :1.0375  
+
+year
+
+Min.   :0.9979  
+1st Qu.:1.0038  
+Median :1.0118  
+Mean   :1.0220  
+3rd Qu.:1.0225  
+Max.   :1.1875  
+
+individual
+
+Min.   :0.9989  
+1st Qu.:1.0017  
+Median :1.0051  
+Mean   :1.0077  
+3rd Qu.:1.0091  
+Max.   :1.0897  
+
+habitat&hostmodel
+
+
+beta
+
+Min.   :0.9981  
+1st Qu.:1.0000  
+Median :1.0015  
+Mean   :1.0028  
+3rd Qu.:1.0037  
+Max.   :1.0528  
+
+gamma
+
+Min.   :0.9982  
+1st Qu.:0.9997  
+Median :1.0008  
+Mean   :1.0017  
+3rd Qu.:1.0024  
+Max.   :1.0189  
+
+rho
+
+1.030286
 
 omega
 
@@ -203,26 +423,26 @@ omega
 location
 
 Min.   :0.9986  
-1st Qu.:1.0041  
-Median :1.0066  
-Mean   :1.0096  
-3rd Qu.:1.0121  
-Max.   :1.0492  
+1st Qu.:1.0026  
+Median :1.0059  
+Mean   :1.0070  
+3rd Qu.:1.0086  
+Max.   :1.0434  
 
-mission
+year
 
-Min.   :1.003  
-1st Qu.:1.009  
-Median :1.013  
-Mean   :1.016  
-3rd Qu.:1.019  
-Max.   :1.053  
+Min.   :0.9985  
+1st Qu.:1.0034  
+Median :1.0101  
+Mean   :1.0161  
+3rd Qu.:1.0191  
+Max.   :1.1531  
 
 individual
 
-Min.   :0.9984  
-1st Qu.:1.0203  
-Median :1.0379  
-Mean   :1.0511  
-3rd Qu.:1.0703  
-Max.   :1.2532  
+Min.   :0.9992  
+1st Qu.:1.0085  
+Median :1.0159  
+Mean   :1.0269  
+3rd Qu.:1.0289  
+Max.   :1.1976  

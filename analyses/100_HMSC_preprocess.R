@@ -14,7 +14,6 @@ library("dplyr")
 inf <- data.table::fread(file = here::here("data", "derived-data", "asylvaticus_data", "asylvaticus_infectious.csv"))
 
 names_inf <- readRDS(file = here::here("data", "derived-data", "asylvaticus_data", "names_infectious_apo.rds"))
-names_inf10 <- readRDS(file = here::here("data", "derived-data", "asylvaticus_data", "names_infectious_apo10.rds"))
 
 #Infectious agents traits
 traits <- readxl::read_excel(path = here::here("data", "raw-data", "20260513_agents_traits.xlsx"))
@@ -22,9 +21,6 @@ traits <- readxl::read_excel(path = here::here("data", "raw-data", "20260513_age
 
 
 # Parameter choice  ----
-
-# Choose which infectious agent to consider ▲
-namesagent <- names_inf10
 
 # Choose which explanatory/random variables to consider ▲
 namesvar <- c("poids", "sexe", "maturity", "season", "category", "nb_apo")
@@ -52,12 +48,12 @@ data_hmsc <- data_hmsc %>%
 
 ##Ensure response variables are numeric
 data_hmsc <- data_hmsc %>%
-  mutate(across(all_of(namesagent), as.numeric))
+  mutate(across(all_of(names_inf), as.numeric))
 
 
 ## Ensure wide format ----
 #Data should be in wide format for hmsc
-head(data_hmsc %>%  select(all_of(namesagent))) #fine here
+head(data_hmsc %>%  select(all_of(names_inf))) #fine here
 
 
 ## Remove rows with NA ----
@@ -65,11 +61,11 @@ head(data_hmsc %>%  select(all_of(namesagent))) #fine here
 
 #response
 data_hmsc %>%
-  filter(if_any(any_of(namesagent), is.na)) %>% 
-  select(all_of( c("numero_centre", namesagent)))
+  filter(if_any(any_of(names_inf), is.na)) %>% 
+  select(all_of( c("numero_centre", names_inf)))
 
 data_hmsc <- data_hmsc %>%
-  filter(! if_any(any_of(namesagent), is.na))
+  filter(! if_any(any_of(names_inf), is.na))
 
 
 #explanatory
@@ -97,7 +93,7 @@ data_hmsc <- data_hmsc %>%
 
 ## Verify the structure of data
 data_hmsc %>%
-  select(any_of(c(namesagent, namesvar, namesrandom))) %>%
+  select(any_of(c(names_inf, namesvar, namesrandom))) %>%
   str()
 
 
@@ -112,7 +108,7 @@ traits <- traits %>%
 ## Y table ----
 Y <- data_hmsc %>% 
   tibble::column_to_rownames("numero_centre") %>% 
-  select(all_of(namesagent))
+  select(all_of(names_inf))
   
 
 head(Y)

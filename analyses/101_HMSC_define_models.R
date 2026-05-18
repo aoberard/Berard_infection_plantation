@@ -49,6 +49,26 @@ table(Tm$direct_transmission)
 table(Tm$tick_transmission)
 
 
+## Remove rare species from Y ----
+
+#Take a look at effectif and prevalence
+data.frame(
+  n_positive = colSums(Y),
+  prevalence = colMeans(Y),
+  prevalence_pct = 100 * colMeans(Y)
+  ) %>%
+  arrange(n_positive)
+
+#Choose effectif threshold
+n_threshold <- 15
+
+#Apply threshold
+parasites_to_keep <- names(colSums(Y)[colSums(Y) >= n_threshold])
+
+Y <- Y %>%
+  select(all_of(parasites_to_keep))
+
+
 ## Safeguards ----
 
 #Just make sure matrix X, Y and the studyDesign dataframe have aligned row names
@@ -92,7 +112,12 @@ message("Matrix location.xy has been reordered to match studyDesign 'location' l
 
 ## Models' fixed effects formula ----
 XFormula.null = ~ 1
-XFormula.host = ~ sexe + poids + maturity
+XFormula.host = ~ season + sexe + poids + maturity 
+XFormula.env = ~  season * category + nb_apo
+XFormula.env_host = ~  season * category + nb_apo + sexe + poids + maturity
+# XFormula.env_detail = ~   
+
+
 
 ## Models' traits formula ----
 TrFormula = ~ direct_transmission + tick_transmission + flea_transmission 
@@ -106,8 +131,7 @@ rL.year <- Hmsc::HmscRandomLevel(units = levels(studyDesign$year))
 rL.mission <- Hmsc::HmscRandomLevel(units = levels(studyDesign$mission))
 rL.location <- Hmsc::HmscRandomLevel(units = levels(studyDesign$location))
 
-
-#Define unstructured random effect at spatiotemporal unit
+#Define unstructured random effect at individual unit
 rL.ind <- Hmsc::HmscRandomLevel(units = levels(studyDesign$individual))
 
 #Define studyDesign "location" spatial random effect
@@ -137,7 +161,7 @@ m.null <- Hmsc::Hmsc(Y = Y,
                      phyloTree = taxonomicTree,
                      ranLevels = list(
                        location = rL.location, 
-                       mission = rL.mission, 
+                       year = rL.year, 
                        individual = rL.ind
                        ))
 
@@ -151,14 +175,45 @@ m.host <- Hmsc::Hmsc(Y = Y,
                       phyloTree = taxonomicTree,
                       ranLevels = list(
                         location = rL.location, 
-                        mission = rL.mission,
+                        year = rL.year,
                         individual = rL.ind
                         ))
+
+m.env <- Hmsc::Hmsc(Y = Y,
+                     distr = "probit", 
+                     XData = X,
+                     XFormula = XFormula.env,
+                     studyDesign = studyDesign, 
+                     TrData = Tm,
+                     TrFormula = TrFormula,
+                     phyloTree = taxonomicTree,
+                     ranLevels = list(
+                       location = rL.location, 
+                       year = rL.year,
+                       individual = rL.ind
+                     ))
+
+m.env_host <- Hmsc::Hmsc(Y = Y,
+                    distr = "probit", 
+                    XData = X,
+                    XFormula = XFormula.env_host,
+                    studyDesign = studyDesign, 
+                    TrData = Tm,
+                    TrFormula = TrFormula,
+                    phyloTree = taxonomicTree,
+                    ranLevels = list(
+                      location = rL.location, 
+                      year = rL.year,
+                      individual = rL.ind
+                    ))
+
 
 
 #Check models structure
 m.null
 m.host
+m.env
+m.env_host
 head(m.host$X) #factor should be subdivided into levels Boolean variables
 head(m.host$TrData)
 
@@ -169,10 +224,15 @@ head(m.host$TrScaled)
 
 # Combining models ----
 models = list(m.null,
-              m.host)
+              m.host,
+              m.env,
+              m.env_host
+              )
 
 names(models) = c("nullmodel",
-                  "hostmodel")
+                  "hostmodel",
+                  "habitatmodel",
+                  "habitat&hostmodel")
 
 # Test run ----
 #Just to see if would fit without errors (before doing real fitting procedure)

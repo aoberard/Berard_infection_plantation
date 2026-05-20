@@ -86,7 +86,7 @@ show.sp.names.omega = NULL #Default: species names shown in beta plot if there a
 
 #use show.sp.names.beta to choose to show / not show species names in betaPlot
 #if given, show.sp.names.beta should be a vector with length equalling number of models
-show.sp.names.beta = c(TRUE, TRUE)
+show.sp.names.beta = c(TRUE, TRUE, TRUE, TRUE)
 
 #use plotTree to choose to plot / not plot the tree in betaPlot
 #if given, plotTree should be a vector with length equalling number of models

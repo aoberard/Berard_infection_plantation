@@ -9,190 +9,190 @@ nullmodel
 
 beta
 
-Min.   :1.013  
-1st Qu.:1.051  
-Median :1.071  
-Mean   :1.164  
-3rd Qu.:1.171  
-Max.   :1.561  
+Min.   :1.058  
+1st Qu.:1.095  
+Median :1.191  
+Mean   :1.205  
+3rd Qu.:1.247  
+Max.   :1.523  
 
 gamma
 
-Min.   :1.000  
-1st Qu.:1.007  
-Median :1.011  
-Mean   :1.011  
-3rd Qu.:1.015  
-Max.   :1.021  
+Min.   :1.009  
+1st Qu.:1.011  
+Median :1.013  
+Mean   :1.018  
+3rd Qu.:1.023  
+Max.   :1.033  
 
 rho
 
-1.007389
+0.9988188
 
 omega
 
 
 location
 
-Min.   :1.008  
-1st Qu.:1.047  
-Median :1.070  
-Mean   :1.080  
-3rd Qu.:1.103  
-Max.   :1.198  
+Min.   :1.005  
+1st Qu.:1.025  
+Median :1.041  
+Mean   :1.051  
+3rd Qu.:1.067  
+Max.   :1.199  
 
-year
+mission
 
-Min.   :0.9989  
-1st Qu.:1.0102  
-Median :1.0165  
-Mean   :1.0250  
-3rd Qu.:1.0329  
-Max.   :1.1140  
+Min.   :1.010  
+1st Qu.:1.032  
+Median :1.049  
+Mean   :1.079  
+3rd Qu.:1.106  
+Max.   :1.554  
 
 individual
 
-Min.   :1.005  
-1st Qu.:1.065  
-Median :1.125  
-Mean   :1.228  
-3rd Qu.:1.322  
-Max.   :2.568  
+Min.   :1.008  
+1st Qu.:1.058  
+Median :1.111  
+Mean   :1.138  
+3rd Qu.:1.165  
+Max.   :1.622  
 
 hostmodel
 
 
 beta
 
-Min.   :0.9991  
-1st Qu.:1.0123  
-Median :1.0253  
-Mean   :1.0316  
-3rd Qu.:1.0462  
-Max.   :1.0963  
+Min.   :1.002  
+1st Qu.:1.016  
+Median :1.031  
+Mean   :1.041  
+3rd Qu.:1.051  
+Max.   :1.139  
 
 gamma
 
-Min.   :0.999  
-1st Qu.:1.001  
-Median :1.003  
-Mean   :1.006  
-3rd Qu.:1.011  
-Max.   :1.026  
+Min.   :1.001  
+1st Qu.:1.002  
+Median :1.004  
+Mean   :1.007  
+3rd Qu.:1.010  
+Max.   :1.024  
 
 rho
 
-1.021885
+1.008498
 
 omega
 
 
 location
 
-Min.   :1.003  
+Min.   :1.016  
 1st Qu.:1.040  
-Median :1.075  
-Mean   :1.096  
-3rd Qu.:1.103  
-Max.   :1.475  
+Median :1.061  
+Mean   :1.077  
+3rd Qu.:1.100  
+Max.   :1.226  
 
-year
+mission
 
-Min.   :1.005  
-1st Qu.:1.022  
-Median :1.041  
-Mean   :1.051  
-3rd Qu.:1.071  
-Max.   :1.219  
+Min.   :1.002  
+1st Qu.:1.024  
+Median :1.036  
+Mean   :1.058  
+3rd Qu.:1.087  
+Max.   :1.211  
 
 individual
 
-Min.   :1.027  
-1st Qu.:1.069  
-Median :1.131  
-Mean   :1.160  
-3rd Qu.:1.215  
-Max.   :1.654  
+Min.   :1.021  
+1st Qu.:1.080  
+Median :1.116  
+Mean   :1.156  
+3rd Qu.:1.196  
+Max.   :1.619  
 
 habitatmodel
 
 
 beta
 
-Min.   :1.005  
-1st Qu.:1.022  
-Median :1.038  
-Mean   :1.047  
+Min.   :1.001  
+1st Qu.:1.021  
+Median :1.040  
+Mean   :1.052  
 3rd Qu.:1.064  
-Max.   :1.199  
+Max.   :1.205  
 
 gamma
 
-Min.   :1.002  
-1st Qu.:1.008  
-Median :1.017  
-Mean   :1.018  
-3rd Qu.:1.027  
-Max.   :1.039  
+Min.   :1.001  
+1st Qu.:1.004  
+Median :1.018  
+Mean   :1.026  
+3rd Qu.:1.031  
+Max.   :1.129  
 
 rho
 
-1.028357
+1.030611
 
 omega
 
 
 location
 
-Min.   :1.010  
-1st Qu.:1.066  
-Median :1.112  
-Mean   :1.150  
-3rd Qu.:1.187  
-Max.   :1.516  
+Min.   :1.006  
+1st Qu.:1.032  
+Median :1.056  
+Mean   :1.067  
+3rd Qu.:1.090  
+Max.   :1.331  
 
-year
+mission
 
-Min.   :1.004  
-1st Qu.:1.038  
-Median :1.048  
-Mean   :1.063  
-3rd Qu.:1.073  
-Max.   :1.313  
+Min.   :1.006  
+1st Qu.:1.024  
+Median :1.039  
+Mean   :1.047  
+3rd Qu.:1.068  
+Max.   :1.145  
 
 individual
 
-Min.   :1.017  
-1st Qu.:1.081  
-Median :1.134  
-Mean   :1.165  
-3rd Qu.:1.213  
-Max.   :1.538  
+Min.   :1.029  
+1st Qu.:1.086  
+Median :1.158  
+Mean   :1.191  
+3rd Qu.:1.245  
+Max.   :2.050  
 
 habitat&hostmodel
 
 
 beta
 
-Min.   :1.001  
-1st Qu.:1.016  
-Median :1.032  
-Mean   :1.045  
-3rd Qu.:1.062  
-Max.   :1.204  
+Min.   :0.9991  
+1st Qu.:1.0129  
+Median :1.0255  
+Mean   :1.0389  
+3rd Qu.:1.0414  
+Max.   :1.5284  
 
 gamma
 
-Min.   :0.9996  
-1st Qu.:1.0070  
-Median :1.0126  
-Mean   :1.0164  
-3rd Qu.:1.0229  
-Max.   :1.0608  
+Min.   :1.002  
+1st Qu.:1.004  
+Median :1.012  
+Mean   :1.014  
+3rd Qu.:1.022  
+Max.   :1.040  
 
 rho
 
-1.046783
+1.022784
 
 omega
 
@@ -200,29 +200,29 @@ omega
 location
 
 Min.   :1.005  
-1st Qu.:1.032  
-Median :1.055  
-Mean   :1.066  
-3rd Qu.:1.088  
-Max.   :1.267  
+1st Qu.:1.025  
+Median :1.038  
+Mean   :1.050  
+3rd Qu.:1.058  
+Max.   :1.248  
 
-year
+mission
 
-Min.   :1.006  
-1st Qu.:1.022  
-Median :1.037  
-Mean   :1.059  
-3rd Qu.:1.078  
-Max.   :1.233  
+Min.   :1.002  
+1st Qu.:1.020  
+Median :1.036  
+Mean   :1.057  
+3rd Qu.:1.080  
+Max.   :1.265  
 
 individual
 
-Min.   :1.015  
-1st Qu.:1.075  
-Median :1.121  
-Mean   :1.147  
-3rd Qu.:1.193  
-Max.   :1.547  
+Min.   :1.020  
+1st Qu.:1.088  
+Median :1.163  
+Mean   :1.174  
+3rd Qu.:1.240  
+Max.   :1.553  
 
 C:/Users/berardal/Documents/Aloïs/BePrep/03_Papier_pathogenes/Analyse/Berard_pathos_community/data/derived-data/hmsc_out/models/models_thin_100_samples_250_chains_4.Rdata
 
@@ -232,55 +232,55 @@ nullmodel
 
 beta
 
-Min.   :1.000  
-1st Qu.:1.001  
-Median :1.003  
-Mean   :1.003  
-3rd Qu.:1.005  
-Max.   :1.007  
+Min.   :0.9990  
+1st Qu.:0.9997  
+Median :1.0012  
+Mean   :1.0018  
+3rd Qu.:1.0037  
+Max.   :1.0059  
 
 gamma
 
-Min.   :1.003  
-1st Qu.:1.006  
-Median :1.010  
-Mean   :1.009  
-3rd Qu.:1.014  
-Max.   :1.015  
+Min.   :1.002  
+1st Qu.:1.002  
+Median :1.003  
+Mean   :1.003  
+3rd Qu.:1.004  
+Max.   :1.004  
 
 rho
 
-0.9999814
+0.9993698
 
 omega
 
 
 location
 
-Min.   :0.9992  
-1st Qu.:1.0031  
-Median :1.0061  
-Mean   :1.0086  
-3rd Qu.:1.0100  
+Min.   :0.9993  
+1st Qu.:1.0028  
+Median :1.0060  
+Mean   :1.0087  
+3rd Qu.:1.0120  
 Max.   :1.0425  
 
-year
+mission
 
-Min.   :0.9984  
-1st Qu.:1.0041  
-Median :1.0072  
-Mean   :1.0081  
-3rd Qu.:1.0112  
-Max.   :1.0281  
+Min.   :0.9985  
+1st Qu.:1.0017  
+Median :1.0045  
+Mean   :1.0060  
+3rd Qu.:1.0088  
+Max.   :1.0232  
 
 individual
 
-Min.   :0.9995  
-1st Qu.:1.0016  
-Median :1.0048  
-Mean   :1.0051  
-3rd Qu.:1.0066  
-Max.   :1.0256  
+Min.   :0.998  
+1st Qu.:1.002  
+Median :1.004  
+Mean   :1.006  
+3rd Qu.:1.008  
+Max.   :1.032  
 
 hostmodel
 
@@ -288,161 +288,161 @@ hostmodel
 beta
 
 Min.   :0.9979  
-1st Qu.:1.0000  
-Median :1.0016  
-Mean   :1.0020  
-3rd Qu.:1.0032  
-Max.   :1.0107  
+1st Qu.:0.9999  
+Median :1.0025  
+Mean   :1.0031  
+3rd Qu.:1.0051  
+Max.   :1.0200  
 
 gamma
 
-Min.   :0.9987  
-1st Qu.:1.0012  
-Median :1.0029  
-Mean   :1.0031  
-3rd Qu.:1.0049  
-Max.   :1.0093  
+Min.   :0.998  
+1st Qu.:1.000  
+Median :1.002  
+Mean   :1.003  
+3rd Qu.:1.003  
+Max.   :1.009  
 
 rho
 
-1.000828
+0.9995323
 
 omega
 
 
 location
 
-Min.   :0.9982  
-1st Qu.:1.0012  
-Median :1.0045  
-Mean   :1.0051  
-3rd Qu.:1.0085  
-Max.   :1.0206  
+Min.   :0.9983  
+1st Qu.:1.0023  
+Median :1.0053  
+Mean   :1.0069  
+3rd Qu.:1.0090  
+Max.   :1.0299  
 
-year
+mission
 
 Min.   :0.9989  
-1st Qu.:1.0056  
-Median :1.0120  
-Mean   :1.0265  
-3rd Qu.:1.0280  
-Max.   :1.2712  
+1st Qu.:1.0043  
+Median :1.0069  
+Mean   :1.0108  
+3rd Qu.:1.0141  
+Max.   :1.0638  
 
 individual
 
-Min.   :1.000  
-1st Qu.:1.006  
-Median :1.014  
-Mean   :1.020  
-3rd Qu.:1.019  
-Max.   :1.136  
+Min.   :0.9982  
+1st Qu.:1.0045  
+Median :1.0100  
+Mean   :1.0186  
+3rd Qu.:1.0222  
+Max.   :1.2007  
 
 habitatmodel
 
 
 beta
 
-Min.   :0.9978  
-1st Qu.:0.9994  
-Median :1.0006  
-Mean   :1.0011  
-3rd Qu.:1.0020  
+Min.   :0.9982  
+1st Qu.:1.0001  
+Median :1.0015  
+Mean   :1.0022  
+3rd Qu.:1.0034  
 Max.   :1.0095  
 
 gamma
 
-Min.   :0.9988  
-1st Qu.:1.0001  
-Median :1.0013  
-Mean   :1.0024  
-3rd Qu.:1.0029  
-Max.   :1.0114  
+Min.   :0.9986  
+1st Qu.:1.0002  
+Median :1.0015  
+Mean   :1.0022  
+3rd Qu.:1.0032  
+Max.   :1.0112  
 
 rho
 
-1.015212
+0.9990679
 
 omega
 
 
 location
 
-Min.   :0.9982  
-1st Qu.:1.0021  
-Median :1.0047  
-Mean   :1.0062  
-3rd Qu.:1.0077  
-Max.   :1.0375  
+Min.   :0.9991  
+1st Qu.:1.0011  
+Median :1.0049  
+Mean   :1.0072  
+3rd Qu.:1.0102  
+Max.   :1.0504  
 
-year
+mission
 
-Min.   :0.9979  
-1st Qu.:1.0038  
-Median :1.0118  
-Mean   :1.0220  
-3rd Qu.:1.0225  
-Max.   :1.1875  
+Min.   :0.9989  
+1st Qu.:1.0047  
+Median :1.0099  
+Mean   :1.0148  
+3rd Qu.:1.0161  
+Max.   :1.1106  
 
 individual
 
-Min.   :0.9989  
-1st Qu.:1.0017  
-Median :1.0051  
-Mean   :1.0077  
-3rd Qu.:1.0091  
-Max.   :1.0897  
+Min.   :0.9987  
+1st Qu.:1.0032  
+Median :1.0054  
+Mean   :1.0072  
+3rd Qu.:1.0093  
+Max.   :1.0371  
 
 habitat&hostmodel
 
 
 beta
 
-Min.   :0.9981  
-1st Qu.:1.0000  
+Min.   :0.9982  
+1st Qu.:1.0002  
 Median :1.0015  
-Mean   :1.0028  
-3rd Qu.:1.0037  
-Max.   :1.0528  
+Mean   :1.0026  
+3rd Qu.:1.0032  
+Max.   :1.0221  
 
 gamma
 
-Min.   :0.9982  
-1st Qu.:0.9997  
-Median :1.0008  
-Mean   :1.0017  
-3rd Qu.:1.0024  
-Max.   :1.0189  
+Min.   :0.9977  
+1st Qu.:1.0001  
+Median :1.0011  
+Mean   :1.0011  
+3rd Qu.:1.0021  
+Max.   :1.0048  
 
 rho
 
-1.030286
+1.010021
 
 omega
 
 
 location
 
-Min.   :0.9986  
-1st Qu.:1.0026  
-Median :1.0059  
-Mean   :1.0070  
-3rd Qu.:1.0086  
-Max.   :1.0434  
+Min.   :0.998  
+1st Qu.:1.001  
+Median :1.004  
+Mean   :1.006  
+3rd Qu.:1.008  
+Max.   :1.041  
 
-year
+mission
 
-Min.   :0.9985  
-1st Qu.:1.0034  
-Median :1.0101  
-Mean   :1.0161  
-3rd Qu.:1.0191  
-Max.   :1.1531  
+Min.   :0.9987  
+1st Qu.:1.0019  
+Median :1.0060  
+Mean   :1.0077  
+3rd Qu.:1.0112  
+Max.   :1.0315  
 
 individual
 
-Min.   :0.9992  
-1st Qu.:1.0085  
-Median :1.0159  
-Mean   :1.0269  
-3rd Qu.:1.0289  
-Max.   :1.1976  
+Min.   :0.9999  
+1st Qu.:1.0074  
+Median :1.0138  
+Mean   :1.0197  
+3rd Qu.:1.0218  
+Max.   :1.1735  

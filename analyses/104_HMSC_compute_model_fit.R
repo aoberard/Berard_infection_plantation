@@ -36,7 +36,7 @@ nParallel = NULL #Default: nParallel = nChains
 #Change default parameters by removing comments and setting value
 #Typically only section of the script that nee to be modified     ▲
 
-#nfolds = 10 #change the number of CV-folds
+nfolds = 5 #change the number of CV-folds
 #nParallel = 1 #Set to 1 to disable parallel computing
 
 
@@ -173,7 +173,7 @@ while(Lst <= length(samples_list)){
   Lst = Lst + 1
 }
 
-#Save nfolds parameter for show model fit script
+#Save parameter for show model fit script
 save(nfolds,
      file = here::here(modelDir, "nfolds_parameter.RData")
      )

@@ -45,8 +45,8 @@ count(X, season, category)
 colSums(Y) %>% sort(decreasing = T)
 hist(colSums(Y))
 
-table(Tm$direct_transmission)
-table(Tm$tick_transmission)
+table(Tm$non_vector_transmission)
+table(Tm$vector_transmission)
 
 
 ## Remove rare species from Y ----
@@ -120,8 +120,16 @@ XFormula.env_host = ~  season * category + nb_apo + sexe + poids + maturity
 
 
 ## Models' traits formula ----
-TrFormula = ~ direct_transmission + tick_transmission + flea_transmission 
+TrFormula = ~ non_vector_transmission + vector_transmission
 
+
+## Phylogenetic tree ----
+
+#Construction of a simple taxonomical tree as proxy for phylogenetic tree
+taxonomicTree <- ape::as.phylo(~ domain / phylum / class / order / family / genus / names, 
+                               data = Tm)
+taxonomicTree$edge.length <- rep(1, length(taxonomicTree$edge))
+plot(taxonomicTree, cex = 0.5)
 
 
 ## Random effects ----
@@ -135,17 +143,10 @@ rL.location <- Hmsc::HmscRandomLevel(units = levels(studyDesign$location))
 rL.ind <- Hmsc::HmscRandomLevel(units = levels(studyDesign$individual))
 
 #Define studyDesign "location" spatial random effect
+#Beware that during model specification random effect name should refers to a column name of studyDesign (locations here) 
+#to which random effect should apply
 rL.location.xy = HmscRandomLevel(sData = locations.xy, sMethod = "Full")
 
-
-## Phylogenetic tree ----
-#I think only ultrametric tree are pertinent for HMSC (all leaves at same distances from root)
-
-#Construction of a simple taxonomical tree as proxy for phylogenetic tree
-taxonomicTree <- ape::as.phylo(~ domain / phylum / class / order / family / genus / names, 
-                               data = Tm)
-taxonomicTree$edge.length <- rep(1, length(taxonomicTree$edge))
-plot(taxonomicTree, cex = 0.5)
 
 
 ## Candidate models specification ----
@@ -161,7 +162,7 @@ m.null <- Hmsc::Hmsc(Y = Y,
                      phyloTree = taxonomicTree,
                      ranLevels = list(
                        location = rL.location, 
-                       year = rL.year, 
+                       mission = rL.mission, 
                        individual = rL.ind
                        ))
 
@@ -175,7 +176,7 @@ m.host <- Hmsc::Hmsc(Y = Y,
                       phyloTree = taxonomicTree,
                       ranLevels = list(
                         location = rL.location, 
-                        year = rL.year,
+                        mission = rL.mission, 
                         individual = rL.ind
                         ))
 
@@ -189,7 +190,7 @@ m.env <- Hmsc::Hmsc(Y = Y,
                      phyloTree = taxonomicTree,
                      ranLevels = list(
                        location = rL.location, 
-                       year = rL.year,
+                       mission = rL.mission, 
                        individual = rL.ind
                      ))
 
@@ -203,7 +204,7 @@ m.env_host <- Hmsc::Hmsc(Y = Y,
                     phyloTree = taxonomicTree,
                     ranLevels = list(
                       location = rL.location, 
-                      year = rL.year,
+                      mission = rL.mission, 
                       individual = rL.ind
                     ))
 

@@ -38,6 +38,7 @@ load(here::here(modelDir, "nfolds_parameter.RData"))
 
 
 # Execute model fit plotting ----
+
 nst = length(thin_list)
 
 for (Lst in nst:1) {
@@ -52,7 +53,9 @@ for (Lst in nst:1) {
   if(file.exists(filename)){break}
 }
 if(file.exists(filename)){
+  
   load(filename)
+  cat("Loading file : ", filename, "\n")
   
   nm = length(MF)
   modelnames = names(MF)
@@ -143,3 +146,76 @@ if(file.exists(filename)){
   }
   dev.off()
 }
+
+
+# Model selection ----
+
+#Based on mean values of parameter
+#using explanatory power (from MF, based on all data) and predictive power (from MFCV, based on cross validation)
+#and waic
+
+
+nst <- length(thin_list)
+
+for (Lst in nst:1) {
+  thin = thin_list[Lst]
+  samples = samples_list[Lst]
+  
+  filename = file.path(modelDir,paste("MF_thin_", as.character(thin),
+                                      "_samples_", as.character(samples),
+                                      "_chains_",as.character(nChains),
+                                      "_nfolds_", as.character(nfolds),
+                                      ".Rdata",sep = "")  )
+
+if (file.exists(filename)) break
+}
+
+if (!file.exists(filename)) {
+  stop("NO MF_*.Rdata found")
+}
+
+cat("Loading file : ", filename, "\n")
+load(filename)
+
+
+#Extract model names
+model_names <- names(MF)
+
+#Generate summary result table
+performances <- data.frame(
+  model = model_names,
+  
+  # Tjur R²
+  MF_TjurR2 = sapply(MF,   function(x) mean(x$TjurR2)),
+  MFCV_TjurR2 = sapply(MFCV, function(x) mean(x$TjurR2)),
+  
+  # AUC
+  MF_AUC  = sapply(MF,   function(x) mean(x$AUC)),
+  MFCV_AUC  = sapply(MFCV, function(x) mean(x$AUC)),
+  
+  # WAIC
+  WAIC =  sapply(WAIC, function(x) mean(x)),
+  
+  thin = thin,
+  samples = samples,
+  nChains = nChains,
+  nfolds = nfolds,
+  
+  row.names = NULL,
+  check.names = FALSE
+)
+
+#Add overlearning diagnostic columns
+performances$Delta_TjurR2 <- performances$MF_TjurR2 - performances$MFCV_TjurR2
+performances$Delta_AUC <- performances$MF_AUC - performances$MFCV_AUC
+
+#Sort models according to MFCV R²
+performances <- performances[order(-performances$MFCV_TjurR2), ]
+
+#Print
+print(performances, digits = 4)
+
+#Save performances summary
+write.csv(performances,
+          file = here::here(modelDir, paste0("model_performance_summary_nfolds_", nfolds,".csv")),
+          row.names = FALSE)

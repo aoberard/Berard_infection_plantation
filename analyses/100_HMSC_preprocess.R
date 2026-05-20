@@ -16,7 +16,7 @@ inf <- data.table::fread(file = here::here("data", "derived-data", "asylvaticus_
 names_inf <- readRDS(file = here::here("data", "derived-data", "asylvaticus_data", "names_infectious_apo.rds"))
 
 #Infectious agents traits
-traits <- readxl::read_excel(path = here::here("data", "raw-data", "20260513_agents_traits.xlsx"))
+traits <- readxl::read_excel(path = here::here("data", "raw-data", "20260520_agents_traits.xlsx"))
 
 
 
@@ -135,7 +135,8 @@ studyDesign <- data_hmsc %>%
   select(all_of(namesrandom)) %>% 
   rename( individual = numero_centre,
           location = numero_ligne,
-          mission = field_session)
+          mission = field_session,
+          year = year)
 
 rownames(studyDesign) <- studyDesign$individual 
 

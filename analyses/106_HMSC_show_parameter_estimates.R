@@ -14,6 +14,7 @@ gc()
 
 # Load libraries
 library("dplyr")
+library("ggplot2")
 library("Hmsc")
 library("colorspace")
 library("corrplot")
@@ -38,15 +39,34 @@ if(!dir.exists(resultDir)) {
 load(file = here::here(modelDir, "fitting_parameters.RData"))
 
 
-#Select models on which to run the script (unless previously other models were filtered out ?) 
-# models <- models$XXXXX
-#not this way definetely, as for is loading by itself
+#Loading "best" MCMC model list
+nst = length(thin_list)
+
+text.file <- file.path(resultDir,"/parameter_estimates.txt")
+cat(c("This file contains additional information regarding parameter estimates.","\n","\n",sep=""),file=text.file)
+
+for (Lst in nst:1) {
+  thin = thin_list[Lst]
+  samples = samples_list[Lst]
+  filename = file.path(modelDir,paste("models_thin_", as.character(thin),
+                                      "_samples_", as.character(samples),
+                                      "_chains_",as.character(nChains),
+                                      ".Rdata",sep = ""))
+  if(file.exists(filename)){break}
+}
+
+if(file.exists(filename)){
+  load(filename)
+  cat(c("\n",filename,"\n","\n"),file=text.file,sep="",append=TRUE)
+  
+  nm = length(models)
+}
 
 
+# Estimation parameters ----
 
-##################################################################################################
-# SETTING COMMONLY ADJUSTED PARAMETERS TO NULL WHICH CORRESPONDS TO DEFAULT CHOICE (BEGINNING)
-##################################################################################################
+#Setting Default parameter (Null implies default)
+
 support.level.beta = NULL #Default: 0.95
 support.level.gamma = NULL #Default: 0.95
 support.level.omega = NULL #Default: 0.9
@@ -56,14 +76,11 @@ show.sp.names.beta = NULL #Default: species names shown in beta plot if there ar
 plotTree = NULL #Default: tree is plotted in Beta plot if the model includes it
 omega.order = NULL #Default: species shown in the order they are in the model
 show.sp.names.omega = NULL #Default: species names shown in beta plot if there are at most 30 species
-##################################################################################################
-# SETTING COMMONLY ADJUSTED PARAMETERS TO NULL WHICH CORRESPONDS TO DEFAULT CHOICE (END)
-##################################################################################################
 
-##################################################################################################
-# CHANGE DEFAULT OPTIONS BY REMOVING COMMENT AND SETTING VALUE (BEGINNING)
-# NOTE THAT THIS IS THE ONLY SECTION OF THE SCRIPT THAT YOU TYPICALLY NEED TO MODIFY
-##################################################################################################
+
+#Change default parameters by removing comments and setting value
+#Typically only section of the script that nee to be modified     ▲
+
 #use support levels to selected the level of statistical support shown
 #support.level.beta = 0.8
 #support.level.gamma = 0.8
@@ -76,13 +93,17 @@ show.sp.names.omega = NULL #Default: species names shown in beta plot if there a
 #or "decreasing" if you wish to order according to explanatory power
 #var.part.order.explained = list()
 #var.part.order.explained[[1]] = 0
+#var.part.order.explained[[1]] = "decreasing"
 #var.part.order.explained[[2]] = c(2,1)
+var.part.order.explained = lapply(1:nm, function(x) "decreasing")
 
 #use var.part.order.raw to select which order species are shown in the explained variance partitioning
 #same options apply as for var.part.order.explained
 #var.part.order.raw = list()
 #var.part.order.raw[[1]] = "decreasing"
 #var.part.order.raw[[2]] = c(1,2)
+var.part.order.raw = lapply(1:nm, function(x) "decreasing")
+
 
 #use show.sp.names.beta to choose to show / not show species names in betaPlot
 #if given, show.sp.names.beta should be a vector with length equalling number of models
@@ -102,37 +123,64 @@ show.sp.names.beta = c(TRUE, TRUE, TRUE, TRUE)
 #omega.order[[2]] = c(2,1)
 #Default: species shown in the order they are in the model
 #show.sp.names.omega = c(TRUE,FALSE) #Default: species names shown in beta plot if there are at most 30 species
-##################################################################################################
-# CHANGE DEFAULT OPTIONS BY REMOVING COMMENT AND SETTING VALUE (END)
-# NOTE THAT THIS IS THE ONLY SECTION OF THE SCRIPT THAT YOU TYPICALLY NEED TO MODIFY
-##################################################################################################
 
 
+
+
+# Fonction custom plotVP ----
+plotVP_gg <- function(VP, main = "", cols = NULL, ylim = c(0, 1)) {
+  vals <- VP$vals
+  nr<- nrow(vals)
+  
+  if (is.null(cols)) {
+      cols <- colorspace::qualitative_hcl(nr, palette = "Dynamic")
+      }
+  
+  
+  row_means <- rowMeans(vals, na.rm = TRUE)
+  legend_labels <- paste0(rownames(vals), " (mean=", round(row_means, 2), ")")
+  
+  #Making data long
+  df <- as.data.frame(vals)
+  df$Variable <- rownames(vals)
+  df_long <- tidyr::pivot_longer(df, -Variable, 
+                                 names_to = "Species", 
+                                 values_to = "Proportion")
+  
+  #species order is from VP$vals
+  df_long$Species <- factor(df_long$Species, levels = colnames(vals))
+  df_long$Variable <- factor(df_long$Variable, levels = rownames(vals))
+  
+  named_labels <- setNames(legend_labels, rownames(vals))
+  
+  ggplot(df_long, aes(x = Species, y = Proportion, fill = Variable)) +
+    geom_bar(stat = "identity", color = "grey40", linewidth = 0.5) +
+    scale_fill_manual(
+      values = setNames(cols, rownames(vals)),
+      labels = named_labels
+    ) +
+    scale_y_continuous(limits = ylim, expand = c(0, 0)) +
+    labs(title = main, y = "Proportion of variance", x = NULL, fill = NULL) +
+    theme_classic() +
+    theme(
+      axis.text.x  = element_text(angle = 90, hjust = 1, size = 7),
+      legend.position = "bottom",
+      legend.text  = element_text(size = 8),
+      plot.title   = element_text(size = 9),
+      plot.margin  = margin(5, 5, 5, 5)
+    )
+}
+
+
+
+# Execute estimation ----
 
 if(is.null(support.level.beta)) support.level.beta = 0.95
 if(is.null(support.level.gamma)) support.level.gamma =  0.95
 if(is.null(support.level.omega)) support.level.omega =  0.9
 
 
-
-nst = length(thin_list)
-
-text.file <- file.path(resultDir,"/parameter_estimates.txt")
-cat(c("This file contains additional information regarding parameter estimates.","\n","\n",sep=""),file=text.file)
-
-for (Lst in nst:1) {
-  thin = thin_list[Lst]
-  samples = samples_list[Lst]
-  filename = file.path(modelDir,paste("models_thin_", as.character(thin),
-                                      "_samples_", as.character(samples),
-                                      "_chains_",as.character(nChains),
-                                      ".Rdata",sep = ""))
-  if(file.exists(filename)){break}
-}
 if(file.exists(filename)){
-  load(filename)
-  cat(c("\n",filename,"\n","\n"),file=text.file,sep="",append=TRUE)
-  nm = length(models)
   if(is.null(var.part.order.explained)){
     var.part.order.explained = list()
     for(j in 1:nm) var.part.order.explained[[j]] = 0
@@ -148,15 +196,19 @@ if(file.exists(filename)){
   
   modelnames = names(models)
   
-  pdf(file= file.path(resultDir,"parameter_estimates.pdf"))
+  
+  
+  pdf(file = file.path(resultDir, "parameter_estimates.pdf"))
+
   for(j in 1:nm){
-    cat(c("\n",names(models)[j],"\n","\n"),file=text.file,sep="",append=TRUE)
+    cat(c("\n", names(models)[j], "\n", "\n"), file = text.file, sep = "", append=TRUE)
     m = models[[j]]
     if(m$XFormula=="~."){
       covariates = colnames(m$X)[-1]
     } else {
       covariates = attr(terms(m$XFormula),"term.labels")
     }
+    
     if(m$nr+length(covariates)>1 & m$ns>1){
       preds = computePredictedValues(m)
       VP = computeVariancePartitioning(m)
@@ -200,26 +252,48 @@ if(file.exists(filename)){
       VP$vals = VP$vals[,c.var.part.order.explained]
       cat(c("\n","var.part.order.explained","\n","\n"),file=text.file,sep="",append=TRUE)
       cat(m$spNames[c.var.part.order.explained],file=text.file,sep="\n",append=TRUE)
-      plotVariancePartitioning(hM=m, VP=VP, main = paste0("Proportion of explained variance, ",modelnames[j]), cex.main=0.8, cols = mycols, args.leg=list(bg="white",cex=0.7))
-      if(all(var.part.order.raw[[j]]==0)){
-        c.var.part.order.raw = 1:m$ns
+      
+      
+      #Explained variance
+      if(all(var.part.order.explained[[j]] == 0)){
+        c.var.part.order.explained = 1:m$ns
+      } else if(all(var.part.order.explained[[j]] == "decreasing")){
+        c.var.part.order.explained = order(R2, decreasing = TRUE)
       } else {
-        if(all(var.part.order.raw[[j]]=="decreasing")){
-          c.var.part.order.raw = order(R2, decreasing = TRUE)
-        }
-        else {
-          c.var.part.order.raw  = var.part.order.raw[[j]]
-        }
+        c.var.part.order.explained = var.part.order.explained[[j]]
       }
+      
+      VP_plot = VP
+      VP_plot$vals = VP$vals[, c.var.part.order.explained]
+      
+      print(plotVP_gg(
+        VP   = VP_plot,
+        main = paste0("Proportion of explained variance, ", modelnames[j]),
+        cols = NULL,
+        ylim = c(0, 1.01)) 
+      )
+      
+      #Raw variance
       if(!is.null(R2)){
+        if(all(var.part.order.raw[[j]] == 0)){
+          c.var.part.order.raw = 1:m$ns
+        } else if(all(var.part.order.raw[[j]] == "decreasing")){
+          c.var.part.order.raw = order(R2, decreasing = TRUE)
+        } else {
+          c.var.part.order.raw = var.part.order.raw[[j]]
+        }
+        
         VPr = VP
         for(k in 1:m$ns){
-          VPr$vals[,k] = R2[k]*VPr$vals[,k]
+          VPr$vals[, k] = R2[k] * VPr$vals[, k]
         }
-        VPr$vals = VPr$vals[,c.var.part.order.raw]
-        cat(c("\n","var.part.order.raw","\n","\n"),file=text.file,sep="",append=TRUE)
-        cat(m$spNames[c.var.part.order.raw],file=text.file,sep="\n",append=TRUE)
-        plotVariancePartitioning(hM=m, VP=VPr,main=paste0("Proportion of raw variance, ",modelnames[j]),cex.main=0.8, cols = mycols, args.leg=list(bg="white",cex=0.7),ylim=c(0,1))
+        VPr$vals = VPr$vals[, c.var.part.order.raw]
+        
+        print(plotVP_gg(
+          VP   = VPr,
+          main = paste0("Proportion of raw variance, ", modelnames[j]),
+          cols = NULL)
+        )
       }
     }
   }

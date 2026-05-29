@@ -1,4 +1,4 @@
-# Script parameters ----
+# Global parameters ----
 
 
 #	INPUT: Model fits.
@@ -13,6 +13,7 @@ gc()
 # Load libraries
 library("dplyr")
 library("Hmsc")
+library("ggplot2")
 
 # Make script reproducible
 set.seed(1)
@@ -35,6 +36,10 @@ load(file = here::here(modelDir, "fitting_parameters.RData"))
 #Loading model fit parameters
 load(here::here(modelDir, "nfolds_parameter.RData"))
 
+#Loading original data used to specify HMSC models
+load(here::here(dataDir, "allData.RData"))
+
+
 
 
 # Execute model fit plotting ----
@@ -52,6 +57,7 @@ for (Lst in nst:1) {
                                       ".Rdata",sep = ""))
   if(file.exists(filename)){break}
 }
+
 if(file.exists(filename)){
   
   load(filename)
@@ -148,6 +154,79 @@ if(file.exists(filename)){
 }
 
 
+# Relationship between predictive power and prevalence ----
+
+#Load fitted models
+nst = length(thin_list)
+for (Lst in nst:1) {
+  thin = thin_list[Lst]
+  samples = samples_list[Lst]
+  filename_models = file.path(modelDir, paste("models_thin_", as.character(thin),
+                                              "_samples_", as.character(samples),
+                                              "_chains_", as.character(nChains),
+                                              ".Rdata", sep = ""))
+  if(file.exists(filename_models)){break}
+}
+load(filename_models)
+
+#Generating datafram
+df_spfit <- do.call(rbind, lapply(names(MFCV), function(model_name) {
+  #Extract for each model_name :
+  #fit performance
+  cMFCV <- MFCV[[model_name]]
+  cMF <- MF[[model_name]]
+  
+  #Hmsc object
+  m <- models[[model_name]]
+  
+  #Then calculate occurence of each infectious agent
+  occur <- colSums(m$Y == 1, na.rm = TRUE)
+  
+  data.frame(
+    model = model_name,
+    species = m$spNames,
+    occur = occur,
+    effectif = nrow(m$XData),  
+    TjurR2_cv = if(!is.null(cMFCV$TjurR2)) cMFCV$TjurR2 else NA,
+    AUC_cv = if(!is.null(cMFCV$AUC)) cMFCV$AUC else NA,
+    TjurR2 = if(!is.null(cMF$TjurR2)) cMF$TjurR2 else NA,
+    AUC = if(!is.null(cMF$AUC)) cMF$AUC else NA,
+    row.names = NULL
+  )
+}))
+
+#Add prevalence column to datafram
+df_spfit <- df_spfit %>% 
+  mutate(prevalence = occur / effectif)
+
+#Plot relationship
+ggplot(df_spfit, aes(x = prevalence, y = TjurR2_cv, color = model, label = species)) +
+  geom_point(size = 2) +
+  ggrepel::geom_text_repel(size = 2.5, max.overlaps = 15) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey40") +
+  facet_wrap( ~ model) +
+  labs(
+    title = "Predictive power vs prevalence",
+    x     = "Infectious agent prevalence",
+    y     = "Tjur R² (cross-validated)") +
+  theme_bw() +
+  theme(legend.position = "none")
+
+ggplot(df_spfit, aes(x = prevalence, y = AUC_cv, color = model, label = species)) +
+  geom_point(size = 2) +
+  ggrepel::geom_text_repel(size = 2.5, max.overlaps = 15) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey40") +
+  facet_wrap( ~ model) +
+  labs(
+    title = "Predictive power vs prevalence",
+    x     = "Infectious agent prevalence",
+    y     = "Tjur R² (cross-validated)") +
+  theme_bw() +
+  theme(legend.position = "none")
+
+
+
+
 # Model selection ----
 
 #Based on mean values of parameter
@@ -219,3 +298,7 @@ print(performances, digits = 4)
 write.csv(performances,
           file = here::here(modelDir, paste0("model_performance_summary_nfolds_", nfolds,".csv")),
           row.names = FALSE)
+
+
+
+

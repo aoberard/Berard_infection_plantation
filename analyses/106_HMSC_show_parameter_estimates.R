@@ -1,4 +1,4 @@
-# Script parameters ----
+# Global parameters ----
 
 #	INPUT. the Fitted models.
 
@@ -42,8 +42,8 @@ load(file = here::here(modelDir, "fitting_parameters.RData"))
 #Loading "best" MCMC model list
 nst = length(thin_list)
 
-text.file <- file.path(resultDir,"/parameter_estimates.txt")
-cat(c("This file contains additional information regarding parameter estimates.","\n","\n",sep=""),file=text.file)
+text.file <- file.path(resultDir,"parameter_estimates.txt")
+cat(c("This file contains additional information regarding parameter estimates.","\n","\n", sep=""), file=text.file)
 
 for (Lst in nst:1) {
   thin = thin_list[Lst]
@@ -57,10 +57,21 @@ for (Lst in nst:1) {
 
 if(file.exists(filename)){
   load(filename)
-  cat(c("\n",filename,"\n","\n"),file=text.file,sep="",append=TRUE)
+  cat(c("\n",filename,"\n","\n"), file=text.file, sep="", append = TRUE)
+}
+
+
+## Selecting model of choice ----
+#Keeping only selected models from the list of models (models object)
+if(file.exists(filename)){
+  
+  models <- models[c("habitat&hostmodel")]
   
   nm = length(models)
 }
+
+
+
 
 
 # Estimation parameters ----
@@ -133,7 +144,7 @@ plotVP_gg <- function(VP, main = "", cols = NULL, ylim = c(0, 1)) {
   nr<- nrow(vals)
   
   if (is.null(cols)) {
-      cols <- colorspace::qualitative_hcl(nr, palette = "Dynamic")
+      cols <- colorspace::qualitative_hcl(nr, palette = "Pastel1")
       }
   
   
@@ -239,19 +250,6 @@ if(file.exists(filename)){
         filename = file.path(resultDir, paste("parameter_estimates_VP_R2T_Y",modelnames[j],".csv"))
         write.csv(VP$R2T$Y,file=filename)
       }
-      if(all(var.part.order.explained[[j]]==0)){
-        c.var.part.order.explained = 1:m$ns
-      } else {
-        if(all(var.part.order.explained[[j]]=="decreasing")){
-          c.var.part.order.explained = order(R2, decreasing = TRUE)
-        }
-        else {
-          c.var.part.order.explained  = var.part.order.explained[[j]]
-        }
-      }
-      VP$vals = VP$vals[,c.var.part.order.explained]
-      cat(c("\n","var.part.order.explained","\n","\n"),file=text.file,sep="",append=TRUE)
-      cat(m$spNames[c.var.part.order.explained],file=text.file,sep="\n",append=TRUE)
       
       
       #Explained variance
@@ -400,4 +398,7 @@ if(file.exists(filename)){
   }
   dev.off()
 }
+
+
+
 

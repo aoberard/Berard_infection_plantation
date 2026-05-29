@@ -1,4 +1,4 @@
-# Script parameters ----
+# Global parameters ----
 
 
 #	INPUT: the Fitted models.
@@ -20,9 +20,51 @@ library("ggplot2")
 set.seed(1)
 
 
+# Load saved elements ----
+
+#Setting directories
+dataDir <- here::here("data", "derived-data", "hmsc_out")
+modelDir <- file.path(dataDir, "models")
+resultDir <- file.path(dataDir, "results", "prediction")
+
+if(!dir.exists(resultDir)) {
+  dir.create(resultDir, recursive = TRUE)
+}
+
+#Loading fitting parameters
+load(file = here::here(modelDir, "fitting_parameters.RData"))
 
 
-## Prediction parameters ----
+
+#Loading "best" MCMC model list
+nst = length(thin_list)
+
+for (Lst in nst:1) {
+  thin = thin_list[Lst]
+  samples = samples_list[Lst]
+  filename = file.path(modelDir,paste("models_thin_", as.character(thin),
+                                      "_samples_", as.character(samples),
+                                      "_chains_",as.character(nChains),
+                                      ".Rdata",sep = ""))
+  if(file.exists(filename)){break}
+}
+if(file.exists(filename)){
+  load(filename)
+}
+
+
+## Selecting model of choice ----
+#Keeping only selected models from the list of models (models object)
+if(file.exists(filename)){
+  
+  models <- models[c("habitat&hostmodel")]
+  
+  nm = length(models)
+}
+
+
+
+# Prediction parameters ----
 
 #Setting Default parameter (Null implies default)
 
@@ -57,38 +99,13 @@ env.list = NULL #predictions constructed over all environmental gradients
 #env.list[[2]] = c("tree","decay")
 
 
-# Load saved elements ----
-
-#Setting directories
-dataDir <- here::here("data", "derived-data", "hmsc_out")
-modelDir <- file.path(dataDir, "models")
-resultDir <- file.path(dataDir, "results", "prediction")
-
-if(!dir.exists(resultDir)) {
-  dir.create(resultDir, recursive = TRUE)
-}
-
-#Loading fitting parameters
-load(file = here::here(modelDir, "fitting_parameters.RData"))
-
 
 
 # Execute prediction ----
 
-nst = length(thin_list)
 
-for (Lst in nst:1) {
-  thin = thin_list[Lst]
-  samples = samples_list[Lst]
-  filename = file.path(modelDir,paste("models_thin_", as.character(thin),
-                                      "_samples_", as.character(samples),
-                                      "_chains_",as.character(nChains),
-                                      ".Rdata",sep = ""))
-  if(file.exists(filename)){break}
-}
+  
 if(file.exists(filename)){
-  load(filename)
-  nm = length(models)
   modelnames = names(models)
   if(is.null(species.list)){
     species.list = list()

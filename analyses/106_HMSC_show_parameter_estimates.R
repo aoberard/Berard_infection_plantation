@@ -23,6 +23,11 @@ library("writexl")
 # Make script reproducible
 set.seed(1)
 
+# Graphical parameters
+effect_direction_palette <- c("positive"          = "#2C7796",
+                              "negative"          = "#D55763",
+                              "non_significant"   = "gray60")
+
 
 # Load saved elements ----
 
@@ -298,7 +303,7 @@ if(file.exists(filename)){
   for(j in 1:nm){
     m = models[[j]]
     if(m$nc>1){
-      postBeta = getPostEstimate(m, parName="Beta")
+      postBeta = getPostEstimate(m, parName = "Beta")
       filename = file.path(resultDir, paste("parameter_estimates_Beta_",modelnames[j],".xlsx"))
       me = as.data.frame(t(postBeta$mean))
       me = cbind(m$spNames,me)
@@ -401,4 +406,149 @@ if(file.exists(filename)){
 
 
 
+# Other plots ----
+#BEWARE BEWARE, model used for this plots may not be the right one if multiple models from "models" object were conserved
+m$call
 
+
+#Beta coefficient extraction (inspired from Hmsc::getPostEstimate function)
+
+#Pool MCMC chains
+postList_pooled <- Hmsc:::poolMcmcChains(m$postList)
+
+#Extract Beta of each chain into a list
+beta_list <- lapply(postList_pooled, function(a) a[["Beta"]])
+
+#Bind all values from each element within the list
+val <- abind::abind(beta_list, along = 0)  
+
+#Compute means and distribution
+beta_mean <- colMeans(val)          
+beta_q025 <- apply(val, c(2,3), quantile, 0.025)
+beta_q975 <- apply(val, c(2,3), quantile, 0.975)
+beta_q25 <- apply(val, c(2,3), quantile, 0.25)
+beta_q75 <- apply(val, c(2,3), quantile, 0.75)
+
+#Rename
+dimnames(beta_mean) <- list(m$covNames, m$spNames)
+dimnames(beta_q025) <- list(m$covNames, m$spNames)
+dimnames(beta_q975) <- list(m$covNames, m$spNames)
+dimnames(beta_q25) <- list(m$covNames, m$spNames)
+dimnames(beta_q75) <- list(m$covNames, m$spNames)
+
+
+#Convert each matrix into long format
+df_mean <- as.data.frame(beta_mean) %>%
+  tibble::rownames_to_column("covariate") %>%
+  tidyr::pivot_longer(-covariate, names_to = "species", values_to = "mean")
+
+df_q025 <- as.data.frame(beta_q025) %>%
+  tibble::rownames_to_column("covariate") %>%
+  tidyr::pivot_longer(-covariate, names_to = "species", values_to = "lower")
+
+df_q975 <- as.data.frame(beta_q975) %>%
+  tibble::rownames_to_column("covariate") %>%
+  tidyr::pivot_longer(-covariate, names_to = "species", values_to = "upper")
+
+df_q25 <- as.data.frame(beta_q25) %>%
+  tibble::rownames_to_column("covariate") %>%
+  tidyr::pivot_longer(-covariate, names_to = "species", values_to = "q25")
+
+df_q75 <- as.data.frame(beta_q75) %>%
+  tibble::rownames_to_column("covariate") %>%
+  tidyr::pivot_longer(-covariate, names_to = "species", values_to = "q75")
+
+#Generate dataframe based on beta coefficient extraction
+beta_coef <- df_mean %>%
+  left_join(df_q025, by = c("covariate", "species")) %>%
+  left_join(df_q975, by = c("covariate", "species")) %>%
+  mutate(significant_bilateral = sign(lower) == sign(upper)) %>%
+  left_join(df_q25, by = c("covariate", "species")) %>%
+  left_join(df_q75, by = c("covariate", "species"))
+
+
+#Now we want to add information obtained using Hmsc::getPostEstimate to our new dataframe (as a check and support provider)
+#Extract beta coefficients using Hmsc::getPostEstimate
+postBeta_bis <- Hmsc::getPostEstimate(m, parName = "Beta")
+rownames(postBeta_bis$support)    <- m$covNames
+rownames(postBeta_bis$supportNeg) <- m$covNames
+rownames(postBeta_bis$mean) <- m$covNames
+
+
+#Make a dataframe out of those
+df_support <- as.data.frame(postBeta_bis$support) %>%
+  tibble::rownames_to_column("covariate") %>%
+  tidyr::pivot_longer(-covariate, names_to = "species", values_to = "support") %>%
+  left_join(
+    as.data.frame(postBeta_bis$supportNeg) %>%
+      tibble::rownames_to_column("covariate") %>%
+      tidyr::pivot_longer(-covariate, names_to = "species", values_to = "supportNeg"),
+    by = c("covariate", "species")) %>%
+  left_join(
+    as.data.frame(postBeta_bis$mean) %>%
+      tibble::rownames_to_column("covariate") %>%
+      tidyr::pivot_longer(-covariate, names_to = "species", values_to = "mean_getestimate"),
+    by = c("covariate", "species")) %>% 
+  mutate(significant_support_unilateral = support > 0.95 | supportNeg > 0.95) %>% 
+  mutate(significant_support_bilateral = support > 0.975 | supportNeg > 0.975)
+
+#Join this df_support to beta_coef
+beta_coef <- beta_coef %>%
+  left_join(df_support %>% select(covariate, species, mean_getestimate, support, supportNeg, significant_support_unilateral, significant_support_bilateral),
+            by = c("covariate", "species"))
+
+
+#Making a forest plot
+beta_coef %>%
+  filter(covariate != "(Intercept)") %>%                          #REMOVING INTERCEPT FOR VISUALIZATION PURPOSES
+  ggplot(aes(x = mean, y = covariate, color = species, group = species)) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey40") +
+  geom_errorbarh(aes(xmin = lower, xmax = upper),
+                 width = 0,
+                 linewidth = 0.9,
+                 position = position_dodge(width = 0.85)) +
+  geom_errorbarh(aes(xmin = q25, xmax = q75),
+                 width = 0, linewidth = 1.2,
+                 position = position_dodge(width = 0.85)) +
+  geom_point(aes(fill = significant_support_unilateral,
+                 color = species),
+             size = 2.5, shape = 21, stroke = 1.1,
+             position = position_dodge(width = 0.85)) +
+  scale_color_viridis_d(option = "magma", end = 0.9) +
+  scale_fill_manual(
+    values = c("TRUE" = "grey20", "FALSE" = "white"),
+    labels = c("TRUE" = "P ≥ 0.95", "FALSE" = "P < 0.95")
+  ) +
+  labs(x = "β coefficients", y = NULL, color = NULL) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(color = "white", face = "bold"),
+    panel.grid = element_blank(),
+    legend.position = "right"
+  )
+
+
+#Same but with facet and direction color
+beta_coef %>%
+  filter(covariate != "(Intercept)") %>%                           #REMOVING INTERCEPT FOR VISUALIZATION PURPOSES
+  mutate(effect_direction = case_when(
+    significant_support_unilateral == FALSE ~ "non_significant",
+    mean  > 0 ~ "positive",
+    mean  < 0 ~ "negative",
+    TRUE ~ "problem")) %>% 
+  ggplot(aes(x = mean, y = species, color = effect_direction)) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey40") +
+  geom_errorbarh(aes(xmin = lower, xmax = upper), width = 0.3) +
+  geom_point(size = 2.5) +
+  facet_wrap(~ covariate, 
+             #scales = "free_x"
+             ) +
+  scale_color_manual(values = effect_direction_palette) +
+  labs(x = "Coefficient β", y = NULL, color = NULL) +
+  theme_bw() +
+  theme(
+    strip.background = element_rect(fill = "grey40"),
+    strip.text = element_text(color = "white", face = "bold"),
+    legend.position = "bottom"
+  )
+  

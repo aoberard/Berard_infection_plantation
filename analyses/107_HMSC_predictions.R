@@ -103,8 +103,6 @@ env.list = NULL #predictions constructed over all environmental gradients
 
 # Execute prediction ----
 
-
-  
 if(file.exists(filename)){
   modelnames = names(models)
   if(is.null(species.list)){
@@ -192,3 +190,173 @@ if(file.exists(filename)){
   }
   dev.off()
 }
+
+
+
+
+# Attempt to predict with interaction ----
+
+# Grille season x category, autres variables fixées
+XNew <- expand.grid(
+  season   = levels(m$XData$season),
+  category = levels(m$XData$category),
+  sexe     = levels(m$XData$sexe)[1],
+  maturity = levels(m$XData$maturity)[2],
+  poids    = mean(m$XData$poids),
+  nb_apo   = mean(m$XData$nb_apo)
+)
+
+# studyDesign avec nouvelles unités pour chaque random level
+studyDesignNew <- data.frame(
+  year       = factor("new_unit"),
+  mission    = factor("new_unit"),
+  location   = factor("new_unit"),
+  individual = factor("new_unit")
+)[rep(1, nrow(XNew)), ]
+rownames(studyDesignNew) <- NULL
+
+# Gradient minimal (comme constructGradient le fait)
+rLNew <- list()
+for(r in names(m$rL)){
+  rL1 <- m$rL[[r]]
+  rL1$pi <- c(rL1$pi, rep("new_unit", nrow(XNew)))
+  rL1$N  <- rL1$N + nrow(XNew)
+  rLNew[[r]] <- rL1
+}
+
+# Prédictions (effets aléatoires fixés à leur moyenne = 0)
+preds <- predict(m,
+                 XData          = XNew,
+                 studyDesign    = studyDesignNew,
+                 ranLevels      = rLNew,
+                 expected       = TRUE,
+                 predictEtaMean = TRUE)
+
+# preds = liste de n_samples matrices [nrow(XNew) x 12 espèces]
+# Résumer les posterieurs
+pred_array <- abind::abind(preds, along = 0)  # [n_samples, nrow(XNew), 12]
+
+pred_mean <- apply(pred_array, c(2,3), mean)
+pred_q025 <- apply(pred_array, c(2,3), quantile, 0.025)
+pred_q975 <- apply(pred_array, c(2,3), quantile, 0.975)
+
+# Nommer
+colnames(pred_mean) <- m$spNames
+colnames(pred_q025) <- m$spNames
+colnames(pred_q975) <- m$spNames
+
+
+
+
+
+
+
+# Mettre pred_mean en format lisible d'abord
+rownames(pred_mean) <- interaction(XNew$category, XNew$season)
+rownames(pred_q025) <- interaction(XNew$category, XNew$season)
+rownames(pred_q975) <- interaction(XNew$category, XNew$season)
+
+
+
+# Comparaisons Spring vs Autumn pour chaque habitat
+habitats <- levels(m$XData$category)
+
+results <- list()
+for(hab in habitats){
+  idx_spring <- which(XNew$season == "Spring" & XNew$category == hab)
+  idx_autumn <- which(XNew$season == "Autumn" & XNew$category == hab)
+  
+  # Différence pour chaque sample MCMC
+  diff_samples <- pred_array[, idx_spring, ] - pred_array[, idx_autumn, ]
+  # [1000 x 12 espèces]
+  
+  # Support bayésien : P(Spring > Autumn)
+  support <- colMeans(diff_samples > 0)
+  support_neg <- colMeans(diff_samples < 0)
+  diff_mean <- colMeans(diff_samples)
+  
+  results[[hab]] <- data.frame(
+    habitat    = hab,
+    species    = m$spNames,
+    diff_mean  = diff_mean,
+    support    = support,
+    supportNeg = support_neg,
+    significant = support > 0.95 | support_neg > 0.95
+  )
+}
+
+df_results <- do.call(rbind, results)
+df_results %>% filter(significant)
+
+
+
+
+
+
+
+
+
+
+
+
+# 
+# 
+# 
+# # Effet de season pour chaque habitat fixé
+# results_gradient <- list()
+# 
+# for(hab in levels(m$XData$category)){
+#   
+#   Gradient <- constructGradient(
+#     m,
+#     focalVariable = "season",
+#     non.focalVariables = list(
+#       category = list(3, hab),      # type 3 = valeur fixée
+#       poids    = list(1, NULL),     # type 1 = fixé à la moyenne
+#       sexe     = list(1, NULL),
+#       maturity = list(1, NULL),
+#       nb_apo   = list(1, NULL)
+#     )
+#   )
+#   
+#   preds <- predict(m, Gradient = Gradient, 
+#                    expected = TRUE, 
+#                    predictEtaMean = TRUE)
+#   
+#   pred_array <- abind::abind(preds, along = 0)
+#   
+#   results_gradient[[hab]] <- list(
+#     XDataNew   = Gradient$XDataNew,
+#     pred_mean  = apply(pred_array, c(2,3), mean),
+#     pred_q025  = apply(pred_array, c(2,3), quantile, 0.025),
+#     pred_q975  = apply(pred_array, c(2,3), quantile, 0.975),
+#     pred_array = pred_array
+#   )
+# }
+# 
+# df_comparisons <- list()
+# 
+# for(hab in levels(m$XData$category)){
+#   
+#   pred_arr <- results_gradient[[hab]]$pred_array
+#   XNew_hab <- results_gradient[[hab]]$XDataNew
+#   
+#   idx_spring <- which(XNew_hab$season == "Spring")
+#   idx_autumn <- which(XNew_hab$season == "Autumn")
+#   
+#   diff <- pred_arr[, idx_spring, ] - pred_arr[, idx_autumn, ]
+#   
+#   df_comparisons[[hab]] <- data.frame(
+#     habitat    = hab,
+#     species    = m$spNames,
+#     diff_mean  = colMeans(diff),
+#     support    = colMeans(diff > 0),
+#     supportNeg = colMeans(diff < 0)
+#   ) %>%
+#     mutate(significant = support > 0.95 | supportNeg > 0.95)
+# }
+# 
+# df_all <- do.call(rbind, df_comparisons)
+# 
+# # Effets significatifs
+# df_all %>% filter(significant) %>% arrange(habitat, species)

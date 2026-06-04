@@ -422,19 +422,19 @@ beta_list <- lapply(postList_pooled, function(a) a[["Beta"]])
 #Bind all values from each element within the list
 val <- abind::abind(beta_list, along = 0)  
 
+#Quick renaming
+dimnames(val) <- list(
+  NULL,
+  m$covNames,
+  m$spNames
+)
+
 #Compute means and distribution
 beta_mean <- colMeans(val)          
 beta_q025 <- apply(val, c(2,3), quantile, 0.025)
 beta_q975 <- apply(val, c(2,3), quantile, 0.975)
 beta_q25 <- apply(val, c(2,3), quantile, 0.25)
 beta_q75 <- apply(val, c(2,3), quantile, 0.75)
-
-#Rename
-dimnames(beta_mean) <- list(m$covNames, m$spNames)
-dimnames(beta_q025) <- list(m$covNames, m$spNames)
-dimnames(beta_q975) <- list(m$covNames, m$spNames)
-dimnames(beta_q25) <- list(m$covNames, m$spNames)
-dimnames(beta_q75) <- list(m$covNames, m$spNames)
 
 
 #Convert each matrix into long format
@@ -552,3 +552,6 @@ beta_coef %>%
     legend.position = "bottom"
   )
   
+
+#Small look at the distribution of one beta coefficients
+plot(density(val[, "poids", "Leptospira"]))

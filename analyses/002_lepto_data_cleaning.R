@@ -11,7 +11,7 @@ library("ggplot2")
 
 
 # Import data ----
-lepto_pcr <- readxl::read_excel(path = here::here("data", "raw-data", "diagnostic", "20260330_data_qPCR_lepto_BePrep.xlsx"))
+lepto_pcr <- readxl::read_excel(path = here::here("data", "raw-data", "diagnostic", "20260602_data_qPCR_lepto_BePrep.xlsx"))
 
 
 # Generate data ----

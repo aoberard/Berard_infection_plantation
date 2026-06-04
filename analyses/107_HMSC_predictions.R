@@ -19,6 +19,10 @@ library("ggplot2")
 # Make script reproducible
 set.seed(1)
 
+#Graphical parameters
+category_palette <- c("pine_edge"          = "#3f826d",
+                      "hedgerows"          = "#f2d0a4",
+                      "broadleaved_forest" = "#a4a8d1")
 
 # Load saved elements ----
 
@@ -140,8 +144,8 @@ if(file.exists(filename)){
     if(length(covariates)>0){
       for(k in 1:(length(covariates))){
         covariate = covariates[[k]]
-        Gradient = constructGradient(m,focalVariable = covariate)
-        Gradient2 = constructGradient(m,focalVariable = covariate,non.focalVariables = 1)
+        Gradient = constructGradient(m, focalVariable = covariate)
+        Gradient2 = constructGradient(m, focalVariable = covariate, non.focalVariables = 1)
         predY = predict(m, Gradient=Gradient, expected = TRUE)  
         predY2 = predict(m, Gradient=Gradient2, expected = TRUE)  
         par(mfrow=c(2,1))
@@ -196,7 +200,13 @@ if(file.exists(filename)){
 
 # Attempt to predict with interaction ----
 
-# Grille season x category, autres variables fixées
+
+## Generate manual gradient ----
+
+#New table of covariates used for prediction (X matrix)
+#Here Season x category table is the effect of interest
+
+#other variables are fixed (we are considering marginal effects)
 XNew <- expand.grid(
   season   = levels(m$XData$season),
   category = levels(m$XData$category),
@@ -206,7 +216,11 @@ XNew <- expand.grid(
   nb_apo   = mean(m$XData$nb_apo)
 )
 
-# studyDesign avec nouvelles unités pour chaque random level
+#New table of random effects used for prediction
+#We generate an artificial unit for every random effect
+#in order to predict on a unit that does not exist in observed data
+names(m$rL)
+
 studyDesignNew <- data.frame(
   year       = factor("new_unit"),
   mission    = factor("new_unit"),
@@ -215,148 +229,308 @@ studyDesignNew <- data.frame(
 )[rep(1, nrow(XNew)), ]
 rownames(studyDesignNew) <- NULL
 
-# Gradient minimal (comme constructGradient le fait)
+#The artificial unit is added in existing levels of hmsc random levels 
 rLNew <- list()
 for(r in names(m$rL)){
   rL1 <- m$rL[[r]]
-  rL1$pi <- c(rL1$pi, rep("new_unit", nrow(XNew)))
-  rL1$N  <- rL1$N + nrow(XNew)
+  rL1$pi <- c(rL1$pi, "new_unit")
+  rL1$N  <- rL1$N + 1
   rLNew[[r]] <- rL1
 }
 
-# Prédictions (effets aléatoires fixés à leur moyenne = 0)
+
+## Generate predictions and distributions ----
+
+#For each MCMC samples (samples * nbChains)
+#Predict occurence probability for every combination of XNew and every species
+#So gives n_samplesMCMC matrices of probability (samples*nbChains matrices of [nrow(XNew) x n_species])
 preds <- predict(m,
-                 XData          = XNew,
-                 studyDesign    = studyDesignNew,
-                 ranLevels      = rLNew,
-                 expected       = TRUE,
-                 predictEtaMean = TRUE)
+                 XData = XNew,
+                 studyDesign = studyDesignNew,
+                 ranLevels = rLNew,
+                 expected = TRUE,
+                 predictEtaMean = FALSE) #random effect fixed at their means (TRUE) or not (FALSE) 
 
-# preds = liste de n_samples matrices [nrow(XNew) x 12 espèces]
-# Résumer les posterieurs
-pred_array <- abind::abind(preds, along = 0)  # [n_samples, nrow(XNew), 12]
+#Bind all values from each element within the list of matrices into an array
+pred_array <- abind::abind(preds, along = 0)  #[n_samples, nrow(XNew), n_species]
 
+#Quick renaming
+dimnames(pred_array) <- list(
+  NULL,
+  interaction(XNew$category, XNew$season),
+  m$spNames
+)
+
+#Compute means and distribution
 pred_mean <- apply(pred_array, c(2,3), mean)
 pred_q025 <- apply(pred_array, c(2,3), quantile, 0.025)
 pred_q975 <- apply(pred_array, c(2,3), quantile, 0.975)
+pred_q25 <- apply(pred_array, c(2,3), quantile, 0.25)
+pred_q75 <- apply(pred_array, c(2,3), quantile, 0.75)
 
-# Nommer
-colnames(pred_mean) <- m$spNames
-colnames(pred_q025) <- m$spNames
-colnames(pred_q975) <- m$spNames
+#Convert each matrix into long format
+df_mean <- as.data.frame(pred_mean) %>%
+  tibble::rownames_to_column("covariate") %>%
+  tidyr::pivot_longer(-covariate, names_to = "species", values_to = "mean")
+
+df_q025 <- as.data.frame(pred_q025) %>%
+  tibble::rownames_to_column("covariate") %>%
+  tidyr::pivot_longer(-covariate, names_to = "species", values_to = "lower")
+
+df_q975 <- as.data.frame(pred_q975) %>%
+  tibble::rownames_to_column("covariate") %>%
+  tidyr::pivot_longer(-covariate, names_to = "species", values_to = "upper")
+
+df_q25 <- as.data.frame(pred_q25) %>%
+  tibble::rownames_to_column("covariate") %>%
+  tidyr::pivot_longer(-covariate, names_to = "species", values_to = "q25")
+
+df_q75 <- as.data.frame(pred_q75) %>%
+  tibble::rownames_to_column("covariate") %>%
+  tidyr::pivot_longer(-covariate, names_to = "species", values_to = "q75")
+
+#Generate dataframe based on predicted probabilities
+pred_distributions <- df_mean %>%
+  left_join(df_q025, by = c("covariate", "species")) %>%
+  left_join(df_q975, by = c("covariate", "species")) %>%
+  left_join(df_q25, by = c("covariate", "species")) %>%
+  left_join(df_q75, by = c("covariate", "species"))
+
+#Join back some metadata for plotting
+pred_distributions <- pred_distributions %>% 
+  left_join(XNew %>% 
+              mutate(category_season = interaction(category, season) )%>% 
+              select(category_season, category, season),
+            by = c("covariate" = "category_season")
+            )
+
+## Visualize predictions ----
+
+pred_distributions %>% 
+  ggplot(aes(x = mean, y = category, color = species, group = species)) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey40") +
+  geom_errorbarh(aes(xmin = lower, xmax = upper),
+                 width = 0,
+                 linewidth = 0.9,
+                 position = position_dodge(width = 0.85)) +
+  geom_errorbarh(aes(xmin = q25, xmax = q75),
+                 width = 0, linewidth = 1.2,
+                 position = position_dodge(width = 0.85)) +
+  geom_point(aes(color = species),
+             size = 2.5,
+             position = position_dodge(width = 0.85)) +
+  scale_color_viridis_d(option = "magma", end = 0.9) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(color = "white", face = "bold"),
+    strip.background = element_rect(fill = "grey40"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.major.x = element_line(color = "gray90", linewidth = 0.5),
+    legend.position = "right" ) +
+  facet_wrap( .~ season, 
+             #scales = "free_x"
+  )
+
+pred_distributions %>% 
+  ggplot(aes(x = mean, y = species, color = category, group = category)) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey40") +
+  geom_errorbarh(aes(xmin = lower, xmax = upper),
+                 width = 0,
+                 linewidth = 0.9,
+                 position = position_dodge(width = 0.85)) +
+  geom_errorbarh(aes(xmin = q25, xmax = q75),
+                 width = 0, linewidth = 1.2,
+                 position = position_dodge(width = 0.85)) +
+  geom_point(aes(color = category),
+             size = 2.5,
+             position = position_dodge(width = 0.85)) +
+  scale_color_manual(values = category_palette) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(color = "white", face = "bold"),
+    strip.background = element_rect(fill = "grey40"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.major.x = element_line(color = "gray90", linewidth = 0.5),
+    legend.position = "right" ) +
+  facet_wrap( .~ season, 
+              #scales = "free_x"
+  )
 
 
+## Statistical investigation ----
 
+### Season effect comparison across habitats ----
+#For each habitat - are there differences in infection probability between seasons (for each species)
 
+results_season <- list()
 
-
-
-# Mettre pred_mean en format lisible d'abord
-rownames(pred_mean) <- interaction(XNew$category, XNew$season)
-rownames(pred_q025) <- interaction(XNew$category, XNew$season)
-rownames(pred_q975) <- interaction(XNew$category, XNew$season)
-
-
-
-# Comparaisons Spring vs Autumn pour chaque habitat
-habitats <- levels(m$XData$category)
-
-results <- list()
-for(hab in habitats){
-  idx_spring <- which(XNew$season == "Spring" & XNew$category == hab)
-  idx_autumn <- which(XNew$season == "Autumn" & XNew$category == hab)
+#For each habitat
+for(hab in levels(XNew$category)){
   
-  # Différence pour chaque sample MCMC
+  #Identify which row of XNew correspond to the right season and habitat
+  idx_spring <- which(
+    XNew$season == "Spring" &
+      XNew$category == hab)
+  
+  idx_autumn <- which(
+    XNew$season == "Autumn" &
+      XNew$category == hab)
+  
+  #For each habitat
+  #Substract autumn prediction from spring prediction (for every species we model)
   diff_samples <- pred_array[, idx_spring, ] - pred_array[, idx_autumn, ]
-  # [1000 x 12 espèces]
   
-  # Support bayésien : P(Spring > Autumn)
-  support <- colMeans(diff_samples > 0)
-  support_neg <- colMeans(diff_samples < 0)
-  diff_mean <- colMeans(diff_samples)
-  
-  results[[hab]] <- data.frame(
-    habitat    = hab,
-    species    = m$spNames,
-    diff_mean  = diff_mean,
-    support    = support,
-    supportNeg = support_neg,
-    significant = support > 0.95 | support_neg > 0.95
+  #Save it into a dataframe saved within a list (one element per habitat)
+  results_season[[hab]] <- data.frame(
+    habitat = hab,
+    species = colnames(diff_samples),
+    diff_mean = colMeans(diff_samples),
+    #P(Spring > Autumn)
+    support_pos = colMeans(diff_samples > 0),
+    #P(Spring < Autumn)
+    support_neg = colMeans(diff_samples < 0),
+    #Significance
+    significant = if_else(colMeans(diff_samples > 0) >= 0.95 | colMeans(diff_samples < 0) >= 0.95, true = TRUE, false = FALSE)
+    
   )
 }
 
-df_results <- do.call(rbind, results)
-df_results %>% filter(significant)
+df_season <- do.call(rbind, results_season)
+
+
+### Habitat effect comparison across season ----
+#For each season - are there differences in infection probability between habitats (for each species)
+
+hab_pairs <- combn(levels(XNew$category), 2, simplify = FALSE)
+results_habitat <- list()
+k <- 1
+
+#For each season
+for(season_i in levels(XNew$season)){
+  
+  #For each combination of habitats
+  for(pair in hab_pairs){
+    
+    hab1 <- pair[1]
+    hab2 <- pair[2]
+    
+    #Identify which row of XNew correspond to the right season and habitat OF THE PAIR of interest
+    idx1 <- which(
+      XNew$season == season_i &
+        XNew$category == hab1)
+    
+    idx2 <- which(
+      XNew$season == season_i &
+        XNew$category == hab2)
+    
+    #For each season, and each pair of habitat
+    #Substract prediction between habitat from the pair 
+    diff_samples <-
+      pred_array[, idx1, ] - pred_array[, idx2, ]
+    
+    #Save it into a dataframe saved within a list (one element per pair of habitat)
+    results_habitat[[k]] <- data.frame(
+      season = season_i,
+      habitat1 = hab1,
+      habitat2 = hab2,
+      species = m$spNames,
+      
+      diff_mean = colMeans(diff_samples),
+      
+      support_pos = colMeans(diff_samples > 0),
+      support_neg = colMeans(diff_samples < 0),
+      significant = if_else(colMeans(diff_samples > 0) >= 0.95 | colMeans(diff_samples < 0) >= 0.95, true = TRUE, false = FALSE))
+    
+    k <- k + 1
+  }
+}
+df_habitat <- do.call(rbind, results_habitat)
+
+df_habitat
+df_habitat %>% filter(species == "Neoehrlichia_mikurensis")
 
 
 
+### Interaction effect ----
+#Testing if the interaction between season and habitat is significant
 
+results_interaction <- list()
+k <- 1
 
+#For each combination of habitats
+for(pair in hab_pairs){
+  
+  hab1 <- pair[1]
+  hab2 <- pair[2]
+  
+  #Identify which row of XNew correspond to the right season and habitat OF THE PAIR of interest
+  #For each habitat both season will be extracted as we are interested about interaction
+  idx_h1_spring <- which(
+    XNew$category == hab1 & XNew$season == "Spring")
+  
+  idx_h1_autumn <- which(
+    XNew$category == hab1 & XNew$season == "Autumn")
+  
+  idx_h2_spring <- which(
+    XNew$category == hab2 & XNew$season == "Spring")
+  
+  idx_h2_autumn <- which(
+    XNew$category == hab2 & XNew$season == "Autumn")
+  
+#For each habitat of the pair, compute difference of probability between seasons
+  #For first habitat of the pair
+  delta_h1 <-
+    pred_array[, idx_h1_spring, ] -
+    pred_array[, idx_h1_autumn, ]
+  #For second habitat of the pair
+  delta_h2 <-
+    pred_array[, idx_h2_spring, ] -
+    pred_array[, idx_h2_autumn, ]
+  
+  #Then compute the differences of differences :
+  #Difference between season among habitat1 vs difference between season among habitat2
+  interaction_samples <-
+    delta_h1 - delta_h2
+  
+  #Save this into a dataframe within a list
+  results_interaction[[k]] <- data.frame(
+    habitat1 = hab1,
+    habitat2 = hab2,
+    species = m$spNames,
+    
+    interaction_mean = colMeans(interaction_samples),
+    
+    support_pos = colMeans(interaction_samples > 0),
+    
+    support_neg = colMeans(interaction_samples < 0),
+    
+    significant = if_else(colMeans(interaction_samples > 0) >= 0.95 | colMeans(interaction_samples < 0) >= 0.95,
+                          true = TRUE, false = FALSE))
+  
+  k <- k + 1
+}
 
+df_interaction <- do.call(rbind, results_interaction)
+rownames(df_interaction) <- NULL
+df_interaction
+ 
 
-
-
-
-
-
-# 
-# 
-# 
-# # Effet de season pour chaque habitat fixé
-# results_gradient <- list()
-# 
-# for(hab in levels(m$XData$category)){
-#   
-#   Gradient <- constructGradient(
-#     m,
-#     focalVariable = "season",
-#     non.focalVariables = list(
-#       category = list(3, hab),      # type 3 = valeur fixée
-#       poids    = list(1, NULL),     # type 1 = fixé à la moyenne
-#       sexe     = list(1, NULL),
-#       maturity = list(1, NULL),
-#       nb_apo   = list(1, NULL)
-#     )
-#   )
-#   
-#   preds <- predict(m, Gradient = Gradient, 
-#                    expected = TRUE, 
-#                    predictEtaMean = TRUE)
-#   
-#   pred_array <- abind::abind(preds, along = 0)
-#   
-#   results_gradient[[hab]] <- list(
-#     XDataNew   = Gradient$XDataNew,
-#     pred_mean  = apply(pred_array, c(2,3), mean),
-#     pred_q025  = apply(pred_array, c(2,3), quantile, 0.025),
-#     pred_q975  = apply(pred_array, c(2,3), quantile, 0.975),
-#     pred_array = pred_array
-#   )
-# }
-# 
-# df_comparisons <- list()
-# 
-# for(hab in levels(m$XData$category)){
-#   
-#   pred_arr <- results_gradient[[hab]]$pred_array
-#   XNew_hab <- results_gradient[[hab]]$XDataNew
-#   
-#   idx_spring <- which(XNew_hab$season == "Spring")
-#   idx_autumn <- which(XNew_hab$season == "Autumn")
-#   
-#   diff <- pred_arr[, idx_spring, ] - pred_arr[, idx_autumn, ]
-#   
-#   df_comparisons[[hab]] <- data.frame(
-#     habitat    = hab,
-#     species    = m$spNames,
-#     diff_mean  = colMeans(diff),
-#     support    = colMeans(diff > 0),
-#     supportNeg = colMeans(diff < 0)
-#   ) %>%
-#     mutate(significant = support > 0.95 | supportNeg > 0.95)
-# }
-# 
-# df_all <- do.call(rbind, df_comparisons)
-# 
-# # Effets significatifs
-# df_all %>% filter(significant) %>% arrange(habitat, species)
+#Plot interaction support
+df_interaction %>%
+  mutate(
+    pair_label = paste(habitat1, "vs", habitat2),
+    support_display = pmax(support_pos, support_neg)
+  ) %>%
+  ggplot(aes(x = species, y = pair_label, fill = support_display)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = if_else(significant, "*", "")), 
+            size = 7, vjust = 0.8) +
+  scale_fill_viridis_c(option = "cividis", end = 0.9,
+    name = "Support") +
+  labs(x = NULL, y = NULL, 
+       title = "Maximum interaction season × category support ") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+    panel.grid = element_blank())

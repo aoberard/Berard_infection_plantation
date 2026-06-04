@@ -56,6 +56,36 @@ Lst = 1
 save(samples_list, thin_list, nChains, file = here::here(modelDir, "fitting_parameters.RData"))
 
 
+#Explanation of MCMC fitting parameters:
+#nChains: number of independent Monte Carlo Markov Chain (MCMC)
+#samples: number of posterior samples retained for each chain
+#thin   : only one state every "thin" iterations is retained
+
+#transient: "burn-in" : number of initial iteration used for each Monte Carlo. 
+#Initial iterations are discarded because the chain has not yet reached the stationary posterior distribution.
+
+#Default value in this script:
+#transient = ceiling(0.5 * samples * thin)
+cat("script transient value equals:", ceiling(0.5*samples*thin))
+
+
+#For example, with samples = 250, thin = 100, nchains = 4, using script default value for transient
+#
+#Burn-in: There is initially 12500 iterations performed per chain (burn-in)
+#Those iterations are discarded
+#
+#Sampling phase: Then there is 250 * 100 additional iterations performed (25000 after the 12500 first iterations)
+#
+#Thinning: One state is retained every 100 iterations from the 25000 performed just before : 250 values saved per chain
+#
+#Total: as 4 chains are processed independently, 250 * 4 = 1000 posterior samples
+#
+#Posterior samples are then used to estimate posterior means and distribution, credible intervals...
+#A retained sample is not a single coefficient value, 
+#but a complete realization of all model parameters at a given MCMC iteration.
+
+
+
 
 ## Fitting execution and saving ----
 

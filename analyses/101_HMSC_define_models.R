@@ -112,9 +112,9 @@ message("Matrix location.xy has been reordered to match studyDesign 'location' l
 
 ## Models' fixed effects formula ----
 XFormula.null = ~ 1
-XFormula.host = ~ season + sexe + poids + maturity 
-XFormula.env = ~  season * category + nb_apo
-XFormula.env_host = ~  season * category + nb_apo + sexe + poids + maturity
+XFormula.host = ~ season + sexe + scale(poids) + maturity 
+XFormula.env = ~  season * category + scale(nb_apo)
+XFormula.env_host = ~  season * category + scale(nb_apo) + sexe + scale(poids) + maturity
 # XFormula.env_detail = ~   
 
 

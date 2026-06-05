@@ -258,8 +258,7 @@ pred_array <- abind::abind(preds, along = 0)  #[n_samples, nrow(XNew), n_species
 dimnames(pred_array) <- list(
   NULL,
   interaction(XNew$category, XNew$season),
-  m$spNames
-)
+  m$spNames)
 
 #Compute means and distribution
 pred_mean <- apply(pred_array, c(2,3), mean)
@@ -301,8 +300,7 @@ pred_distributions <- pred_distributions %>%
   left_join(XNew %>% 
               mutate(category_season = interaction(category, season) )%>% 
               select(category_season, category, season),
-            by = c("covariate" = "category_season")
-            )
+            by = c("covariate" = "category_season"))
 
 ## Visualize predictions ----
 
@@ -371,12 +369,10 @@ for(hab in levels(XNew$category)){
   
   #Identify which row of XNew correspond to the right season and habitat
   idx_spring <- which(
-    XNew$season == "Spring" &
-      XNew$category == hab)
+    XNew$season == "Spring" & XNew$category == hab)
   
   idx_autumn <- which(
-    XNew$season == "Autumn" &
-      XNew$category == hab)
+    XNew$season == "Autumn" & XNew$category == hab)
   
   #For each habitat
   #Substract autumn prediction from spring prediction (for every species we model)
@@ -418,17 +414,14 @@ for(season_i in levels(XNew$season)){
     
     #Identify which row of XNew correspond to the right season and habitat OF THE PAIR of interest
     idx1 <- which(
-      XNew$season == season_i &
-        XNew$category == hab1)
+      XNew$season == season_i & XNew$category == hab1)
     
     idx2 <- which(
-      XNew$season == season_i &
-        XNew$category == hab2)
+      XNew$season == season_i & XNew$category == hab2)
     
     #For each season, and each pair of habitat
     #Substract prediction between habitat from the pair 
-    diff_samples <-
-      pred_array[, idx1, ] - pred_array[, idx2, ]
+    diff_samples <- pred_array[ , idx1, ] - pred_array[ , idx2, ]
     
     #Save it into a dataframe saved within a list (one element per pair of habitat)
     results_habitat[[k]] <- data.frame(
@@ -482,12 +475,10 @@ for(pair in hab_pairs){
 #For each habitat of the pair, compute difference of probability between seasons
   #For first habitat of the pair
   delta_h1 <-
-    pred_array[, idx_h1_spring, ] -
-    pred_array[, idx_h1_autumn, ]
+    pred_array[, idx_h1_spring, ] - pred_array[, idx_h1_autumn, ]
   #For second habitat of the pair
   delta_h2 <-
-    pred_array[, idx_h2_spring, ] -
-    pred_array[, idx_h2_autumn, ]
+    pred_array[, idx_h2_spring, ] - pred_array[, idx_h2_autumn, ]
   
   #Then compute the differences of differences :
   #Difference between season among habitat1 vs difference between season among habitat2
@@ -503,9 +494,7 @@ for(pair in hab_pairs){
     interaction_mean = colMeans(interaction_samples),
     
     support_pos = colMeans(interaction_samples > 0),
-    
     support_neg = colMeans(interaction_samples < 0),
-    
     significant = if_else(colMeans(interaction_samples > 0) >= 0.95 | colMeans(interaction_samples < 0) >= 0.95,
                           true = TRUE, false = FALSE))
   
@@ -521,8 +510,7 @@ df_interaction
 df_interaction %>%
   mutate(
     pair_label = paste(habitat1, "vs", habitat2),
-    support_display = pmax(support_pos, support_neg)
-  ) %>%
+    support_display = pmax(support_pos, support_neg)) %>%
   ggplot(aes(x = species, y = pair_label, fill = support_display)) +
   geom_tile(color = "white") +
   geom_text(aes(label = if_else(significant, "*", "")), 
@@ -530,7 +518,7 @@ df_interaction %>%
   scale_fill_viridis_c(option = "cividis", end = 0.9,
     name = "Support") +
   labs(x = NULL, y = NULL, 
-       title = "Maximum interaction season × category support ") +
+       title = "Maximum interaction season x category support ") +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
     panel.grid = element_blank())

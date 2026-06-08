@@ -237,8 +237,8 @@ model_selection %>% filter(delta <= 2)
 
 #Selected model specification
 if (exists("m_bartgrah")) rm(m_bartgrah)
-m_bartgrah <- glmmTMB::glmmTMB(
-  Bartonella_grahamii ~ season + poids + (1 | numero_ligne) + (1 | year),
+m_bartgrah <- glmmTMB::glmmTMB(                #BELOW IS A TEST BEWARE ITS NOT THE BEST SELECTED :
+  Bartonella_grahamii ~ season * category + nb_apo + sexe + poids + maturity + (1|numero_ligne) + (1|numero_centre) + (1|code_mission),
   data = df_probainf,
   family = binomial(link = "logit"),
   na.action = "na.fail"
@@ -255,6 +255,44 @@ performance::check_collinearity(m_bartgrah)
 #Selected model look
 summary(m_bartgrah)
 confint(m_bartgrah)
+
+
+
+#Selected model - Contrasts
+em_bartgrah <- emmeans::emmeans(m_bartgrah, ~ category | season, type = "response")
+emmeans::contrast(em_bartgrah, "pairwise", adjust = "Tukey")
+emmeans::contrast(em_bartgrah, "pairwise", adjust = "Tukey") %>% confint()
+
+em_summary_bartgrah <- as.data.frame(em_bartgrah)
+
+
+em_summary_bartgrah %>%
+  mutate(
+    category = forcats::fct_rev(forcats::fct_relevel(category, category_order))
+  ) %>%
+  ggplot(aes(x = prob, y = category, color = category)) +
+  geom_point(size = 4.5) +
+  geom_segment(aes(x = asymp.LCL, xend = asymp.UCL, y = category, yend = category), linewidth = 1.5) +
+  scale_color_manual(values = category_palette) +
+  theme_minimal(base_size = 16) +
+  labs(
+    x = "Estimated infection probability for Neoehrlichia mikurensis",
+    y = "Habitat category",
+  ) +
+  theme(
+    axis.text = element_text(color = "gray20", size = 11),
+    axis.title = element_text(color = "gray20", size = 12),
+    strip.text = element_text(color = "gray20", size = 12),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.major.x = element_line(color = "gray90", linewidth = 0.5)
+  ) +
+  facet_grid(season ~ .) +
+  guides(color = "none")
+
+
+
+
 
 
 

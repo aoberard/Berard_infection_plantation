@@ -46,7 +46,11 @@ infected <- infecti %>%
 
 #Adding environment
 infected <- infected %>% 
-  left_join(envi, by = c("numero_ligne" = "num",
+  left_join(envi %>% 
+              #keeping only variables that we will use later on
+              select(num, category, herb_cover, shrub_cover, tree_cover, longitude_lambert93, latitude_lambert93,
+                     PCA_microclim2025_axis1, PCA_microclim2025_axis2, pct500brd, gauss500brd, code_mission), 
+            by = c("numero_ligne" = "num",
                          "code_mission" = "code_mission"))
 
 #Compute number of A. sylvaticus and C. glareolus caught for each line-session (in 3 first days of capture)

@@ -115,7 +115,7 @@ XFormula.null = ~ 1
 XFormula.host = ~ season + sexe + scale(poids) + maturity 
 XFormula.env = ~  season * category + scale(nb_apo)
 XFormula.env_host = ~  season * category + scale(nb_apo) + sexe + scale(poids) + maturity
-# XFormula.env_detail = ~   
+XFormula.envdescriptors= ~ season 
 
 
 

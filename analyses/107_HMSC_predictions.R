@@ -443,7 +443,7 @@ df_habitat <- do.call(rbind, results_habitat)
 
 df_habitat
 df_habitat %>% filter(species == "Neoehrlichia_mikurensis")
-
+df_habitat %>% filter(species == "Bartonella_grahamii")
 
 
 ### Interaction effect ----

@@ -66,7 +66,10 @@ save(samples_list, thin_list, nChains, file = here::here(modelDir, "fitting_para
 
 #Default value in this script:
 #transient = ceiling(0.5 * samples * thin)
-cat("script transient value equals:", ceiling(0.5*samples*thin))
+for(i in seq_along(samples_list)) {
+  transient <- ceiling(0.5 * samples_list[i] * thin_list[i])
+  cat("Run", i, ": samples =", samples_list[i], ", thin =", thin_list[i], ", transient =", transient, "\n")
+}
 
 
 #For example, with samples = 250, thin = 100, nchains = 4, using script default value for transient

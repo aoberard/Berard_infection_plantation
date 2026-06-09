@@ -21,6 +21,8 @@ gc()
 library("dplyr")
 library("Hmsc")
 
+library("Hmsc")
+
 # Make script reproducible
 set.seed(1)
 
@@ -37,7 +39,7 @@ nParallel = NULL #Default: nParallel = nChains
 #Typically only section of the script that needs to be modified     ▲
 
 nfolds = 5 #change the number of CV-folds
-#nParallel = 1 #Set to 1 to disable parallel computing
+nParallel = 64 #Set to 1 to disable parallel computing, otherwise comment
 
 
 # Load saved elements ----

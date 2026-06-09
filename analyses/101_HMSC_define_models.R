@@ -14,6 +14,7 @@ gc()
 library("dplyr")
 library("Hmsc")
 
+
 # Make script reproducible
 set.seed(1)
 
@@ -115,7 +116,7 @@ XFormula.null = ~ 1
 XFormula.host = ~ season + sexe + scale(poids) + maturity 
 XFormula.env = ~  season * category + scale(nb_apo)
 XFormula.env_host = ~  season * category + scale(nb_apo) + sexe + scale(poids) + maturity
-XFormula.envdescriptors= ~ season 
+XFormula.envdescriptors = ~ season * (herb_cover + shrub_cover + tree_cover + gauss500brd)
 
 
 
@@ -208,6 +209,20 @@ m.env_host <- Hmsc::Hmsc(Y = Y,
                       individual = rL.ind
                     ))
 
+m.envdescriptors <- Hmsc::Hmsc(Y = Y,
+                         distr = "probit", 
+                         XData = X,
+                         XFormula = XFormula.envdescriptors,
+                         studyDesign = studyDesign, 
+                         TrData = Tm,
+                         TrFormula = TrFormula,
+                         phyloTree = taxonomicTree,
+                         ranLevels = list(
+                           location = rL.location, 
+                           mission = rL.mission, 
+                           individual = rL.ind
+                         ))
+
 
 
 #Check models structure
@@ -215,6 +230,7 @@ m.null
 m.host
 m.env
 m.env_host
+m.envdescriptors
 head(m.host$X) #factor should be subdivided into levels Boolean variables
 head(m.host$TrData)
 
@@ -227,13 +243,16 @@ head(m.host$TrScaled)
 models = list(m.null,
               m.host,
               m.env,
-              m.env_host
+              m.env_host,
+              m.envdescriptors
               )
 
 names(models) = c("nullmodel",
                   "hostmodel",
                   "habitatmodel",
-                  "habitat&hostmodel")
+                  "habitat&hostmodel",
+                  "fine_descriptors"
+                  )
 
 # Test run ----
 #Just to see if would fit without errors (before doing real fitting procedure)

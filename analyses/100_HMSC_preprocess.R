@@ -23,7 +23,7 @@ traits <- readxl::read_excel(path = here::here("data", "raw-data", "20260520_age
 # Parameter choice  ----
 
 # Choose which explanatory/random variables to consider ▲
-namesvar <- c("poids", "sexe", "maturity", "season", "category", "nb_apo")
+namesvar <- c("poids", "sexe", "maturity", "season", "category", "nb_apo", "herb_cover", "shrub_cover", "tree_cover", "gauss500brd")
 namesrandom <- c( "year", "field_session", "numero_ligne", "numero_centre")
 
 

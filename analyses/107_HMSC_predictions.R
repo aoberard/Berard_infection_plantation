@@ -13,8 +13,11 @@ gc()
 
 # Load libraries
 library("dplyr")
-library("Hmsc")
 library("ggplot2")
+if (!requireNamespace("Hmsc", quietly = TRUE)) {
+  install.packages("Hmsc", repos = "https://cloud.r-project.org")
+}
+library("Hmsc")
 
 # Make script reproducible
 set.seed(1)
@@ -474,16 +477,13 @@ for(pair in hab_pairs){
   
 #For each habitat of the pair, compute difference of probability between seasons
   #For first habitat of the pair
-  delta_h1 <-
-    pred_array[, idx_h1_spring, ] - pred_array[, idx_h1_autumn, ]
+  delta_h1 <- pred_array[, idx_h1_spring, ] - pred_array[, idx_h1_autumn, ]
   #For second habitat of the pair
-  delta_h2 <-
-    pred_array[, idx_h2_spring, ] - pred_array[, idx_h2_autumn, ]
+  delta_h2 <- pred_array[, idx_h2_spring, ] - pred_array[, idx_h2_autumn, ]
   
   #Then compute the differences of differences :
   #Difference between season among habitat1 vs difference between season among habitat2
-  interaction_samples <-
-    delta_h1 - delta_h2
+  interaction_samples <- delta_h1 - delta_h2
   
   #Save this into a dataframe within a list
   results_interaction[[k]] <- data.frame(

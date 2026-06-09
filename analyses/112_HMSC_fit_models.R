@@ -19,6 +19,7 @@ gc()
 library("dplyr")
 library("Hmsc")
 
+
 # Make script reproducible
 set.seed(1)
 
@@ -28,7 +29,7 @@ nParallel = NULL #Default: nParallel = nChains
 #Change default options by removing comment and setting value
 #Only section of the script typically modified ▲
 
-#nParallel = 1 #Set to 1 to disable parallel computing
+nParallel = 64 #Set to 1 to disable parallel computing, otherwise comment
 
 
 

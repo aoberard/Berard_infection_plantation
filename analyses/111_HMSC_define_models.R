@@ -14,6 +14,7 @@ gc()
 library("dplyr")
 library("Hmsc")
 
+
 # Make script reproducible
 set.seed(1)
 

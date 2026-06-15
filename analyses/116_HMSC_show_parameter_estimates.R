@@ -66,17 +66,13 @@ if(file.exists(filename)){
 }
 
 
-#BANDAGE LIE NOM MODEL ATTENTION -----
-names(models) <- gsub("\\*", "x", gsub("\\s+", "_", names(models)))
-
-
 ## Selecting model of choice ▲ ----
 #Keeping only selected models from the list of models (models object)
 #Make as a comment in order to explore all models, but last part of the script will not work
-if(file.exists(filename)){
-
-  models <- models[c("categoryxseason")]
-}
+# if(file.exists(filename)){
+# 
+#   models <- models[c("categoryxseason")]
+# }
 nm = length(models)
 
 
@@ -558,4 +554,4 @@ beta_coef %>%
 
 
 #Small look at the distribution of one beta coefficients
-plot(density(val[, "categoryhedgerows", "Neoehrlichia_mikurensis"]))
+# plot(density(val[, "categoryhedgerows", "Neoehrlichia_mikurensis"]))

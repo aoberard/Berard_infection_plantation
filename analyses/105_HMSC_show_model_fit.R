@@ -154,6 +154,10 @@ if(file.exists(filename)){
 }
 
 
+
+
+
+
 # Relationship between predictive power and prevalence ----
 
 #Load fitted models
@@ -303,4 +307,23 @@ write.csv(performances,
 
 
 
+# Save species ordered by CV Tjur R2 ----
+# for each model
+
+species_order <- lapply(names(MFCV), function(model_name) {
+  cMFCV <- MFCV[[model_name]]
+  m <- models[[model_name]]
+  
+  if(!is.null(cMFCV$TjurR2)){
+    tjur_cv <- setNames(cMFCV$TjurR2, m$spNames)
+    list(
+      species_order = names(sort(tjur_cv, decreasing = TRUE)),
+      tjur_cv = sort(tjur_cv, decreasing = TRUE)
+    )
+  } else {
+    NULL
+  }
+})
+names(species_order) <- names(MFCV)
+save(species_order, file = here::here(resultDir, "species_order_tjurCV.RData"))
 

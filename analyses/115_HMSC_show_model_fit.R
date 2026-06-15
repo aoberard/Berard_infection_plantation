@@ -307,4 +307,26 @@ write.csv(performances,
 
 
 
+# Save species ordered by CV SR2 ----
+# for each model
+
+species_order <- lapply(names(MFCV), function(model_name) {
+  cMFCV <- MFCV[[model_name]]
+  m <- models[[model_name]]
+  
+  if(!is.null(cMFCV$SR2)){
+    sr_cv <- setNames(cMFCV$SR2, m$spNames)
+    list(
+      species_order = names(sort(sr_cv, decreasing = TRUE)),
+      sr_cv = sort(sr_cv, decreasing = TRUE)
+    )
+  } else {
+    NULL
+  }
+})
+names(species_order) <- names(MFCV)
+save(species_order, file = here::here(resultDir, "species_order_srCV.RData"))
+
+
+
 

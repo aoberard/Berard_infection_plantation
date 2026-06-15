@@ -60,14 +60,14 @@ if(file.exists(filename)){
 }
 
 
-## Selecting model of choice ----
+## Selecting model of choice ▲ ----
 #Keeping only selected models from the list of models (models object)
+#Make as a comment in order to explore all models, but last part of the script will not work
 if(file.exists(filename)){
   
-  models <- models[c("habitat&hostmodel")]
-  
-  nm = length(models)
-}
+  models <- models[c("habitat_hostmodel")]
+  }
+nm = length(models)
 
 
 
@@ -105,7 +105,10 @@ env.list = NULL #predictions constructed over all environmental gradients
 #env.list[[1]] = 0
 #env.list[[2]] = c("tree","decay")
 
-
+m <- models[[1]]
+m$nt          # nombre de traits
+m$trNames     # noms des traits
+ncol(m$Tr)    # taille réelle de la matrice de traits
 
 
 # Execute prediction ----
@@ -211,11 +214,11 @@ if(file.exists(filename)){
 
 #other variables are fixed (we are considering marginal effects)
 XNew <- expand.grid(
-  season   = levels(m$XData$season),
+  season = levels(m$XData$season),
   category = levels(m$XData$category),
-  sexe     = levels(m$XData$sexe)[1],
+  sexe = levels(m$XData$sexe)[1],
   maturity = levels(m$XData$maturity)[2],
-  poids    = mean(m$XData$poids),
+  poids = mean(m$XData$poids),
   nb_apo   = mean(m$XData$nb_apo)
 )
 
@@ -225,9 +228,9 @@ XNew <- expand.grid(
 names(m$rL)
 
 studyDesignNew <- data.frame(
-  year       = factor("new_unit"),
-  mission    = factor("new_unit"),
-  location   = factor("new_unit"),
+  # year  = factor("new_unit"),
+  mission  = factor("new_unit"),
+  location = factor("new_unit"),
   individual = factor("new_unit")
 )[rep(1, nrow(XNew)), ]
 rownames(studyDesignNew) <- NULL

@@ -66,14 +66,15 @@ if(file.exists(filename)){
 }
 
 
-## Selecting model of choice ----
+## Selecting model of choice ▲ ----
 #Keeping only selected models from the list of models (models object)
-if(file.exists(filename)){
-  
-  models <- models[c("habitat&hostmodel")]
-  
-  nm = length(models)
-}
+#Make as a comment in order to explore all models, but last part of the script will not work
+# if(file.exists(filename)){
+# 
+#   models <- models[c("habitat_hostmodel")]
+# 
+# }
+nm = length(models)
 
 
 
@@ -123,7 +124,7 @@ var.part.order.raw = lapply(1:nm, function(x) "decreasing")
 
 #use show.sp.names.beta to choose to show / not show species names in betaPlot
 #if given, show.sp.names.beta should be a vector with length equalling number of models
-show.sp.names.beta = c(TRUE, TRUE, TRUE, TRUE)
+show.sp.names.beta = rep(TRUE, nm)
 
 #use plotTree to choose to plot / not plot the tree in betaPlot
 #if given, plotTree should be a vector with length equalling number of models
@@ -181,8 +182,8 @@ plotVP_gg <- function(VP, main = "", cols = NULL, ylim = c(0, 1)) {
     theme(
       axis.text.x  = element_text(angle = 90, hjust = 1, size = 7),
       legend.position = "bottom",
-      legend.text  = element_text(size = 8),
-      plot.title   = element_text(size = 9),
+      legend.text  = element_text(size = 5),
+      plot.title   = element_text(size = 7),
       plot.margin  = margin(5, 5, 5, 5)
     )
 }
@@ -554,4 +555,4 @@ beta_coef %>%
   
 
 #Small look at the distribution of one beta coefficients
-plot(density(val[, "poids", "Leptospira"]))
+#plot(density(val[, "scale(poids)", "Leptospira"]))

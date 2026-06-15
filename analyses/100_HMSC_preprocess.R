@@ -91,6 +91,20 @@ data_hmsc <- data_hmsc %>%
   mutate(across(where(is.factor), droplevels))
 
 
+## Scale continuous covariates (X) ----
+vars_cont <- c(
+  "poids",
+  "nb_apo",
+  "herb_cover",
+  "shrub_cover",
+  "tree_cover",
+  "gauss500brd"
+)
+
+data_hmsc <- data_hmsc %>%
+  mutate(across(all_of(vars_cont), ~ as.numeric(scale(.))))
+
+
 ## Verify the structure of data
 data_hmsc %>%
   select(any_of(c(names_inf, namesvar, namesrandom))) %>%

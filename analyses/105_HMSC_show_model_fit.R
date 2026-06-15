@@ -167,9 +167,11 @@ for (Lst in nst:1) {
                                               ".Rdata", sep = ""))
   if(file.exists(filename_models)){break}
 }
+
+if(!file.exists(filename_models)) stop("models file not found: ", filename_models)
 load(filename_models)
 
-#Generating datafram
+#Generating dataframe
 df_spfit <- do.call(rbind, lapply(names(MFCV), function(model_name) {
   #Extract for each model_name :
   #fit performance
@@ -220,7 +222,7 @@ ggplot(df_spfit, aes(x = prevalence, y = AUC_cv, color = model, label = species)
   labs(
     title = "Predictive power vs prevalence",
     x     = "Infectious agent prevalence",
-    y     = "Tjur R² (cross-validated)") +
+    y     = "AUC (cross-validated)") +
   theme_bw() +
   theme(legend.position = "none")
 

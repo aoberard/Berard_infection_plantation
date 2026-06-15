@@ -29,7 +29,10 @@ nParallel = NULL #Default: nParallel = nChains
 #Change default options by removing comment and setting value
 #Only section of the script typically modified ▲
 
-nParallel = 64 #Set to 1 to disable parallel computing, otherwise comment
+#nParallel = 1 #Set to 1 to disable parallel computing, otherwise comment
+
+#Use socket clusters in parallel processing (TRUE or FALSE), must be TRUE if launched in Windows, else FALSE is usually quicker
+useSocket_param <- FALSE
 
 
 
@@ -47,7 +50,7 @@ load(file = here::here(modelDir, "unfitted_models.RData"))
 #Choose fitting parameters
 nm <- length(models)
 samples_list <- c(250, 250)    #250, 250
-thin_list <- c(1, 1000)          #100, 1000
+thin_list <- c(1, 500)          #100, 1000
 nChains <- 4
 
 if(is.null(nParallel)) nParallel = nChains
@@ -147,7 +150,9 @@ while(Lst <= length(samples_list)){
                      adaptNf = rep(ceiling(0.4*samples*thin), m$nr), 
                      transient = ceiling(0.5*samples*thin),
                      nChains = nChains,
-                     nParallel = nParallel) 
+                     nParallel = nParallel,
+                     useSocket = useSocket_param
+                     ) 
       
       models[[mi]] = m
       

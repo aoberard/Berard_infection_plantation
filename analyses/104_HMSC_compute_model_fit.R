@@ -21,8 +21,6 @@ gc()
 library("dplyr")
 library("Hmsc")
 
-library("Hmsc")
-
 # Make script reproducible
 set.seed(1)
 
@@ -39,7 +37,11 @@ nParallel = NULL #Default: nParallel = nChains
 #Typically only section of the script that nee to be modified     ▲
 
 nfolds = 5 #change the number of CV-folds
-nParallel = 64 #Set to 1 to disable parallel computing, otherwise comment
+#nParallel = 1 #Set to 1 to disable parallel computing, otherwise comment
+
+#Use socket clusters in parallel processing (TRUE or FALSE), must be TRUE if launched in Windows, else FALSE is usually quicker
+useSocket_param <- FALSE
+
 
 
 # Load saved elements ----
@@ -132,14 +134,20 @@ while(Lst <= length(samples_list)){
           m = models[[mi]]
           
           
-          preds = computePredictedValues(m)
+          preds = pcomputePredictedValues(m,
+                                         nParallel = nParallel,
+                                         useSocket = useSocket_param
+          )
+          
           MF[[mi]] = evaluateModelFit(hM = m,
                                       predY = preds)
           
           partition = createPartition(m, nfolds = nfolds) #USE column = ...
-          preds = computePredictedValues(m,
+          preds = pcomputePredictedValues(m,
                                          partition = partition, 
-                                         nParallel = nParallel)
+                                         nParallel = nParallel,
+                                         useSocket = useSocket_param
+          )
           MFCV[[mi]] = evaluateModelFit(hM = m,
                                         predY = preds)
           

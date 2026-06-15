@@ -28,7 +28,10 @@ nParallel = NULL #Default: nParallel = nChains
 #Change default options by removing comment and setting value
 #Only section of the script typically modified ▲
 
-nParallel = 64 #Set to 1 to disable parallel computing, otherwise comment
+#nParallel = 1 #Set to 1 to disable parallel computing, otherwise comment
+
+#Use socket clusters in parallel processing (TRUE or FALSE), must be TRUE if launched in Windows, else FALSE is usually quicker
+useSocket_param <- FALSE
 
 
 
@@ -98,7 +101,7 @@ for(i in seq_along(samples_list)) {
 #fitted models is saved to disk.
 
 #Overwrite parameter : set to TRUE to refit models even if the output file already exists
-overwrite <- TRUE
+overwrite <- FALSE
 
 
 
@@ -146,7 +149,9 @@ while(Lst <= length(samples_list)){
                      adaptNf = rep(ceiling(0.4*samples*thin), m$nr), 
                      transient = ceiling(0.5*samples*thin),
                      nChains = nChains,
-                     nParallel = nParallel) 
+                     nParallel = nParallel,
+                     useSocket = useSocket_param
+                     ) 
       
       models[[mi]] = m
       

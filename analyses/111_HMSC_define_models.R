@@ -110,6 +110,7 @@ message("Matrix location.xy has been reordered to match studyDesign 'location' l
 ## Models' fixed effects formula ----
 XFormula.null = ~ 1
 XFormula.category = ~  category 
+XFormula.season = ~  season 
 XFormula.season_category = ~  season + category 
 XFormula.interaction = ~  season * category 
 
@@ -172,6 +173,18 @@ m.category <- Hmsc::Hmsc(Y = Y,
                        location = rL.location, 
                        mission = rL.mission
                      ))
+m.season <- Hmsc::Hmsc(Y = Y,
+                         distr = "poisson", 
+                         XData = X,
+                         XFormula = XFormula.season,
+                         studyDesign = studyDesign, 
+                         TrData = Tm,
+                         TrFormula = TrFormula,
+                         phyloTree = taxonomicTree,
+                         ranLevels = list(
+                           location = rL.location, 
+                           mission = rL.mission
+                         ))
 
 m.season_category <- Hmsc::Hmsc(Y = Y,
                          distr = "poisson", 
@@ -202,6 +215,7 @@ m.interaction <- Hmsc::Hmsc(Y = Y,
 #Check models structure
 m.null
 m.category
+m.season
 m.season_category
 m.interaction
 head(m.category$X) #factor should be subdivided into levels Boolean variables
@@ -215,14 +229,16 @@ head(m.category$TrScaled)
 # Combining models ----
 models = list(m.null,
               m.category,
+              m.season,
               m.season_category,
               m.interaction
               )
 
 names(models) = c("nullmodel",
                   "category",
+                  "season",
                   "category+season",
-                  "category*season")
+                  "categoryxseason")
 
 # Test run ----
 #Just to see if would fit without errors (before doing real fitting procedure)

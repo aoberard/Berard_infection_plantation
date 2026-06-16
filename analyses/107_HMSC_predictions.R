@@ -568,3 +568,11 @@ df_interaction %>%
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
     panel.grid = element_blank())
+
+### Save pairwise comparison ----
+save(df_season,
+     df_habitat,
+     df_interaction,
+     file = here::here(resultDir, "pairwise_comparisons.RData"))
+
+

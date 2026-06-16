@@ -437,7 +437,9 @@ for(hab in levels(XNew$category)){
   )
 }
 
-df_season <- do.call(rbind, results_season)
+df_ab_season <- do.call(rbind, results_season)
+df_ab_season %>% filter(species == "Bartonella_grahamii")
+
 
 
 ### Habitat effect comparison across season ----
@@ -483,12 +485,12 @@ for(season_i in levels(XNew$season)){
     k <- k + 1
   }
 }
-df_habitat <- do.call(rbind, results_habitat)
+df_ab_habitat <- do.call(rbind, results_habitat)
 
-df_habitat
-df_habitat %>% filter(species == "Neoehrlichia_mikurensis")
-df_habitat %>% filter(species == "Bartonella_grahamii")
-df_habitat %>% filter(species == "Bartonella_birtlesii")
+df_ab_habitat
+df_ab_habitat %>% filter(species == "Neoehrlichia_mikurensis")
+df_ab_habitat %>% filter(species == "Bartonella_grahamii")
+df_ab_habitat %>% filter(species == "Bartonella_birtlesii")
 
 ### Interaction effect ----
 #Testing if the interaction between season and habitat is significant
@@ -542,13 +544,14 @@ for(pair in hab_pairs){
   k <- k + 1
 }
 
-df_interaction <- do.call(rbind, results_interaction)
-rownames(df_interaction) <- NULL
-df_interaction
+df_ab_interaction <- do.call(rbind, results_interaction)
+rownames(df_ab_interaction) <- NULL
+df_ab_interaction
+
 
 
 #Plot interaction support
-df_interaction %>%
+df_ab_interaction %>%
   mutate(
     pair_label = paste(habitat1, "vs", habitat2),
     support_display = pmax(support_pos, support_neg)) %>%
@@ -563,3 +566,12 @@ df_interaction %>%
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
         panel.grid = element_blank())
+
+
+### Save pairwise comparison ----
+save(df_ab_season,
+     df_ab_habitat,
+     df_ab_interaction,
+     file = here::here(resultDir, "pairwise_comparisons.RData"))
+
+

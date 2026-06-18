@@ -133,13 +133,13 @@ plot(taxonomicTree, cex = 0.5)
 #Define unstructured random effect at spatiotemporal unit
 rL.year <- Hmsc::HmscRandomLevel(units = levels(studyDesign$year))
 rL.mission <- Hmsc::HmscRandomLevel(units = levels(studyDesign$mission))
-rL.location <- Hmsc::HmscRandomLevel(units = levels(studyDesign$location))
+rL.site <- Hmsc::HmscRandomLevel(units = levels(studyDesign$site))
 
 #Define unstructured random effect at sampling unit level
 rL.ind <- Hmsc::HmscRandomLevel(units = levels(studyDesign$site_session))
 
 #Define studyDesign "location" spatial random effect
-#Beware that during model specification random effect name should refers to a column name of studyDesign (locations here) 
+#Beware that during model specification random effect name should refers to a column name of studyDesign (location here) 
 #to which random effect should apply
 rL.location.xy = HmscRandomLevel(sData = locations.xy, sMethod = "Full")
 
@@ -149,7 +149,7 @@ rL.location.xy = HmscRandomLevel(sData = locations.xy, sMethod = "Full")
 #using hmsc constructor
 
 m.null <- Hmsc::Hmsc(Y = Y,
-                     distr = "poisson", 
+                     distr = "lognormal poisson", 
                      XData = X,
                      XFormula = XFormula.null,
                      studyDesign = studyDesign, 
@@ -157,12 +157,13 @@ m.null <- Hmsc::Hmsc(Y = Y,
                      TrFormula = TrFormula,
                      phyloTree = taxonomicTree,
                      ranLevels = list(
-                       location = rL.location, 
+                       site = rL.site,
+                       location = rL.location.xy,
                        mission = rL.mission
                      ))
 
 m.category <- Hmsc::Hmsc(Y = Y,
-                     distr = "poisson", 
+                     distr = "lognormal poisson", 
                      XData = X,
                      XFormula = XFormula.category,
                      studyDesign = studyDesign, 
@@ -170,11 +171,13 @@ m.category <- Hmsc::Hmsc(Y = Y,
                      TrFormula = TrFormula,
                      phyloTree = taxonomicTree,
                      ranLevels = list(
-                       location = rL.location, 
+                       site = rL.site, 
+                       location = rL.location.xy,
                        mission = rL.mission
                      ))
+
 m.season <- Hmsc::Hmsc(Y = Y,
-                         distr = "poisson", 
+                         distr = "lognormal poisson", 
                          XData = X,
                          XFormula = XFormula.season,
                          studyDesign = studyDesign, 
@@ -182,12 +185,13 @@ m.season <- Hmsc::Hmsc(Y = Y,
                          TrFormula = TrFormula,
                          phyloTree = taxonomicTree,
                          ranLevels = list(
-                           location = rL.location, 
+                           site = rL.site, 
+                           location = rL.location.xy,
                            mission = rL.mission
                          ))
 
 m.season_category <- Hmsc::Hmsc(Y = Y,
-                         distr = "poisson", 
+                         distr = "lognormal poisson", 
                          XData = X,
                          XFormula = XFormula.season_category,
                          studyDesign = studyDesign, 
@@ -195,12 +199,13 @@ m.season_category <- Hmsc::Hmsc(Y = Y,
                          TrFormula = TrFormula,
                          phyloTree = taxonomicTree,
                          ranLevels = list(
-                           location = rL.location, 
+                           site = rL.site, 
+                           location = rL.location.xy,
                            mission = rL.mission
                          ))
 
 m.interaction <- Hmsc::Hmsc(Y = Y,
-                                distr = "poisson", 
+                                distr = "lognormal poisson", 
                                 XData = X,
                                 XFormula = XFormula.interaction,
                                 studyDesign = studyDesign, 
@@ -208,7 +213,8 @@ m.interaction <- Hmsc::Hmsc(Y = Y,
                                 TrFormula = TrFormula,
                                 phyloTree = taxonomicTree,
                                 ranLevels = list(
-                                  location = rL.location, 
+                                  site = rL.site, 
+                                  location = rL.location.xy,
                                   mission = rL.mission
                                 ))
 
@@ -230,15 +236,16 @@ head(m.category$TrScaled)
 models = list(m.null,
               m.category,
               m.season,
-              m.season_category,
+              ms.season_category,
               m.interaction
               )
 
 names(models) = c("nullmodel",
-                  "category",
+                  "habitat",
                   "season",
-                  "category+season",
-                  "categoryxseason")
+                  "habitat+season",
+                  "habitatxseason"
+                  )
 
 # Test run ----
 #Just to see if would fit without errors (before doing real fitting procedure)
@@ -250,3 +257,5 @@ for(i in 1:length(models)){
 
 # Saving models ----
 save(models, file = here::here(modelDir, "unfitted_models.RData"))
+
+

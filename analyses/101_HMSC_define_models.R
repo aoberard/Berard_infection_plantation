@@ -97,7 +97,7 @@ message("All species in Y are present in T, and T has been reordered to match Y.
 #Check uniqueness of row names
 stopifnot(!anyDuplicated(rownames(locations.xy)))
 
-#Check that all studyDesign locations are represented
+#Check that all studyDesign sites are represented
 stopifnot(all(as.character(studyDesign$location) %in% rownames(locations.xy)))
 
 #Reorder to match the factor levels 
@@ -116,8 +116,6 @@ XFormula.null = ~ 1
 XFormula.host = ~ season + sexe + poids + maturity 
 XFormula.env = ~  season * category + nb_apo
 XFormula.env_host = ~  season * category + nb_apo + sexe + poids + maturity
-XFormula.envdescriptors = ~ season * (herb_cover + shrub_cover + tree_cover + gauss500brd)
-
 
 
 ## Models' traits formula ----
@@ -138,13 +136,13 @@ plot(taxonomicTree, cex = 0.5)
 #Define unstructured random effect at spatiotemporal unit
 rL.year <- Hmsc::HmscRandomLevel(units = levels(studyDesign$year))
 rL.mission <- Hmsc::HmscRandomLevel(units = levels(studyDesign$mission))
-rL.location <- Hmsc::HmscRandomLevel(units = levels(studyDesign$location))
+rL.site <- Hmsc::HmscRandomLevel(units = levels(studyDesign$site))
 
 #Define unstructured random effect at individual unit
 rL.ind <- Hmsc::HmscRandomLevel(units = levels(studyDesign$individual))
 
 #Define studyDesign "location" spatial random effect
-#Beware that during model specification random effect name should refers to a column name of studyDesign (locations here) 
+#Beware that during model specification random effect name should refers to a column name of studyDesign (location here) 
 #to which random effect should apply
 rL.location.xy = HmscRandomLevel(sData = locations.xy, sMethod = "Full")
 
@@ -162,7 +160,8 @@ m.null <- Hmsc::Hmsc(Y = Y,
                      TrFormula = TrFormula,
                      phyloTree = taxonomicTree,
                      ranLevels = list(
-                       location = rL.location, 
+                       site = rL.site, 
+                       location = rL.location.xy,
                        mission = rL.mission, 
                        individual = rL.ind
                        ))
@@ -176,7 +175,8 @@ m.host <- Hmsc::Hmsc(Y = Y,
                       TrFormula = TrFormula,
                       phyloTree = taxonomicTree,
                       ranLevels = list(
-                        location = rL.location, 
+                        site = rL.site, 
+                        location = rL.location.xy,
                         mission = rL.mission, 
                         individual = rL.ind
                         ))
@@ -190,7 +190,8 @@ m.env <- Hmsc::Hmsc(Y = Y,
                      TrFormula = TrFormula,
                      phyloTree = taxonomicTree,
                      ranLevels = list(
-                       location = rL.location, 
+                       site = rL.site,
+                       location = rL.location.xy,
                        mission = rL.mission, 
                        individual = rL.ind
                      ))
@@ -204,25 +205,11 @@ m.env_host <- Hmsc::Hmsc(Y = Y,
                     TrFormula = TrFormula,
                     phyloTree = taxonomicTree,
                     ranLevels = list(
-                      location = rL.location, 
+                      site = rL.site, 
+                      location = rL.location.xy,
                       mission = rL.mission, 
                       individual = rL.ind
                     ))
-
-m.envdescriptors <- Hmsc::Hmsc(Y = Y,
-                         distr = "probit", 
-                         XData = X,
-                         XFormula = XFormula.envdescriptors,
-                         studyDesign = studyDesign, 
-                         TrData = Tm,
-                         TrFormula = TrFormula,
-                         phyloTree = taxonomicTree,
-                         ranLevels = list(
-                           location = rL.location, 
-                           mission = rL.mission, 
-                           individual = rL.ind
-                         ))
-
 
 
 #Check models structure
@@ -230,7 +217,6 @@ m.null
 m.host
 m.env
 m.env_host
-m.envdescriptors
 head(m.host$X) #factor should be subdivided into levels Boolean variables
 head(m.host$TrData)
 
@@ -243,15 +229,13 @@ head(m.host$TrScaled)
 models = list(m.null,
               m.host,
               m.env,
-              m.env_host,
-              m.envdescriptors
+              m.env_host
               )
 
 names(models) = c("nullmodel",
                   "hostmodel",
                   "habitatmodel",
-                  "habitat_hostmodel",
-                  "fine_descriptors"
+                  "habitat_hostmodel"
                   )
 
 # Test run ----

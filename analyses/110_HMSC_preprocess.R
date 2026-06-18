@@ -148,9 +148,10 @@ rownames(Tm) <- Tm$names
 studyDesign <- data_hmsc %>% 
   select(all_of(namesrandom)) %>% 
   rename( site_session = site_session,
-          location = numero_ligne,
+          site = numero_ligne,
           mission = field_session,
           year = year) %>% 
+  mutate(location = site)%>% 
   as.data.frame()
 
 rownames(studyDesign) <- studyDesign$site_session 
@@ -159,7 +160,7 @@ rownames(studyDesign) <- studyDesign$site_session
 
 ## Random effect (spatial) matrix ----
 
-#Defined at the studyDesign chosen "location" scale
+#Defined at the studyDesign chosen "site" scale
 locations.xy <- data_hmsc %>%
   select(numero_ligne, longitude_lambert93, latitude_lambert93) %>%
   distinct() %>% 

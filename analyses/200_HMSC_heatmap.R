@@ -71,7 +71,7 @@ df_heatmap_season <- df_heatmap_season %>%
   mutate(
     species = factor(species, levels = species_order),
     model = factor(model, levels = c("probability", "abundance"),
-                     labels = c("Probit", "Poisson")),
+                     labels = c("Probability", "Abundance")),
     habitat = factor(habitat, levels = c("pine_edge", "hedgerows", "broadleaved_forest"),
                      labels = c("Pine edges", "Hedgerows", "Broadleaved forests"))
     )
@@ -197,7 +197,7 @@ df_heatmap_habitat <- df_heatmap_habitat %>%
   mutate(
     species = factor(species, levels = species_order_habitat),
     model = factor(model, levels = c("probability", "abundance"),
-                     labels = c("Probit", "Poisson")),
+                     labels = c("Probability", "Abundance")),
     season = factor(season, levels = c("Spring", "Autumn"))
   )
 
@@ -324,7 +324,7 @@ df_heatmap_interaction <- df_heatmap_interaction %>%
   mutate(
     species = factor(species, levels = species_order_interaction),
     model = factor(model, levels = c("probability", "abundance"),
-                     labels = c("Probit", "Poisson"))
+                     labels = c("Probability", "Abundance"))
   )
 
 
@@ -423,7 +423,4 @@ ggsave(filename = here::here("figures",  "heatmap_habitat.png"),
 ggsave(filename = here::here("figures", "heatmap_interaction.png"),
        plot = plot_heatmap_interaction_diff + coord_equal(),
        width = 2700, height = 2400, units = "px", dpi = 300, bg = NULL)
-
-
-
 

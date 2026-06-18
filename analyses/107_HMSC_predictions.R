@@ -432,6 +432,8 @@ for(hab in levels(XNew$category)){
     habitat = hab,
     species = colnames(diff_samples),
     diff_mean = colMeans(diff_samples),
+    lower95 = apply(diff_samples, 2, quantile, 0.025),
+    upper95 = apply(diff_samples, 2, quantile, 0.975),
     #P(Spring > Autumn)
     support_pos = colMeans(diff_samples > 0),
     #P(Spring < Autumn)
@@ -480,6 +482,9 @@ for(season_i in levels(XNew$season)){
       species = m$spNames,
       
       diff_mean = colMeans(diff_samples),
+      
+      lower95 = apply(diff_samples, 2, quantile, 0.025),
+      upper95 = apply(diff_samples, 2, quantile, 0.975),
       
       support_pos = colMeans(diff_samples > 0),
       support_neg = colMeans(diff_samples < 0),
@@ -538,6 +543,9 @@ for(pair in hab_pairs){
     species = m$spNames,
     
     interaction_mean = colMeans(interaction_samples),
+    
+    lower95 = apply(interaction_samples, 2, quantile, 0.025),
+    upper95 = apply(interaction_samples, 2, quantile, 0.975),
     
     support_pos = colMeans(interaction_samples > 0),
     support_neg = colMeans(interaction_samples < 0),

@@ -158,7 +158,7 @@ m.null <- Hmsc::Hmsc(Y = Y,
                      phyloTree = taxonomicTree,
                      ranLevels = list(
                        site = rL.site,
-                       location = rL.location.xy,
+                       # location = rL.location.xy,
                        mission = rL.mission
                      ))
 
@@ -172,7 +172,7 @@ m.category <- Hmsc::Hmsc(Y = Y,
                      phyloTree = taxonomicTree,
                      ranLevels = list(
                        site = rL.site, 
-                       location = rL.location.xy,
+                       # location = rL.location.xy,
                        mission = rL.mission
                      ))
 
@@ -186,7 +186,7 @@ m.season <- Hmsc::Hmsc(Y = Y,
                          phyloTree = taxonomicTree,
                          ranLevels = list(
                            site = rL.site, 
-                           location = rL.location.xy,
+                           # location = rL.location.xy,
                            mission = rL.mission
                          ))
 
@@ -200,7 +200,7 @@ m.season_category <- Hmsc::Hmsc(Y = Y,
                          phyloTree = taxonomicTree,
                          ranLevels = list(
                            site = rL.site, 
-                           location = rL.location.xy,
+                           # location = rL.location.xy,
                            mission = rL.mission
                          ))
 
@@ -214,9 +214,23 @@ m.interaction <- Hmsc::Hmsc(Y = Y,
                                 phyloTree = taxonomicTree,
                                 ranLevels = list(
                                   site = rL.site, 
-                                  location = rL.location.xy,
+                                  # location = rL.location.xy,
                                   mission = rL.mission
                                 ))
+
+m.interaction.spat <- Hmsc::Hmsc(Y = Y,
+                            distr = "lognormal poisson", 
+                            XData = X,
+                            XFormula = XFormula.interaction,
+                            studyDesign = studyDesign, 
+                            TrData = Tm,
+                            TrFormula = TrFormula,
+                            phyloTree = taxonomicTree,
+                            ranLevels = list(
+                              site = rL.site, 
+                              location = rL.location.xy,
+                              mission = rL.mission
+                            ))
 
 #Check models structure
 m.null
@@ -224,6 +238,7 @@ m.category
 m.season
 m.season_category
 m.interaction
+m.interaction.spat
 head(m.category$X) #factor should be subdivided into levels Boolean variables
 head(m.category$TrData)
 
@@ -236,15 +251,17 @@ head(m.category$TrScaled)
 models = list(m.null,
               m.category,
               m.season,
-              ms.season_category,
-              m.interaction
+              m.season_category,
+              m.interaction,
+              m.interaction.spat
               )
 
 names(models) = c("nullmodel",
                   "habitat",
                   "season",
                   "habitat+season",
-                  "habitatxseason"
+                  "habitatxseason",
+                  "habitatxseason_spat"
                   )
 
 # Test run ----

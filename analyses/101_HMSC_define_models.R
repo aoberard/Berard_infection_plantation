@@ -161,7 +161,7 @@ m.null <- Hmsc::Hmsc(Y = Y,
                      phyloTree = taxonomicTree,
                      ranLevels = list(
                        site = rL.site, 
-                       location = rL.location.xy,
+                       # location = rL.location.xy,
                        mission = rL.mission, 
                        individual = rL.ind
                        ))
@@ -176,7 +176,7 @@ m.host <- Hmsc::Hmsc(Y = Y,
                       phyloTree = taxonomicTree,
                       ranLevels = list(
                         site = rL.site, 
-                        location = rL.location.xy,
+                        # location = rL.location.xy,
                         mission = rL.mission, 
                         individual = rL.ind
                         ))
@@ -191,7 +191,7 @@ m.env <- Hmsc::Hmsc(Y = Y,
                      phyloTree = taxonomicTree,
                      ranLevels = list(
                        site = rL.site,
-                       location = rL.location.xy,
+                       # location = rL.location.xy,
                        mission = rL.mission, 
                        individual = rL.ind
                      ))
@@ -206,10 +206,25 @@ m.env_host <- Hmsc::Hmsc(Y = Y,
                     phyloTree = taxonomicTree,
                     ranLevels = list(
                       site = rL.site, 
-                      location = rL.location.xy,
+                      # location = rL.location.xy,
                       mission = rL.mission, 
                       individual = rL.ind
                     ))
+
+m.env_host.spat <- Hmsc::Hmsc(Y = Y,
+                         distr = "probit", 
+                         XData = X,
+                         XFormula = XFormula.env_host,
+                         studyDesign = studyDesign, 
+                         TrData = Tm,
+                         TrFormula = TrFormula,
+                         phyloTree = taxonomicTree,
+                         ranLevels = list(
+                           site = rL.site, 
+                           location = rL.location.xy,
+                           mission = rL.mission, 
+                           individual = rL.ind
+                         ))
 
 
 #Check models structure
@@ -217,6 +232,7 @@ m.null
 m.host
 m.env
 m.env_host
+m.env_host.spat
 head(m.host$X) #factor should be subdivided into levels Boolean variables
 head(m.host$TrData)
 
@@ -229,13 +245,15 @@ head(m.host$TrScaled)
 models = list(m.null,
               m.host,
               m.env,
-              m.env_host
+              m.env_host,
+              m.env_host.spat
               )
 
 names(models) = c("nullmodel",
                   "hostmodel",
                   "habitatmodel",
-                  "habitat_hostmodel"
+                  "habitat_hostmodel",
+                  "habitat_hostmodel_spat"
                   )
 
 # Test run ----

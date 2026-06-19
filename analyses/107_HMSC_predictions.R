@@ -584,3 +584,41 @@ save(df_season,
      file = here::here(resultDir, "pairwise_comparisons.RData"))
 
 
+
+
+# 
+# 
+# Gradient_abundance <- constructGradient(m, focalVariable = "nb_apo")
+# 
+# Gradient_spring <- constructGradient(m, focalVariable = "category",
+#                                      non.focalVariables = list('season' = list(3, "Spring")))
+# 
+# Gradient_autumn <- constructGradient(m, focalVariable = "category",
+#                                      non.focalVariables = list('season' = list(3, "Autumn")))
+# 
+# 
+# predY_abundance <- predict(m, XData = Gradient_abundance$XDataNew,
+#                         studyDesign = Gradient_abundance$studyDesignNew,
+#                         ranLevels = Gradient_abundance$rLNew, expected = TRUE)
+# 
+# predY_spring <- predict(m, XData = Gradient_spring$XDataNew, 
+#                         studyDesign = Gradient_spring$studyDesignNew,
+#                         ranLevels = Gradient_spring$rLNew, expected = TRUE)
+# 
+# predY_autumn <- predict(m, XData = Gradient_autumn$XDataNew,
+#                         studyDesign = Gradient_autumn$studyDesignNew,
+#                         ranLevels = Gradient_autumn$rLNew, expected = TRUE)
+# 
+# 
+# 
+# 
+# # Réponse de toute la communauté
+# plotGradient(m, Gradient_spring, pred = predY_spring, measure = "S", showData = FALSE)
+# plotGradient(m, Gradient_autumn, pred = predY_autumn, measure = "S", showData = FALSE)
+# 
+# # Pour une espèce spécifique (vérifier l'ordre avec colnames(m$Y))
+# colnames(m$Y)
+# plotGradient(m, Gradient_spring, pred = predY_spring, measure = "Y", index = which(colnames(m$Y) == "Bartonella_grahamii"))
+# 
+# 
+# plotGradient(m, Gradient_abundance, pred = predY_abundance, measure = "Y", index = which(colnames(m$Y) == "Eperythrozoon_coccoides"))

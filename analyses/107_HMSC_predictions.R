@@ -67,7 +67,7 @@ if(file.exists(filename)){
 #Make as a comment in order to explore all models, but last part of the script will not work
 if(file.exists(filename)){
   
-  models <- models[c("habitat_hostmodel")]
+  models <- models[c("habitat_hostmodel_spat")]
   }
 nm = length(models)
 
@@ -207,6 +207,8 @@ if(file.exists(filename)){
 
 
 # Attempt to predict with interaction ----
+#example of constructed gradient used for prediction:
+#constructGradient(m, focalVariable = "season")
 
 
 ## Generate manual gradient ----
@@ -232,19 +234,14 @@ names(m$rL)
 studyDesignNew <- data.frame(
   # year  = factor("new_unit"),
   mission  = factor("new_unit"),
+  site = factor("new_unit"),
   location = factor("new_unit"),
   individual = factor("new_unit")
 )[rep(1, nrow(XNew)), ]
 rownames(studyDesignNew) <- NULL
 
-#The artificial unit is added in existing levels of hmsc random levels 
-rLNew <- list()
-for(r in names(m$rL)){
-  rL1 <- m$rL[[r]]
-  rL1$pi <- c(rL1$pi, "new_unit")
-  rL1$N  <- rL1$N + 1
-  rLNew[[r]] <- rL1
-}
+#Extracting random effects factor from hmsc default function
+rLNew <- constructGradient(m, focalVariable = "season")$rLNew
 
 
 ## Generate predictions and distributions ----
@@ -577,6 +574,7 @@ df_interaction %>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
     panel.grid = element_blank())
 
+
 ### Save pairwise comparison ----
 save(df_season,
      df_habitat,
@@ -586,9 +584,8 @@ save(df_season,
 
 
 
-# 
-# 
-# Gradient_abundance <- constructGradient(m, focalVariable = "nb_apo")
+
+Gradient_abundance <- constructGradient(m, focalVariable = "nb_apo")
 # 
 # Gradient_spring <- constructGradient(m, focalVariable = "category",
 #                                      non.focalVariables = list('season' = list(3, "Spring")))

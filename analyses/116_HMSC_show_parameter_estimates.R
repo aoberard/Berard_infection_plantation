@@ -69,10 +69,10 @@ if(file.exists(filename)){
 ## Selecting model of choice ▲ ----
 #Keeping only selected models from the list of models (models object)
 #Make as a comment in order to explore all models, but last part of the script will not work
-# if(file.exists(filename)){
-# 
-#   models <- models[c("categoryxseason")]
-# }
+if(file.exists(filename)){
+
+  models <- models[c("habitatxseason_spat")]
+}
 nm = length(models)
 
 
@@ -123,7 +123,7 @@ var.part.order.raw = lapply(1:nm, function(x) "decreasing")
 
 #use show.sp.names.beta to choose to show / not show species names in betaPlot
 #if given, show.sp.names.beta should be a vector with length equalling number of models
-show.sp.names.beta = c(TRUE, TRUE, TRUE, TRUE)
+show.sp.names.beta = rep(TRUE, nm)
 
 #use plotTree to choose to plot / not plot the tree in betaPlot
 #if given, plotTree should be a vector with length equalling number of models

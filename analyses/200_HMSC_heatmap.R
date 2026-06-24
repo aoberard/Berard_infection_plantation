@@ -17,9 +17,14 @@ library("Hmsc")
 set.seed(1)
 
 #Graphical parameters
-category_palette <- c("pine_edge"          = "#3f826d",
-                      "hedgerows"          = "#f2d0a4",
-                      "broadleaved_forest" = "#a4a8d1")
+
+#Dual scale for each type of model
+pal_prob <- c(low = "#2C7796", mid = "#F7F7F7", high = "#D55763")
+# pal_ab   <- c(low = "#3E5641", mid = "#F7F7F7", high = "#BB7E8C")
+pal_ab   <- c(low = "#2C7796", mid = "#F7F7F7", high = "#D55763")
+
+
+
 
 # Load saved elements ----
 
@@ -33,6 +38,44 @@ resultDir_ab <- file.path(dataDir_ab, "results", "prediction")
 #Loading pairwise comparisons
 load(here::here(resultDir,"pairwise_comparisons.RData"))
 load(here::here(resultDir_ab,"pairwise_comparisons.RData"))
+
+#Loading predictive power per species
+load(file = here::here(dataDir, "results", "model_fit", "species_order_tjurCV.RData"))
+load(file = here::here(dataDir_ab, "results", "model_fit", "species_order_srCV.RData"))
+
+
+# (Optional) keeping only explained species ----
+#Here based on intersection between the two models
+
+# #Extract not well explained species for each model
+# model_name <- "habitat_hostmodel_spat"
+# sp_inf <- species_order[[model_name]]$tjur#_cv
+# good_sp_inf <- names(sp_inf[sp_inf >= 0.1])
+# 
+# model_name <- "habitatxseason_spat"
+# sp_ab <- species_ab_order[[model_name]]$sr#_cv 
+# good_sp_ab  <- names(sp_ab[sp_ab >= 0.1])
+# 
+# good_sp <- intersect(good_sp_inf, good_sp_ab)
+# 
+# #Remove them from each dataframe
+# df_ab_habitat <- df_ab_habitat %>%
+#   filter(species %in% good_sp)
+# 
+# df_habitat <- df_habitat %>%
+#   filter(species %in% good_sp)
+# 
+# df_ab_season <- df_ab_season %>%
+#   filter(species %in% good_sp)
+# 
+# df_season <- df_season %>%
+#   filter(species %in% good_sp)
+# 
+# df_interaction <- df_interaction %>%
+#   filter(species %in% good_sp)
+# 
+# df_ab_interaction <- df_ab_interaction %>%
+#   filter(species %in% good_sp)
 
 
 
@@ -60,7 +103,7 @@ df_heatmap_season <- df_heatmap_season %>%
 
 
 #Order species (by average difference here)
-species_order <- df_heatmap_season %>%
+species_order_season <- df_heatmap_season %>%
   group_by(species) %>%
   summarise(mean_effect = mean(abs(diff_mean))) %>%
   arrange(desc(mean_effect)) %>%
@@ -69,7 +112,7 @@ species_order <- df_heatmap_season %>%
 #Factorize and add labels
 df_heatmap_season <- df_heatmap_season %>%
   mutate(
-    species = factor(species, levels = species_order),
+    species = factor(species, levels = species_order_season),
     model = factor(model, levels = c("probability", "abundance"),
                      labels = c("Probability", "Abundance")),
     habitat = factor(habitat, levels = c("pine_edge", "hedgerows", "broadleaved_forest"),
@@ -86,7 +129,7 @@ plot_heatmap_season_diff <- df_heatmap_season %>%
   geom_text(aes(label = if_else(significant, "*", "")), 
             size = 5, vjust = 0.75, color = "black") +
   scale_fill_gradient2(
-    low = "#D55763", mid = "white", high = "#2C7796", 
+    low = "#2C7796", mid = "white", high = "#D55763", 
     midpoint = 0,
     name = "Mean difference"
   ) +
@@ -112,7 +155,7 @@ plot_heatmap_season_diffscaled <- df_heatmap_season %>%
   geom_text(aes(label = if_else(significant, "*", "")), 
             size = 5, vjust = 0.75, color = "black") +
   scale_fill_gradient2(
-    low = "#D55763", mid = "white", high = "#2C7796", 
+    low = "#2C7796", mid = "white", high = "#D55763", 
     midpoint = 0,
     name = "Scaled mean difference"
   ) +
@@ -138,9 +181,9 @@ plot_heatmap_season_support <- df_heatmap_season %>%
   geom_text(aes(label = if_else(significant, "*", "")), 
             size = 5, vjust = 0.75, color = "black") +
   scale_fill_gradient2(
-    low = "#D55763", mid = "white", high = "#2C7796", 
+    low = "#2C7796", mid = "white", high = "#D55763", 
     midpoint = 0,
-    name = "Mean difference"
+    name = "Signed support"
   ) +
   facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
   labs(x = NULL, y = NULL, 
@@ -155,6 +198,66 @@ plot_heatmap_season_support <- df_heatmap_season %>%
   )
 
 plot_heatmap_season_support
+
+
+#Version with dual scale
+df_prob_season <- df_heatmap_season %>% filter(model == "Probability")
+df_ab_season   <- df_heatmap_season %>% filter(model == "Abundance")
+
+lim_prob_season <- max(abs(df_prob_season$diff_mean), na.rm = TRUE)
+lim_ab_season   <- max(abs(df_ab_season$diff_mean),  na.rm = TRUE)
+
+plot_heatmap_season_dualscale <- ggplot() +
+  
+  #Infection prob tiles
+  geom_tile(data = df_prob_season,
+            aes(x = model, y = habitat, fill = diff_mean),
+            color = "white") +
+  scale_fill_gradient2(
+    low = pal_prob["low"], mid = pal_prob["mid"], high = pal_prob["high"],
+    midpoint = 0,
+    limits = c(-lim_prob_season, lim_prob_season),
+    name = "Δ P(infection)"
+  ) +
+  geom_text(data = df_prob_season,
+            aes(x = model, y = habitat,
+                label = if_else(significant, "*", "")),
+            size = 5, vjust = 0.75, color = "black") +
+  
+  #Individual number tiles
+  ggnewscale::new_scale_fill() +
+  
+  geom_tile(data = df_ab_season,
+            aes(x = model, y = habitat, fill = diff_mean),
+            color = "white") +
+  scale_fill_gradient2(
+    low = pal_ab["low"], mid = pal_ab["mid"], high = pal_ab["high"],
+    midpoint = 0,
+    limits = c(-lim_ab_season, lim_ab_season),
+    name = "Δ E(infected individuals)"
+  ) +
+  geom_text(data = df_ab_season,
+            aes(x = model, y = habitat,
+                label = if_else(significant, "*", "")),
+            size = 5, vjust = 0.75, color = "black") +
+  
+  facet_wrap(~ species,
+             labeller = labeller(species = function(x) gsub("_", " ", x))) +
+  labs(x = NULL, y = NULL,
+       title = "Season effect (Spring - Autumn)") +
+  theme_bw() +
+  theme(
+    legend.title = element_text(size = 7),
+    legend.text = element_text(size = 6),
+    strip.text = element_text(face = "bold", size = 8),
+    strip.background = element_rect(fill = "grey40", color = NA),
+    strip.text.x = element_text(color = "white"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid = element_blank()
+  )
+plot_heatmap_season_dualscale
+
+
 
 
 # Habitat comparison heatmap ----
@@ -211,7 +314,7 @@ plot_heatmap_habitat_diff <- df_heatmap_habitat %>%
   geom_text(aes(label = if_else(significant, "*", "")), 
             size = 5, vjust = 0.75, color = "black") +
   scale_fill_gradient2(
-    low = "#D55763", mid = "white", high = "#2C7796", 
+    low = "#2C7796", mid = "white", high = "#D55763", 
     midpoint = 0,
     name = "Mean difference"
   ) +
@@ -238,7 +341,7 @@ plot_heatmap_habitat_diffscaled <- df_heatmap_habitat %>%
   geom_text(aes(label = if_else(significant, "*", "")), 
             size = 5, vjust = 0.75, color = "black") +
   scale_fill_gradient2(
-    low = "#D55763", mid = "white", high = "#2C7796", 
+    low = "#2C7796", mid = "white", high = "#D55763", 
     midpoint = 0,
     name = "Scaled mean difference"
   ) +
@@ -265,9 +368,9 @@ plot_heatmap_habitat_support <- df_heatmap_habitat %>%
   geom_text(aes(label = if_else(significant, "*", "")), 
             size = 5, vjust = 0.75, color = "black") +
   scale_fill_gradient2(
-    low = "#D55763", mid = "white", high = "#2C7796", 
+    low = "#2C7796", mid = "white", high = "#D55763", 
     midpoint = 0,
-    name = "Mean difference"
+    name = "Signed support"
   ) +
   facet_grid(season ~ species, 
              labeller = labeller(species = function(x) gsub("_", " ", x))) +
@@ -283,6 +386,63 @@ plot_heatmap_habitat_support <- df_heatmap_habitat %>%
     panel.grid = element_blank()
   )
 plot_heatmap_habitat_support
+
+
+#Version with dual scale
+df_prob_habitat <- df_heatmap_habitat %>% filter(model == "Probability")
+df_ab_habitat   <- df_heatmap_habitat %>% filter(model == "Abundance")
+
+lim_prob_habitat <- max(abs(df_prob_habitat$diff_mean), na.rm = TRUE)
+lim_ab_habitat   <- max(abs(df_ab_habitat$diff_mean),  na.rm = TRUE)
+
+plot_heatmap_habitat_dualscale <- ggplot() +
+  
+  #Infection prob tiles
+  geom_tile(data = df_prob_habitat,
+            aes(x = model, y = pair_label, fill = diff_mean),
+            color = "white") +
+  scale_fill_gradient2(
+    low = pal_prob["low"], mid = pal_prob["mid"], high = pal_prob["high"],
+    midpoint = 0,
+    limits = c(-lim_prob_habitat, lim_prob_habitat),
+    name = "Δ P(infection)"
+  ) +
+  geom_text(data = df_prob_habitat,
+            aes(x = model, y = pair_label,
+                label = if_else(significant, "*", "")),
+            size = 5, vjust = 0.75, color = "black") +
+  
+  #Individual number tiles
+  ggnewscale::new_scale_fill() +
+  
+  geom_tile(data = df_ab_habitat,
+            aes(x = model, y = pair_label, fill = diff_mean),
+            color = "white") +
+  scale_fill_gradient2(
+    low = pal_ab["low"], mid = pal_ab["mid"], high = pal_ab["high"],
+    midpoint = 0,
+    limits = c(-lim_ab_habitat, lim_ab_habitat),
+    name = "Δ E(infected individuals)"
+  ) +
+  geom_text(data = df_ab_habitat,
+            aes(x = model, y = pair_label,
+                label = if_else(significant, "*", "")),
+            size = 5, vjust = 0.75, color = "black") +
+  facet_grid(season ~ species, 
+             labeller = labeller(species = function(x) gsub("_", " ", x))) +
+  labs(x = NULL, y = NULL, 
+       title = "Habitat effect across species, season and model") +
+  theme_bw() +
+  theme(
+    strip.text = element_text(face = "bold", size = 8),
+    strip.background = element_rect(fill = "grey40", color = NA),
+    strip.text.x = element_text(color = "white"),
+    strip.text.y = element_text(color = "white"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid = element_blank()
+  )
+plot_heatmap_habitat_dualscale
+
 
 
 
@@ -321,12 +481,9 @@ species_order_interaction <- df_heatmap_interaction %>%
 
 #Factorize and add labels
 df_heatmap_interaction <- df_heatmap_interaction %>%
-  mutate(
-    species = factor(species, levels = species_order_interaction),
-    model = factor(model, levels = c("probability", "abundance"),
-                     labels = c("Probability", "Abundance"))
-  )
-
+  mutate(species = factor(species, levels = species_order_interaction),
+         model = factor(model, levels = c("probability", "abundance"),
+                     labels = c("Probability", "Abundance")))
 
 
 ## Heatmap plotting ----
@@ -338,11 +495,10 @@ plot_heatmap_interaction_diff <- df_heatmap_interaction %>%
   geom_text(aes(label = if_else(significant, "*", "")), 
             size = 5, vjust = 0.75, color = "black") +
   scale_fill_gradient2(
-    low = "#D55763", mid = "white", high = "#2C7796", 
+    low = "#2C7796", mid = "white", high = "#D55763", 
     midpoint = 0,
     name = "Difference of difference"
   ) +
-  coord_equal() +
   facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
   labs(x = NULL, y = NULL, 
        title = "Season x Habitat interaction across species and model") +
@@ -364,11 +520,10 @@ plot_heatmap_interaction_diffscaled <- df_heatmap_interaction %>%
   geom_text(aes(label = if_else(significant, "*", "")), 
             size = 5, vjust = 0.75, color = "black") +
   scale_fill_gradient2(
-    low = "#D55763", mid = "white", high = "#2C7796", 
+    low = "#2C7796", mid = "white", high = "#D55763", 
     midpoint = 0,
     name = "Scaled difference of difference"
   ) +
-  coord_equal() +
   facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
   labs(x = NULL, y = NULL, 
        title = "Season x Habitat interaction across species and model (scaled)") +
@@ -390,11 +545,10 @@ plot_heatmap_interaction_support <- df_heatmap_interaction %>%
   geom_text(aes(label = if_else(significant, "*", "")), 
             size = 5, vjust = 0.75, color = "black") +
   scale_fill_gradient2(
-    low = "#D55763", mid = "white", high = "#2C7796", 
+    low = "#2C7796", mid = "white", high = "#D55763", 
     midpoint = 0,
     name = "Signed support"
   ) +
-  coord_equal() +
   facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
   labs(x = NULL, y = NULL, 
        title = "Season x Habitat interaction (signed posterior support) across species and model") +
@@ -410,17 +564,72 @@ plot_heatmap_interaction_support
 
 
 
+#Version with dual scale
+df_prob_interaction <- df_heatmap_interaction %>% filter(model == "Probability")
+df_ab_interaction   <- df_heatmap_interaction %>% filter(model == "Abundance")
+
+lim_prob_interaction <- max(abs(df_prob_interaction$interaction_mean), na.rm = TRUE)
+lim_ab_interaction   <- max(abs(df_ab_interaction$interaction_mean),  na.rm = TRUE)
+
+plot_heatmap_interaction_dualscale <- ggplot() +
+  
+  #Infection prob tiles
+  geom_tile(data = df_prob_interaction,
+            aes(x = model, y = pair_label, fill = interaction_mean),
+            color = "white") +
+  scale_fill_gradient2(
+    low = pal_prob["low"], mid = pal_prob["mid"], high = pal_prob["high"],
+    midpoint = 0,
+    limits = c(-lim_prob_interaction, lim_prob_interaction),
+    name = "ΔΔ P(infection)"
+  ) +
+  geom_text(data = df_prob_interaction,
+            aes(x = model, y = pair_label,
+                label = if_else(significant, "*", "")),
+            size = 5, vjust = 0.75, color = "black") +
+  
+  #Individual number tiles
+  ggnewscale::new_scale_fill() +
+  
+  geom_tile(data = df_ab_interaction,
+            aes(x = model, y = pair_label, fill = interaction_mean),
+            color = "white") +
+  scale_fill_gradient2(
+    low = pal_ab["low"], mid = pal_ab["mid"], high = pal_ab["high"],
+    midpoint = 0,
+    limits = c(-lim_ab_interaction, lim_ab_interaction),
+    name = "ΔΔ E(infected individuals)"
+  ) +
+  geom_text(data = df_ab_interaction,
+            aes(x = model, y = pair_label,
+                label = if_else(significant, "*", "")),
+            size = 5, vjust = 0.75, color = "black") +
+  facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
+  labs(x = NULL, y = NULL, 
+       title = "Season x Habitat interaction across species and model") +
+  theme_bw() +
+  theme(
+    strip.text = element_text(face = "bold", size = 8),
+    strip.background = element_rect(fill = "grey40", color = NA),
+    strip.text.x = element_text(color = "white"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid = element_blank()
+  )
+plot_heatmap_interaction_dualscale
+
+
 
 # Save plots ----
 ggsave(filename = here::here("figures", "heatmap_season.png"),
-       plot = plot_heatmap_season_diff + coord_equal(),
+       plot = plot_heatmap_season_dualscale + coord_equal(),
        width = 2500, height = 2500, units = "px", dpi = 300, bg = NULL)
 
 ggsave(filename = here::here("figures",  "heatmap_habitat.png"),
-       plot = plot_heatmap_habitat_diff + coord_equal(),
+       plot = plot_heatmap_habitat_dualscale + coord_equal(),
        width = 6000, height = 1500, units = "px", dpi = 300, bg = NULL)
 
 ggsave(filename = here::here("figures", "heatmap_interaction.png"),
-       plot = plot_heatmap_interaction_diff + coord_equal(),
+       plot = plot_heatmap_interaction_dualscale + coord_equal(),
        width = 2700, height = 2400, units = "px", dpi = 300, bg = NULL)
+
 

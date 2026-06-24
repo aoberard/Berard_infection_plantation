@@ -29,13 +29,18 @@ namesrandom <- c( "year", "field_session", "numero_ligne", "site_session")
 
 # Data modification ----
 
+## Keep individuals trapped within 3 nights ----
+inf_3night <- inf %>% 
+  filter(after_3days == FALSE)
+
+
 ## Summarise data per site-session ----
-data_hmsc <- inf %>%
+data_hmsc <- inf_3night %>%
   group_by(numero_ligne, field_session) %>% 
   summarise(across(all_of(names_inf), ~sum(.x, na.rm = TRUE), 
                    .names = "{.col}"),
             .groups = "drop_last") %>%  
-  left_join(inf %>% 
+  left_join(inf_3night %>% 
               select(numero_ligne, field_session, category, season, year, longitude_lambert93, latitude_lambert93) %>% 
               distinct()) %>% 
   ungroup() %>% 
@@ -183,3 +188,4 @@ save(Y,
      locations.xy,
      data_hmsc,
      file = here::here(dirpath, "allData.RData"))
+

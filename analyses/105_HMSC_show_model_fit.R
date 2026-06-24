@@ -309,21 +309,35 @@ write.csv(performances,
 
 # Save species ordered by CV Tjur R2 ----
 # for each model
-
 species_order <- lapply(names(MFCV), function(model_name) {
   cMFCV <- MFCV[[model_name]]
+  cMF   <- MF[[model_name]]
   m <- models[[model_name]]
   
+  res <- list()
+  
+  #CV Tjur R
   if(!is.null(cMFCV$TjurR2)){
     tjur_cv <- setNames(cMFCV$TjurR2, m$spNames)
-    list(
-      species_order = names(sort(tjur_cv, decreasing = TRUE)),
-      tjur_cv = sort(tjur_cv, decreasing = TRUE)
-    )
-  } else {
-    NULL
+    res$tjur_cv <- sort(tjur_cv, decreasing = TRUE)
   }
+  
+  #Full data Tjur R
+  if(!is.null(cMF$TjurR2)){
+    tjur <- setNames(cMF$TjurR2, m$spNames)
+    res$tjur <- sort(tjur, decreasing = TRUE)
+  }
+  
+  #Species order based on CV metric
+  if(!is.null(res$tjur_cv)){
+    res$species_order <- names(res$tjur_cv)
+  } else if(!is.null(res$tjur)){
+    res$species_order <- names(res$tjur)
+  }
+  return(res)
+  
 })
+
 names(species_order) <- names(MFCV)
 save(species_order, file = here::here(resultDir, "species_order_tjurCV.RData"))
 

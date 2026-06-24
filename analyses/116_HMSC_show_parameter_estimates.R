@@ -69,10 +69,11 @@ if(file.exists(filename)){
 ## Selecting model of choice ▲ ----
 #Keeping only selected models from the list of models (models object)
 #Make as a comment in order to explore all models, but last part of the script will not work
-if(file.exists(filename)){
+# if(file.exists(filename)){
+# 
+#   models <- models[c("habitatxseason_spat")]
+# }
 
-  models <- models[c("habitatxseason_spat")]
-}
 nm = length(models)
 
 

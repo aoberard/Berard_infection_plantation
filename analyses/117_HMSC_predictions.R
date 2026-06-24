@@ -360,7 +360,7 @@ pred_distributions %>%
 
 #Extract right species order
 model_name <- names(models)[length(names(models))]
-sp_info <- species_order[[model_name]]
+sp_info <- species_ab_order[[model_name]]
 order <- sp_info$species_order
 sr_cv <- sp_info$sr_cv
 

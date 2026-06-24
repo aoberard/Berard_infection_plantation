@@ -69,16 +69,16 @@ if(file.exists(filename)){
   for(j in 1:nm){
     cMF = MF[[j]]
     cMFCV = MFCV[[j]]
-    if(!is.null(cMF$TjurR2)){
-      plot(cMF$TjurR2,cMFCV$TjurR2,xlim=c(-1,1),ylim=c(-1,1),
+    if(!is.null(cMF$SR2)){
+      plot(cMF$SR2,cMFCV$SR2,xlim=c(-1,1),ylim=c(-1,1),
            xlab = "explanatory power",
            ylab = "predictive power",
            main=paste0(modelnames[j],", thin = ",
                        as.character(thin),
                        ", samples = ",as.character(samples),
                        ": Tjur R2.\n",
-                       "mean(MF) = ",as.character(mean(cMF$TjurR2,na.rm=TRUE)),
-                       ", mean(MFCV) = ",as.character(mean(cMFCV$TjurR2,na.rm=TRUE))))
+                       "mean(MF) = ",as.character(mean(cMF$SR2,na.rm=TRUE)),
+                       ", mean(MFCV) = ",as.character(mean(cMFCV$SR2,na.rm=TRUE))))
       abline(0,1)
       abline(v=0)
       abline(h=0)
@@ -309,23 +309,38 @@ write.csv(performances,
 
 # Save species ordered by CV SR2 ----
 # for each model
-
 species_order <- lapply(names(MFCV), function(model_name) {
   cMFCV <- MFCV[[model_name]]
+  cMF   <- MF[[model_name]]
   m <- models[[model_name]]
   
+  res <- list()
+  
+  #CV SR
   if(!is.null(cMFCV$SR2)){
     sr_cv <- setNames(cMFCV$SR2, m$spNames)
-    list(
-      species_order = names(sort(sr_cv, decreasing = TRUE)),
-      sr_cv = sort(sr_cv, decreasing = TRUE)
-    )
-  } else {
-    NULL
+    res$sr_cv <- sort(sr_cv, decreasing = TRUE)
   }
+  
+  #Full data sr R
+  if(!is.null(cMF$SR2)){
+    sr <- setNames(cMF$SR2, m$spNames)
+    res$sr <- sort(sr, decreasing = TRUE)
+  }
+  
+  #Species order based on CV metric
+  if(!is.null(res$sr_cv)){
+    res$species_order <- names(res$sr_cv)
+  } else if(!is.null(res$sr)){
+    res$species_order <- names(res$sr)
+  }
+  return(res)
+  
 })
+
 names(species_order) <- names(MFCV)
-save(species_order, file = here::here(resultDir, "species_order_srCV.RData"))
+species_ab_order <-species_order 
+save(species_ab_order, file = here::here(resultDir, "species_order_srCV.RData"))
 
 
 

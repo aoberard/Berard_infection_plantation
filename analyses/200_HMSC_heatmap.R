@@ -20,8 +20,8 @@ set.seed(1)
 
 #Dual scale for each type of model
 pal_prob <- c(low = "#2C7796", mid = "#F7F7F7", high = "#D55763")
-# pal_ab   <- c(low = "#3E5641", mid = "#F7F7F7", high = "#BB7E8C")
 pal_ab   <- c(low = "#2C7796", mid = "#F7F7F7", high = "#D55763")
+# pal_ab   <- c(low = "#3E5641", mid = "#F7F7F7", high = "#BB7E8C")
 
 
 
@@ -434,6 +434,8 @@ plot_heatmap_habitat_dualscale <- ggplot() +
        title = "Habitat effect across species, season and model") +
   theme_bw() +
   theme(
+    legend.title = element_text(size = 7),
+    legend.text = element_text(size = 6),
     strip.text = element_text(face = "bold", size = 8),
     strip.background = element_rect(fill = "grey40", color = NA),
     strip.text.x = element_text(color = "white"),
@@ -609,6 +611,8 @@ plot_heatmap_interaction_dualscale <- ggplot() +
        title = "Season x Habitat interaction across species and model") +
   theme_bw() +
   theme(
+    legend.title = element_text(size = 7),
+    legend.text = element_text(size = 6),
     strip.text = element_text(face = "bold", size = 8),
     strip.background = element_rect(fill = "grey40", color = NA),
     strip.text.x = element_text(color = "white"),
@@ -622,14 +626,14 @@ plot_heatmap_interaction_dualscale
 # Save plots ----
 ggsave(filename = here::here("figures", "heatmap_season.png"),
        plot = plot_heatmap_season_dualscale + coord_equal(),
-       width = 2500, height = 2500, units = "px", dpi = 300, bg = NULL)
+       width = 2700, height = 2500, units = "px", dpi = 300, bg = NULL)
 
 ggsave(filename = here::here("figures",  "heatmap_habitat.png"),
        plot = plot_heatmap_habitat_dualscale + coord_equal(),
-       width = 6000, height = 1500, units = "px", dpi = 300, bg = NULL)
+       width = 6300, height = 1750, units = "px", dpi = 300, bg = NULL)
 
 ggsave(filename = here::here("figures", "heatmap_interaction.png"),
        plot = plot_heatmap_interaction_dualscale + coord_equal(),
-       width = 2700, height = 2400, units = "px", dpi = 300, bg = NULL)
+       width = 2900, height = 2500, units = "px", dpi = 300, bg = NULL)
 
 

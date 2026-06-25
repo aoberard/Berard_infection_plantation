@@ -16,8 +16,13 @@ inf <- data.table::fread(file = here::here("data", "derived-data", "asylvaticus_
 names_inf <- readRDS(file = here::here("data", "derived-data", "asylvaticus_data", "names_infectious_apo.rds"))
 
 #Infectious agents traits
-traits <- readxl::read_excel(path = here::here("data", "raw-data", "20260520_agents_traits.xlsx"))
+traits <- readxl::read_excel(path = here::here("data", "raw-data", "agents_traits.xlsx"))
 
+#Apodemus sylvaticus number per site-session (over the three first trapping nights)
+effectif <- data.table::fread(file = here::here("data", "raw-data", "apodemus_number.csv"))
+
+#Site environmental data
+envi <- data.table::fread(file = here::here("data", "raw-data", "lines_variability.csv"))
 
 
 # Parameter choice  ----
@@ -35,17 +40,63 @@ inf_3night <- inf %>%
 
 
 ## Summarise data per site-session ----
-data_hmsc <- inf_3night %>%
+
+#Regroup infected individuals data
+infect_counts <- inf_3night %>%
   group_by(numero_ligne, field_session) %>% 
-  summarise(across(all_of(names_inf), ~sum(.x, na.rm = TRUE), 
-                   .names = "{.col}"),
-            .groups = "drop_last") %>%  
-  left_join(inf_3night %>% 
-              select(numero_ligne, field_session, category, season, year, longitude_lambert93, latitude_lambert93) %>% 
-              distinct()) %>% 
-  ungroup() %>% 
+  summarise(across(all_of(names_inf),
+                   ~sum(.x, na.rm = TRUE)),
+           .groups = "drop")
+
+#Join to effectif data (otherwise 0 abundance sites would be excluded)
+data_hmsc <- effectif %>%
+  left_join(infect_counts,
+            by = c("numero_ligne", "field_session"))
+
+#Join back environmental and sampling session information
+data_hmsc <- data_hmsc %>% 
+  left_join(envi %>%
+              select(
+                num,
+                category,
+                longitude_lambert93,
+                latitude_lambert93
+              ) %>%
+              distinct(),
+            by = c("numero_ligne" = "num"))
+
+data_hmsc <- data_hmsc %>%
+  left_join(inf_3night %>%
+              select(
+                field_session,
+                season,
+                year,
+              ) %>%
+              distinct(),
+            by = join_by("field_session")) %>%
   mutate(site_session = interaction(numero_ligne, field_session))
-                   
+
+#Ensure 0 abundance site are not NA but 0 infected individuals
+data_hmsc <- data_hmsc %>%
+  mutate(
+    across(
+      all_of(names_inf),
+      ~tidyr::replace_na(.x, 0)
+    )
+  )
+
+
+## Remove site-session with too many individuals not dissected
+
+#Site-session with individuals not dissected
+data_hmsc %>% 
+  filter(total > dissected) %>% 
+  nrow()
+  
+#Remove site-session with more than 1 individual not dissected
+data_hmsc <- data_hmsc %>%
+  filter(dissected >= total - 1)
+
 
 
 ## Ensure relevant columns are factors or numeric----

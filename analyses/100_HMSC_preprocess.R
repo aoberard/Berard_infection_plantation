@@ -16,7 +16,7 @@ inf <- data.table::fread(file = here::here("data", "derived-data", "asylvaticus_
 names_inf <- readRDS(file = here::here("data", "derived-data", "asylvaticus_data", "names_infectious_apo.rds"))
 
 #Infectious agents traits
-traits <- readxl::read_excel(path = here::here("data", "raw-data", "20260520_agents_traits.xlsx"))
+traits <- readxl::read_excel(path = here::here("data", "raw-data", "agents_traits.xlsx"))
 
 
 

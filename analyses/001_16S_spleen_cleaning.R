@@ -355,6 +355,14 @@ physeq_s16 <- phyloseq::prune_taxa(
   x = physeq_s16
 )
 
+
+additional_clusters_to_remove <- c("Cluster_899")
+physeq_s16 <- phyloseq::prune_taxa(
+  taxa = !(as.vector(phyloseq::tax_table(physeq_s16)[, "observation_name"]) %in% additional_clusters_to_remove),
+  x = physeq_s16
+)
+
+
 physeq_s16 <- phyloseq::prune_samples(
   x = physeq_s16,
   samples = sample_sums(physeq_s16) != 0)
@@ -373,6 +381,7 @@ tax_full[tax_full == "Pseudostreptobacillus"] <- "Streptobacillus"
 tax_full[tax_full == "Borreliella"] <- "Borrelia"
 tax_full[tax_full == "Borreliella afzelii"] <- "Borrelia afzelii"
 tax_full[tax_full == "Mycoplasma coccoides"] <- "Eperythrozoon coccoides"
+tax_full[tax_full == "Haemobartonella muris"] <- "Eperythrozoon muris"
 tax_full[tax_full == "Mycoplasma moatsii"] <- "Mesomycoplasma moatsii"
 
  
@@ -423,16 +432,15 @@ tax_full[tax_full[, "observation_name"] == "Cluster_5922", "Species"] <- "Eperyt
 tax_full[tax_full[, "observation_name"] == "Cluster_6232", "Species"] <- "Eperythrozoon coccoides"
 
 
-tax_full[tax_full[, "observation_name"] == "Cluster_7", "Species"] <- "Haemo_2"
+tax_full[tax_full[, "observation_name"] == "Cluster_7", "Species"] <- "Eperythrozoon_2"
 
-tax_full[tax_full[, "observation_name"] == "Cluster_109", "Species"] <- "Haemo_3"
+tax_full[tax_full[, "observation_name"] == "Cluster_109", "Species"] <- "Eperythrozoon_3"
 
-tax_full[tax_full[, "observation_name"] == "Cluster_519", "Species"] <- "Haemo_3"
+tax_full[tax_full[, "observation_name"] == "Cluster_519", "Species"] <- "Eperythrozoon_3"
 
-tax_full[tax_full[, "observation_name"] == "Cluster_137", "Species"] <- "Haemo_4"
+tax_full[tax_full[, "observation_name"] == "Cluster_11", "Species"] <- "Eperythrozoon_4"
 
-tax_full[tax_full[, "observation_name"] == "Cluster_11", "Species"] <- "Haemo_5"
-
+tax_full[tax_full[, "observation_name"] == "Cluster_137", "Species"] <- "Eperythrozoon_5"
 
 
 # Identify best affiliation level again

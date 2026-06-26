@@ -121,83 +121,83 @@ df_heatmap_season <- df_heatmap_season %>%
 
 
 ## Heatmap plotting ----
-
-#Version with diff mean (not on same scale)
-plot_heatmap_season_diff <- df_heatmap_season %>%
-  ggplot(aes(x = model , y = habitat, fill = diff_mean)) +
-  geom_tile(color = "white") +
-  geom_text(aes(label = if_else(significant, "*", "")), 
-            size = 5, vjust = 0.75, color = "black") +
-  scale_fill_gradient2(
-    low = "#2C7796", mid = "white", high = "#D55763", 
-    midpoint = 0,
-    name = "Mean difference"
-  ) +
-  facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
-  labs(x = NULL, y = NULL, 
-       title = "Season effect (Spring - Autumn) across species, habitat type and model") +
-  theme_bw() +
-  theme(
-    strip.text = element_text(face = "bold", size = 8),
-    strip.background = element_rect(fill = "grey40", color = NA),
-    strip.text.x = element_text(color = "white"),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid = element_blank()
-  )
-
-plot_heatmap_season_diff
-
-
-#Version with diff mean (initially scaled)
-plot_heatmap_season_diffscaled <- df_heatmap_season %>%
-  ggplot(aes(x = model , y = habitat, fill = diff_scaled)) +
-  geom_tile(color = "white") +
-  geom_text(aes(label = if_else(significant, "*", "")), 
-            size = 5, vjust = 0.75, color = "black") +
-  scale_fill_gradient2(
-    low = "#2C7796", mid = "white", high = "#D55763", 
-    midpoint = 0,
-    name = "Scaled mean difference"
-  ) +
-  facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
-  labs(x = NULL, y = NULL, 
-       title = "Season effect (Spring - Autumn) across species, habitat type and model (scaled)") +
-  theme_bw() +
-  theme(
-    strip.text = element_text(face = "bold", size = 8),
-    strip.background = element_rect(fill = "grey40", color = NA),
-    strip.text.x = element_text(color = "white"),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid = element_blank()
-  )
-
-plot_heatmap_season_diffscaled
-
-
-#version with support
-plot_heatmap_season_support <- df_heatmap_season %>%
-  ggplot(aes(x = model , y = habitat, fill = signed_support)) +
-  geom_tile(color = "white") +
-  geom_text(aes(label = if_else(significant, "*", "")), 
-            size = 5, vjust = 0.75, color = "black") +
-  scale_fill_gradient2(
-    low = "#2C7796", mid = "white", high = "#D55763", 
-    midpoint = 0,
-    name = "Signed support"
-  ) +
-  facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
-  labs(x = NULL, y = NULL, 
-       title = "Season effect (Spring - Autumn) across species, habitat type and model") +
-  theme_bw() +
-  theme(
-    strip.text = element_text(face = "bold", size = 8),
-    strip.background = element_rect(fill = "grey40", color = NA),
-    strip.text.x = element_text(color = "white"),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid = element_blank()
-  )
-
-plot_heatmap_season_support
+# 
+# #Version with diff mean (not on same scale)
+# plot_heatmap_season_diff <- df_heatmap_season %>%
+#   ggplot(aes(x = model , y = habitat, fill = diff_mean)) +
+#   geom_tile(color = "white") +
+#   geom_text(aes(label = if_else(significant, "*", "")), 
+#             size = 5, vjust = 0.75, color = "black") +
+#   scale_fill_gradient2(
+#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     midpoint = 0,
+#     name = "Mean difference"
+#   ) +
+#   facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
+#   labs(x = NULL, y = NULL, 
+#        title = "Season effect (Spring - Autumn) across species, habitat type and model") +
+#   theme_bw() +
+#   theme(
+#     strip.text = element_text(face = "bold", size = 8),
+#     strip.background = element_rect(fill = "grey40", color = NA),
+#     strip.text.x = element_text(color = "white"),
+#     axis.text.x = element_text(angle = 45, hjust = 1),
+#     panel.grid = element_blank()
+#   )
+# 
+# plot_heatmap_season_diff
+# 
+# 
+# #Version with diff mean (initially scaled)
+# plot_heatmap_season_diffscaled <- df_heatmap_season %>%
+#   ggplot(aes(x = model , y = habitat, fill = diff_scaled)) +
+#   geom_tile(color = "white") +
+#   geom_text(aes(label = if_else(significant, "*", "")), 
+#             size = 5, vjust = 0.75, color = "black") +
+#   scale_fill_gradient2(
+#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     midpoint = 0,
+#     name = "Scaled mean difference"
+#   ) +
+#   facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
+#   labs(x = NULL, y = NULL, 
+#        title = "Season effect (Spring - Autumn) across species, habitat type and model (scaled)") +
+#   theme_bw() +
+#   theme(
+#     strip.text = element_text(face = "bold", size = 8),
+#     strip.background = element_rect(fill = "grey40", color = NA),
+#     strip.text.x = element_text(color = "white"),
+#     axis.text.x = element_text(angle = 45, hjust = 1),
+#     panel.grid = element_blank()
+#   )
+# 
+# plot_heatmap_season_diffscaled
+# 
+# 
+# #version with support
+# plot_heatmap_season_support <- df_heatmap_season %>%
+#   ggplot(aes(x = model , y = habitat, fill = signed_support)) +
+#   geom_tile(color = "white") +
+#   geom_text(aes(label = if_else(significant, "*", "")), 
+#             size = 5, vjust = 0.75, color = "black") +
+#   scale_fill_gradient2(
+#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     midpoint = 0,
+#     name = "Signed support"
+#   ) +
+#   facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
+#   labs(x = NULL, y = NULL, 
+#        title = "Season effect (Spring - Autumn) across species, habitat type and model") +
+#   theme_bw() +
+#   theme(
+#     strip.text = element_text(face = "bold", size = 8),
+#     strip.background = element_rect(fill = "grey40", color = NA),
+#     strip.text.x = element_text(color = "white"),
+#     axis.text.x = element_text(angle = 45, hjust = 1),
+#     panel.grid = element_blank()
+#   )
+# 
+# plot_heatmap_season_support
 
 
 #Version with dual scale
@@ -307,85 +307,85 @@ df_heatmap_habitat <- df_heatmap_habitat %>%
 
 ## Heatmap plotting ----
 
-#Version with diff mean (not on same scale)
-plot_heatmap_habitat_diff <- df_heatmap_habitat %>%
-  ggplot(aes(x = model, y = pair_label, fill = diff_mean)) +
-  geom_tile(color = "white") +
-  geom_text(aes(label = if_else(significant, "*", "")), 
-            size = 5, vjust = 0.75, color = "black") +
-  scale_fill_gradient2(
-    low = "#2C7796", mid = "white", high = "#D55763", 
-    midpoint = 0,
-    name = "Mean difference"
-  ) +
-  facet_grid(season ~ species, 
-             labeller = labeller(species = function(x) gsub("_", " ", x))) +
-  labs(x = NULL, y = NULL, 
-       title = "Habitat effect across species, season and model") +
-  theme_bw() +
-  theme(
-    strip.text = element_text(face = "bold", size = 8),
-    strip.background = element_rect(fill = "grey40", color = NA),
-    strip.text.x = element_text(color = "white"),
-    strip.text.y = element_text(color = "white"),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid = element_blank()
-  )
-plot_heatmap_habitat_diff
-
-
-#Version with diff mean (not on same scale)
-plot_heatmap_habitat_diffscaled <- df_heatmap_habitat %>%
-  ggplot(aes(x = model, y = pair_label, fill = diff_scaled)) +
-  geom_tile(color = "white") +
-  geom_text(aes(label = if_else(significant, "*", "")), 
-            size = 5, vjust = 0.75, color = "black") +
-  scale_fill_gradient2(
-    low = "#2C7796", mid = "white", high = "#D55763", 
-    midpoint = 0,
-    name = "Scaled mean difference"
-  ) +
-  facet_grid(season ~ species, 
-             labeller = labeller(species = function(x) gsub("_", " ", x))) +
-  labs(x = NULL, y = NULL, 
-       title = "Habitat effect across species, season and model (scaled)") +
-  theme_bw() +
-  theme(
-    strip.text = element_text(face = "bold", size = 8),
-    strip.background = element_rect(fill = "grey40", color = NA),
-    strip.text.x = element_text(color = "white"),
-    strip.text.y = element_text(color = "white"),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid = element_blank()
-  )
-plot_heatmap_habitat_diffscaled
-
-
-#Version with support 
-plot_heatmap_habitat_support <- df_heatmap_habitat %>%
-  ggplot(aes(x = model, y = pair_label, fill = signed_support)) +
-  geom_tile(color = "white") +
-  geom_text(aes(label = if_else(significant, "*", "")), 
-            size = 5, vjust = 0.75, color = "black") +
-  scale_fill_gradient2(
-    low = "#2C7796", mid = "white", high = "#D55763", 
-    midpoint = 0,
-    name = "Signed support"
-  ) +
-  facet_grid(season ~ species, 
-             labeller = labeller(species = function(x) gsub("_", " ", x))) +
-  labs(x = NULL, y = NULL, 
-       title = "Habitat effect (signed posterior support) across species, season and model") +
-  theme_bw() +
-  theme(
-    strip.text = element_text(face = "bold", size = 8),
-    strip.background = element_rect(fill = "grey40", color = NA),
-    strip.text.x = element_text(color = "white"),
-    strip.text.y = element_text(color = "white"),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid = element_blank()
-  )
-plot_heatmap_habitat_support
+# #Version with diff mean (not on same scale)
+# plot_heatmap_habitat_diff <- df_heatmap_habitat %>%
+#   ggplot(aes(x = model, y = pair_label, fill = diff_mean)) +
+#   geom_tile(color = "white") +
+#   geom_text(aes(label = if_else(significant, "*", "")), 
+#             size = 5, vjust = 0.75, color = "black") +
+#   scale_fill_gradient2(
+#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     midpoint = 0,
+#     name = "Mean difference"
+#   ) +
+#   facet_grid(season ~ species, 
+#              labeller = labeller(species = function(x) gsub("_", " ", x))) +
+#   labs(x = NULL, y = NULL, 
+#        title = "Habitat effect across species, season and model") +
+#   theme_bw() +
+#   theme(
+#     strip.text = element_text(face = "bold", size = 8),
+#     strip.background = element_rect(fill = "grey40", color = NA),
+#     strip.text.x = element_text(color = "white"),
+#     strip.text.y = element_text(color = "white"),
+#     axis.text.x = element_text(angle = 45, hjust = 1),
+#     panel.grid = element_blank()
+#   )
+# plot_heatmap_habitat_diff
+# 
+# 
+# #Version with diff mean (not on same scale)
+# plot_heatmap_habitat_diffscaled <- df_heatmap_habitat %>%
+#   ggplot(aes(x = model, y = pair_label, fill = diff_scaled)) +
+#   geom_tile(color = "white") +
+#   geom_text(aes(label = if_else(significant, "*", "")), 
+#             size = 5, vjust = 0.75, color = "black") +
+#   scale_fill_gradient2(
+#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     midpoint = 0,
+#     name = "Scaled mean difference"
+#   ) +
+#   facet_grid(season ~ species, 
+#              labeller = labeller(species = function(x) gsub("_", " ", x))) +
+#   labs(x = NULL, y = NULL, 
+#        title = "Habitat effect across species, season and model (scaled)") +
+#   theme_bw() +
+#   theme(
+#     strip.text = element_text(face = "bold", size = 8),
+#     strip.background = element_rect(fill = "grey40", color = NA),
+#     strip.text.x = element_text(color = "white"),
+#     strip.text.y = element_text(color = "white"),
+#     axis.text.x = element_text(angle = 45, hjust = 1),
+#     panel.grid = element_blank()
+#   )
+# plot_heatmap_habitat_diffscaled
+# 
+# 
+# #Version with support 
+# plot_heatmap_habitat_support <- df_heatmap_habitat %>%
+#   ggplot(aes(x = model, y = pair_label, fill = signed_support)) +
+#   geom_tile(color = "white") +
+#   geom_text(aes(label = if_else(significant, "*", "")), 
+#             size = 5, vjust = 0.75, color = "black") +
+#   scale_fill_gradient2(
+#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     midpoint = 0,
+#     name = "Signed support"
+#   ) +
+#   facet_grid(season ~ species, 
+#              labeller = labeller(species = function(x) gsub("_", " ", x))) +
+#   labs(x = NULL, y = NULL, 
+#        title = "Habitat effect (signed posterior support) across species, season and model") +
+#   theme_bw() +
+#   theme(
+#     strip.text = element_text(face = "bold", size = 8),
+#     strip.background = element_rect(fill = "grey40", color = NA),
+#     strip.text.x = element_text(color = "white"),
+#     strip.text.y = element_text(color = "white"),
+#     axis.text.x = element_text(angle = 45, hjust = 1),
+#     panel.grid = element_blank()
+#   )
+# plot_heatmap_habitat_support
 
 
 #Version with dual scale
@@ -490,79 +490,79 @@ df_heatmap_interaction <- df_heatmap_interaction %>%
 
 ## Heatmap plotting ----
 
-#Version with interaction mean (not on same scale)
-plot_heatmap_interaction_diff <- df_heatmap_interaction %>%
-  ggplot(aes(x = model, y = pair_label, fill = interaction_mean)) +
-  geom_tile(color = "white") +
-  geom_text(aes(label = if_else(significant, "*", "")), 
-            size = 5, vjust = 0.75, color = "black") +
-  scale_fill_gradient2(
-    low = "#2C7796", mid = "white", high = "#D55763", 
-    midpoint = 0,
-    name = "Difference of difference"
-  ) +
-  facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
-  labs(x = NULL, y = NULL, 
-       title = "Season x Habitat interaction across species and model") +
-  theme_bw() +
-  theme(
-    strip.text = element_text(face = "bold", size = 8),
-    strip.background = element_rect(fill = "grey40", color = NA),
-    strip.text.x = element_text(color = "white"),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid = element_blank()
-  )
-plot_heatmap_interaction_diff
-
-
-#Version with interaction mean (scaled)
-plot_heatmap_interaction_diffscaled <- df_heatmap_interaction %>%
-  ggplot(aes(x = model, y = pair_label, fill = diff_scaled)) +
-  geom_tile(color = "white") +
-  geom_text(aes(label = if_else(significant, "*", "")), 
-            size = 5, vjust = 0.75, color = "black") +
-  scale_fill_gradient2(
-    low = "#2C7796", mid = "white", high = "#D55763", 
-    midpoint = 0,
-    name = "Scaled difference of difference"
-  ) +
-  facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
-  labs(x = NULL, y = NULL, 
-       title = "Season x Habitat interaction across species and model (scaled)") +
-  theme_bw() +
-  theme(
-    strip.text = element_text(face = "bold", size = 8),
-    strip.background = element_rect(fill = "grey40", color = NA),
-    strip.text.x = element_text(color = "white"),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid = element_blank()
-  )
-plot_heatmap_interaction_diffscaled
-
-
-#Version with support
-plot_heatmap_interaction_support <- df_heatmap_interaction %>%
-  ggplot(aes(x = model, y = pair_label, fill = signed_support)) +
-  geom_tile(color = "white") +
-  geom_text(aes(label = if_else(significant, "*", "")), 
-            size = 5, vjust = 0.75, color = "black") +
-  scale_fill_gradient2(
-    low = "#2C7796", mid = "white", high = "#D55763", 
-    midpoint = 0,
-    name = "Signed support"
-  ) +
-  facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
-  labs(x = NULL, y = NULL, 
-       title = "Season x Habitat interaction (signed posterior support) across species and model") +
-  theme_bw() +
-  theme(
-    strip.text = element_text(face = "bold", size = 8),
-    strip.background = element_rect(fill = "grey40", color = NA),
-    strip.text.x = element_text(color = "white"),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid = element_blank()
-  )
-plot_heatmap_interaction_support
+# #Version with interaction mean (not on same scale)
+# plot_heatmap_interaction_diff <- df_heatmap_interaction %>%
+#   ggplot(aes(x = model, y = pair_label, fill = interaction_mean)) +
+#   geom_tile(color = "white") +
+#   geom_text(aes(label = if_else(significant, "*", "")), 
+#             size = 5, vjust = 0.75, color = "black") +
+#   scale_fill_gradient2(
+#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     midpoint = 0,
+#     name = "Difference of difference"
+#   ) +
+#   facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
+#   labs(x = NULL, y = NULL, 
+#        title = "Season x Habitat interaction across species and model") +
+#   theme_bw() +
+#   theme(
+#     strip.text = element_text(face = "bold", size = 8),
+#     strip.background = element_rect(fill = "grey40", color = NA),
+#     strip.text.x = element_text(color = "white"),
+#     axis.text.x = element_text(angle = 45, hjust = 1),
+#     panel.grid = element_blank()
+#   )
+# plot_heatmap_interaction_diff
+# 
+# 
+# #Version with interaction mean (scaled)
+# plot_heatmap_interaction_diffscaled <- df_heatmap_interaction %>%
+#   ggplot(aes(x = model, y = pair_label, fill = diff_scaled)) +
+#   geom_tile(color = "white") +
+#   geom_text(aes(label = if_else(significant, "*", "")), 
+#             size = 5, vjust = 0.75, color = "black") +
+#   scale_fill_gradient2(
+#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     midpoint = 0,
+#     name = "Scaled difference of difference"
+#   ) +
+#   facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
+#   labs(x = NULL, y = NULL, 
+#        title = "Season x Habitat interaction across species and model (scaled)") +
+#   theme_bw() +
+#   theme(
+#     strip.text = element_text(face = "bold", size = 8),
+#     strip.background = element_rect(fill = "grey40", color = NA),
+#     strip.text.x = element_text(color = "white"),
+#     axis.text.x = element_text(angle = 45, hjust = 1),
+#     panel.grid = element_blank()
+#   )
+# plot_heatmap_interaction_diffscaled
+# 
+# 
+# #Version with support
+# plot_heatmap_interaction_support <- df_heatmap_interaction %>%
+#   ggplot(aes(x = model, y = pair_label, fill = signed_support)) +
+#   geom_tile(color = "white") +
+#   geom_text(aes(label = if_else(significant, "*", "")), 
+#             size = 5, vjust = 0.75, color = "black") +
+#   scale_fill_gradient2(
+#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     midpoint = 0,
+#     name = "Signed support"
+#   ) +
+#   facet_wrap(~ species, labeller = labeller(species = function(x) gsub("_", " ", x))) +
+#   labs(x = NULL, y = NULL, 
+#        title = "Season x Habitat interaction (signed posterior support) across species and model") +
+#   theme_bw() +
+#   theme(
+#     strip.text = element_text(face = "bold", size = 8),
+#     strip.background = element_rect(fill = "grey40", color = NA),
+#     strip.text.x = element_text(color = "white"),
+#     axis.text.x = element_text(angle = 45, hjust = 1),
+#     panel.grid = element_blank()
+#   )
+# plot_heatmap_interaction_support
 
 
 

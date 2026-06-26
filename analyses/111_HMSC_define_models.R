@@ -244,6 +244,7 @@ head(m.category$TrData)
 
 head(m.category$XScaled) #continuous variables (within Y, X and T) are automatically scaled in hmsc for default priors
 head(m.category$TrScaled)
+head(m.category$YScaled)
 
 
 

@@ -98,7 +98,6 @@ data_hmsc <- data_hmsc %>%
   filter(dissected >= total - 1)
 
 
-
 ## Ensure relevant columns are factors or numeric----
 
 ##Convert all character columns to factors

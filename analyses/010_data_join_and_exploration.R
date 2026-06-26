@@ -35,6 +35,9 @@ envi <- data.table::fread(file = here::here("data", "raw-data", "lines_variabili
 #Cleaned infectious agents data
 infecti <- data.table::fread(file = here::here("data", "derived-data", "infectious_cleaning", "infectious_data.csv"))
 
+#Apodemus sylvaticus number per site-session (over the three first trapping nights)
+effectif <- data.table::fread(file = here::here("data", "raw-data", "apodemus_number.csv"))
+
 
 # Generate data ----
 
@@ -53,21 +56,11 @@ infected <- infected %>%
             by = c("numero_ligne" = "num",
                          "code_mission" = "code_mission"))
 
-#Compute number of A. sylvaticus and C. glareolus caught for each line-session (in 3 first days of capture)
+# Add number of A. sylvaticus  caught for each line-session (in 3 first days of capture)
 infected <- infected %>% 
-  left_join(
-  infected %>% 
-    filter(after_3days == FALSE) %>% 
-    group_by(numero_ligne, field_session) %>% 
-    summarise(
-      nb_apo = sum(taxon_mamm == "Apodemus sylvaticus"),
-      nb_clet = sum(taxon_mamm == "Clethrionomys glareolus"),
-      .groups = "drop"
-    ), by = c("numero_ligne", "field_session")) %>%
-  mutate(
-    nb_apo = coalesce(nb_apo, 0),
-    nb_clet = coalesce(nb_clet, 0)
-  )
+  left_join(effectif, by = join_by("numero_ligne", "field_session")) %>% 
+  rename(nb_apo = total)
+
 
 #Ensure empty information are converted to NA
 infected <- infected %>%
@@ -148,10 +141,11 @@ prev_df %>%
     position = position_dodge(width = 0.5),
     size = 2
   ) +
-  geom_errorbarh(
+  geom_errorbar(
     aes(xmin = lower, xmax = upper),
     position = position_dodge(width = 0.5),
-    width = 0.3
+    width = 0.3,
+    orientation = "y"
   ) +
   scale_color_manual(values = common_rodent_palette) +
   theme_bw()
@@ -802,3 +796,41 @@ data.table::fwrite(x = infected_apo,
 
 saveRDS(object = names_infectious_apo, file = here::here("data", "derived-data", "asylvaticus_data", "names_infectious_apo.rds"))
 saveRDS(object = names_infectious_apo10, file = here::here("data", "derived-data", "asylvaticus_data", "names_infectious_apo10.rds"))
+
+
+
+
+
+#TO REMOVE -----
+infected_apo <- infected_apo %>% 
+  mutate(Bartonella = case_when(
+    Bartonella_birtlesii== 1  ~ 1,
+    Bartonella_taylorii == 1 ~ 1,
+    Bartonella_grahamii == 1 ~1,
+    Bartonella_elizabethae == 1 ~1,
+    Bartonella_doshiae== 1 ~1,
+    TRUE ~ 0))
+
+infected_apo %>%  pull(Bartonella) %>% sum()
+
+infected_apo <- infected_apo %>% 
+  mutate(Bartonella = Bartonella_birtlesii + Bartonella_taylorii + Bartonella_doshiae + Bartonella_grahamii + Bartonella_elizabethae)
+
+hist(infected_apo$Bartonella)
+
+infected_apo %>% 
+  filter(Bartonella>1) %>% 
+  pull(Bartonella) %>%
+  max()
+
+
+infected_apo <- infected_apo %>% 
+  mutate(Eperythrozoon = case_when(
+    Eperythrozoon_coccoides== 1  ~ 1,
+    Eperythrozoon_muris == 1 ~ 1,
+    Eperythrozoon_2 == 1 ~1,
+    Eperythrozoon_3 == 1 ~1,
+    Eperythrozoon_4== 1 ~1,
+    TRUE ~ 0))
+
+infected_apo %>%  pull(Eperythrozoon) %>% sum()

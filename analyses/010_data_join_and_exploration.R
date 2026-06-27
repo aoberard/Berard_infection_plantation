@@ -799,38 +799,3 @@ saveRDS(object = names_infectious_apo10, file = here::here("data", "derived-data
 
 
 
-
-
-#TO REMOVE -----
-infected_apo <- infected_apo %>% 
-  mutate(Bartonella = case_when(
-    Bartonella_birtlesii== 1  ~ 1,
-    Bartonella_taylorii == 1 ~ 1,
-    Bartonella_grahamii == 1 ~1,
-    Bartonella_elizabethae == 1 ~1,
-    Bartonella_doshiae== 1 ~1,
-    TRUE ~ 0))
-
-infected_apo %>%  pull(Bartonella) %>% sum()
-
-infected_apo <- infected_apo %>% 
-  mutate(Bartonella = Bartonella_birtlesii + Bartonella_taylorii + Bartonella_doshiae + Bartonella_grahamii + Bartonella_elizabethae)
-
-hist(infected_apo$Bartonella)
-
-infected_apo %>% 
-  filter(Bartonella>1) %>% 
-  pull(Bartonella) %>%
-  max()
-
-
-infected_apo <- infected_apo %>% 
-  mutate(Eperythrozoon = case_when(
-    Eperythrozoon_coccoides== 1  ~ 1,
-    Eperythrozoon_muris == 1 ~ 1,
-    Eperythrozoon_2 == 1 ~1,
-    Eperythrozoon_3 == 1 ~1,
-    Eperythrozoon_4== 1 ~1,
-    TRUE ~ 0))
-
-infected_apo %>%  pull(Eperythrozoon) %>% sum()

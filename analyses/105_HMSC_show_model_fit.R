@@ -295,7 +295,7 @@ performances$Delta_TjurR2 <- performances$MF_TjurR2 - performances$MFCV_TjurR2
 performances$Delta_AUC <- performances$MF_AUC - performances$MFCV_AUC
 
 #Sort models according to MFCV R²
-performances <- performances[order(-performances$MFCV_TjurR2), ]
+performances <- performances[order(-performances$MF_TjurR2), ]
 
 #Print
 print(performances, digits = 4)

@@ -295,7 +295,7 @@ performances$Delta_SR2 <- performances$MF_SR2 - performances$MFCV_SR2
 performances$Delta_SR2_c <- performances$MF_SR2_c - performances$MFCV_SR2_c
 
 #Sort models according to MFCV SR²
-performances <- performances[order(-performances$MFCV_SR2), ]
+performances <- performances[order(-performances$MF_SR2), ]
 
 #Print
 print(performances, digits = 4)

@@ -113,9 +113,11 @@ message("Matrix location.xy has been reordered to match studyDesign 'location' l
 
 ## Models' fixed effects formula ----
 XFormula.null = ~ 1
-XFormula.host = ~ season + sexe + poids + maturity 
-XFormula.env = ~  season * category + nb_apo
-XFormula.env_host = ~  season * category + nb_apo + sexe + poids + maturity
+XFormula.host = ~ sexe + poids + maturity 
+XFormula.hab_season = ~  season * category + nb_apo
+XFormula.hab_host = ~ category + nb_apo + sexe + poids + maturity 
+XFormula.season_host = ~ season + nb_apo + sexe + poids + maturity 
+XFormula.hab_season_host = ~  season * category + nb_apo + sexe + poids + maturity
 
 
 ## Models' traits formula ----
@@ -161,7 +163,7 @@ m.null <- Hmsc::Hmsc(Y = Y,
                      phyloTree = taxonomicTree,
                      ranLevels = list(
                        site = rL.site, 
-                       # location = rL.location.xy,
+                       location = rL.location.xy,
                        mission = rL.mission, 
                        individual = rL.ind
                        ))
@@ -176,45 +178,60 @@ m.host <- Hmsc::Hmsc(Y = Y,
                       phyloTree = taxonomicTree,
                       ranLevels = list(
                         site = rL.site, 
-                        # location = rL.location.xy,
+                        location = rL.location.xy,
                         mission = rL.mission, 
                         individual = rL.ind
                         ))
 
-m.env <- Hmsc::Hmsc(Y = Y,
+m.hab_season <- Hmsc::Hmsc(Y = Y,
                      distr = "probit", 
                      XData = X,
-                     XFormula = XFormula.env,
+                     XFormula = XFormula.hab_season,
                      studyDesign = studyDesign, 
                      TrData = Tm,
                      TrFormula = TrFormula,
                      phyloTree = taxonomicTree,
                      ranLevels = list(
                        site = rL.site,
-                       # location = rL.location.xy,
+                       location = rL.location.xy,
                        mission = rL.mission, 
                        individual = rL.ind
                      ))
 
-m.env_host <- Hmsc::Hmsc(Y = Y,
+m.hab_host <- Hmsc::Hmsc(Y = Y,
                     distr = "probit", 
                     XData = X,
-                    XFormula = XFormula.env_host,
+                    XFormula = XFormula.hab_host,
                     studyDesign = studyDesign, 
                     TrData = Tm,
                     TrFormula = TrFormula,
                     phyloTree = taxonomicTree,
                     ranLevels = list(
                       site = rL.site, 
-                      # location = rL.location.xy,
+                      location = rL.location.xy,
                       mission = rL.mission, 
                       individual = rL.ind
                     ))
 
-m.env_host.spat <- Hmsc::Hmsc(Y = Y,
+m.season_host <- Hmsc::Hmsc(Y = Y,
                          distr = "probit", 
                          XData = X,
-                         XFormula = XFormula.env_host,
+                         XFormula = XFormula.season_host,
+                         studyDesign = studyDesign, 
+                         TrData = Tm,
+                         TrFormula = TrFormula,
+                         phyloTree = taxonomicTree,
+                         ranLevels = list(
+                           site = rL.site, 
+                           location = rL.location.xy,
+                           mission = rL.mission, 
+                           individual = rL.ind
+                         ))
+
+m.hab_season_host <- Hmsc::Hmsc(Y = Y,
+                         distr = "probit", 
+                         XData = X,
+                         XFormula = XFormula.hab_season_host,
                          studyDesign = studyDesign, 
                          TrData = Tm,
                          TrFormula = TrFormula,
@@ -230,9 +247,6 @@ m.env_host.spat <- Hmsc::Hmsc(Y = Y,
 #Check models structure
 m.null
 m.host
-m.env
-m.env_host
-m.env_host.spat
 head(m.host$X) #factor should be subdivided into levels Boolean variables
 head(m.host$TrData)
 
@@ -244,16 +258,18 @@ head(m.host$TrScaled)
 # Combining models ----
 models = list(m.null,
               m.host,
-              m.env,
-              m.env_host,
-              m.env_host.spat
+              m.hab_season,
+              m.hab_host,
+              m.season_host,
+              m.hab_season_host
               )
 
-names(models) = c("nullmodel",
-                  "hostmodel",
-                  "habitatmodel",
-                  "habitat_hostmodel",
-                  "habitat_hostmodel_spat"
+names(models) = c("null",
+                  "host",
+                  "habitat_season",
+                  "habitat_host",
+                  "season_host",
+                  "habitat_season_host"
                   )
 
 # Test run ----

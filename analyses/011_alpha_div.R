@@ -229,36 +229,36 @@ gtsummary::tbl_regression(m_richness)
 ggstats::ggcoef_model(m_richness)
 
 #Marginal means contrast
-em_rich <- emmeans::emmeans(m_richness, ~  category | season  , type = "response")
-emmeans::contrast(em_rich, "pairwise", adjust = "Tukey")
-emmeans::contrast(em_rich, "pairwise", adjust = "Tukey") %>% confint()
-
-em_summary_rich <- as.data.frame(em_rich)
-
-
-em_summary_rich %>%
-  mutate(
-    category = forcats::fct_rev(forcats::fct_relevel(category, category_order))
-  ) %>%
-  ggplot(aes(x = rate, y = category, color = category)) +
-  geom_point(size = 4.5) +
-  geom_segment(aes(x = asymp.LCL, xend = asymp.UCL, y = category, yend = category), linewidth = 1.5) +
-  scale_color_manual(values = category_palette) +
-  theme_minimal(base_size = 16) +
-  labs(
-    x = "Estimated number of infectious",
-    y = "Habitat category",
-  ) +
-  theme(
-    axis.text = element_text(color = "gray20", size = 11),
-    axis.title = element_text(color = "gray20", size = 12),
-    strip.text = element_text(color = "gray20", size = 12),
-    panel.grid.minor = element_blank(),
-    panel.grid.major.y = element_blank(),
-    panel.grid.major.x = element_line(color = "gray90", linewidth = 0.5)
-  ) +
-  facet_grid(season ~ .) +
-  guides(color = "none")
+# em_rich <- emmeans::emmeans(m_richness, ~  category | season  , type = "response")
+# emmeans::contrast(em_rich, "pairwise", adjust = "Tukey")
+# emmeans::contrast(em_rich, "pairwise", adjust = "Tukey") %>% confint()
+# 
+# em_summary_rich <- as.data.frame(em_rich)
+# 
+# 
+# em_summary_rich %>%
+#   mutate(
+#     category = forcats::fct_rev(forcats::fct_relevel(category, category_order))
+#   ) %>%
+#   ggplot(aes(x = rate, y = category, color = category)) +
+#   geom_point(size = 4.5) +
+#   geom_segment(aes(x = asymp.LCL, xend = asymp.UCL, y = category, yend = category), linewidth = 1.5) +
+#   scale_color_manual(values = category_palette) +
+#   theme_minimal(base_size = 16) +
+#   labs(
+#     x = "Estimated number of infectious",
+#     y = "Habitat category",
+#   ) +
+#   theme(
+#     axis.text = element_text(color = "gray20", size = 11),
+#     axis.title = element_text(color = "gray20", size = 12),
+#     strip.text = element_text(color = "gray20", size = 12),
+#     panel.grid.minor = element_blank(),
+#     panel.grid.major.y = element_blank(),
+#     panel.grid.major.x = element_line(color = "gray90", linewidth = 0.5)
+#   ) +
+#   facet_grid(season ~ .) +
+#   guides(color = "none")
 
 
 
@@ -310,3 +310,125 @@ gtsummary::tbl_regression(m_richness2)
 ggstats::ggcoef_model(m_richness2)
 
 
+
+
+## Inference approach ----
+
+#Models' fixed effects formula
+XFormula.null = rich ~ 1 + (1 | numero_ligne) + (1 | year)
+XFormula.host = rich ~ sexe + poids + maturity + (1 | numero_ligne) + (1 | year)
+XFormula.hab_host = rich ~ category + nb_apo + sexe + poids + maturity + (1 | numero_ligne) + (1 | year)
+XFormula.season_host = rich ~ season + nb_apo + sexe + poids + maturity + (1 | numero_ligne) + (1 | year) 
+
+XFormula.hab_season = rich ~  season * category + nb_apo + (1 | numero_ligne) + (1 | year)
+XFormula.hab_season_host = rich ~  season * category + nb_apo + sexe + poids + maturity + (1 | numero_ligne) + (1 | year)
+
+#Specification of GLMMs
+m.null <- glmmTMB::glmmTMB(
+  XFormula.null,
+  data = df_alpha,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m.null)
+
+m.host <- glmmTMB::glmmTMB(
+  XFormula.host,
+  data = df_alpha,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m.host)
+
+m.hab_host <- glmmTMB::glmmTMB(
+  XFormula.hab_host,
+  data = df_alpha,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m.hab_host)
+
+m.season_host <- glmmTMB::glmmTMB(
+  XFormula.season_host,
+  data = df_alpha,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m.season_host)
+
+
+m.hab_season <- glmmTMB::glmmTMB(
+  XFormula.hab_season,
+  data = df_alpha,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m.hab_season)
+
+
+m.hab_season_host <- glmmTMB::glmmTMB(
+  XFormula.hab_season_host,
+  data = df_alpha,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m.hab_season_host)
+
+
+# Model selection
+
+#Based on AICc
+model_selection <- MuMIn::model.sel(
+  m.null,
+  m.host,
+  m.hab_season,
+  m.hab_host,
+  m.season_host,
+  m.hab_season_host,
+  rank = "AICc"
+)
+model_selection
+model_selection %>% filter(delta <= 2)
+
+#Choosing between the two best models
+avg <- MuMIn::model.avg(model_selection, subset = delta < 2)
+summary(avg)
+
+AIC(m.hab_season_host, m.season_host)
+BIC(m.hab_season_host, m.season_host)
+
+anova(m.season_host, m.hab_season_host)
+
+
+
+
+#Looking at marginal means contrast for the complex model
+em_inf <- emmeans::emmeans(m.hab_season_host, ~  category | season  , type = "response")
+emmeans::contrast(em_inf, "pairwise", adjust = "Tukey")
+
+em_summary_inf <- as.data.frame(em_inf)
+
+
+em_summary_inf %>%
+  mutate(
+    category = forcats::fct_rev(forcats::fct_relevel(category, category_order))
+  ) %>%
+  ggplot(aes(x = rate, y = category, color = category)) +
+  geom_point(size = 4.5) +
+  geom_segment(aes(x = asymp.LCL, xend = asymp.UCL, y = category, yend = category), linewidth = 1.5) +
+  scale_color_manual(values = category_palette) +
+  theme_minimal(base_size = 16) +
+  labs(
+    x = "Estimated number of infectious",
+    y = "Habitat category",
+  ) +
+  theme(
+    axis.text = element_text(color = "gray20", size = 11),
+    axis.title = element_text(color = "gray20", size = 12),
+    strip.text = element_text(color = "gray20", size = 12),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.major.x = element_line(color = "gray90", linewidth = 0.5)
+  ) +
+  facet_grid(season ~ .) +
+  guides(color = "none")

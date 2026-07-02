@@ -323,6 +323,7 @@ XFormula.season_host = rich ~ season + nb_apo + sexe + poids + maturity + (1 | n
 XFormula.hab_season = rich ~  season * category + nb_apo + (1 | numero_ligne) + (1 | year)
 XFormula.hab_season_host = rich ~  season * category + nb_apo + sexe + poids + maturity + (1 | numero_ligne) + (1 | year)
 
+
 #Specification of GLMMs
 m.null <- glmmTMB::glmmTMB(
   XFormula.null,
@@ -432,3 +433,82 @@ em_summary_inf %>%
   ) +
   facet_grid(season ~ .) +
   guides(color = "none")
+
+
+
+### version new test ----
+
+
+XFormula.null <- rich ~ 1 + (1 | numero_ligne) + (1 | year)
+XFormula.host <- rich ~ sexe + poids + maturity + (1 | numero_ligne) + (1 | year)
+XFormula.hab <- rich ~ category + nb_apo + sexe + poids + maturity + (1 | numero_ligne) + (1 | year)
+XFormula.season <- rich ~ season + nb_apo + sexe + poids + maturity + (1 | numero_ligne) + (1 | year)
+XFormula.hab_season_add <- rich ~ category + season + nb_apo + sexe + poids + maturity + (1 | numero_ligne) + (1 | year)
+XFormula.hab_season_int <- rich ~ category * season + nb_apo + sexe + poids + maturity + (1 | numero_ligne) + (1 | year)
+
+
+#Specification of GLMMs
+m.null <- glmmTMB::glmmTMB(
+  XFormula.null,
+  data = df_alpha,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m.null)
+
+m.host <- glmmTMB::glmmTMB(
+  XFormula.host,
+  data = df_alpha,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m.host)
+
+m.hab <- glmmTMB::glmmTMB(
+  XFormula.hab,
+  data = df_alpha,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m.hab)
+
+m.season <- glmmTMB::glmmTMB(
+  XFormula.season,
+  data = df_alpha,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m.season)
+
+
+m.hab_season_add <- glmmTMB::glmmTMB(
+  XFormula.hab_season_add,
+  data = df_alpha,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m.hab_season_add)
+
+m.hab_season_int <- glmmTMB::glmmTMB(
+  XFormula.hab_season_int,
+  data = df_alpha,
+  family = poisson(link = "log"),
+  na.action = "na.fail",
+)
+performance::check_collinearity(m.hab_season_int)
+
+
+# Model selection
+
+#Based on AICc
+model_selection <- MuMIn::model.sel(
+  m.null,
+  m.host,
+  m.hab,
+  m.season,
+  m.hab_season_add,
+  m.hab_season_int,
+  rank = "AICc"
+)
+model_selection
+model_selection %>% filter(delta <= 2)

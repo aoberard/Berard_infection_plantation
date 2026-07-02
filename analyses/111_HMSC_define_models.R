@@ -111,7 +111,8 @@ message("Matrix location.xy has been reordered to match studyDesign 'location' l
 XFormula.null = ~ 1
 XFormula.category = ~  category 
 XFormula.season = ~  season 
-XFormula.interaction = ~  season * category 
+XFormula.additive = ~ category + season
+XFormula.interaction = ~  category* season  
 
 
 ## Models' traits formula ----
@@ -189,6 +190,20 @@ m.season <- Hmsc::Hmsc(Y = Y,
                            mission = rL.mission
                          ))
 
+m.additive <- Hmsc::Hmsc(Y = Y,
+                       distr = "lognormal poisson", 
+                       XData = X,
+                       XFormula = XFormula.additive,
+                       studyDesign = studyDesign, 
+                       TrData = Tm,
+                       TrFormula = TrFormula,
+                       phyloTree = taxonomicTree,
+                       ranLevels = list(
+                         site = rL.site, 
+                         location = rL.location.xy,
+                         mission = rL.mission
+                       ))
+
 m.interaction <- Hmsc::Hmsc(Y = Y,
                                 distr = "lognormal poisson", 
                                 XData = X,
@@ -207,6 +222,7 @@ m.interaction <- Hmsc::Hmsc(Y = Y,
 m.null
 m.category
 m.season
+m.additive
 m.interaction
 head(m.category$X) #factor should be subdivided into levels Boolean variables
 head(m.category$TrData)
@@ -221,13 +237,15 @@ head(m.category$YScaled)
 models = list(m.null,
               m.category,
               m.season,
+              m.additive,
               m.interaction
               )
 
 names(models) = c("nullmodel",
                   "habitat",
                   "season",
-                  "habitat_season"
+                  "habitat_season_add",
+                  "habitat_season_int"
                   )
 
 # Test run ----

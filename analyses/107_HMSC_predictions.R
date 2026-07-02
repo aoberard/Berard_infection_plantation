@@ -67,7 +67,7 @@ if(file.exists(filename)){
 #Make as a comment in order to explore all models, but last part of the script will not work
 if(file.exists(filename)){
   
-  models <- models[c("habitat_hostmodel_spat")]
+  models <- models[c("habitat_season_int")]
   }
 nm = length(models)
 
@@ -207,7 +207,7 @@ if(file.exists(filename)){
 
 
 # Attempt to predict with interaction ----
-#example of constructed gradient used for prediction:
+#example of constructed gradient used for prediction in simple case:
 #constructGradient(m, focalVariable = "season")
 
 
@@ -397,10 +397,10 @@ plot_pred_ordered <- pred_distributions %>%
   )
 plot_pred_ordered
 
-ggsave(filename = here::here(resultDir, "plot_pred_ordered.png"),
-       plot = plot_pred_ordered,
-       width = 3000, height = 2000, units = "px", dpi = 300, bg = NULL)
-
+# ggsave(filename = here::here(resultDir, "plot_pred_ordered.png"),
+#        plot = plot_pred_ordered,
+#        width = 3000, height = 2000, units = "px", dpi = 300, bg = NULL)
+# 
 
 
 ## Statistical investigation ----
@@ -584,8 +584,8 @@ save(df_season,
 
 
 
-
-Gradient_abundance <- constructGradient(m, focalVariable = "nb_apo")
+# TO REMOVE 
+# Gradient_abundance <- constructGradient(m, focalVariable = "nb_apo")
 # 
 # Gradient_spring <- constructGradient(m, focalVariable = "category",
 #                                      non.focalVariables = list('season' = list(3, "Spring")))

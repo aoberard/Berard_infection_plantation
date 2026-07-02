@@ -15,18 +15,20 @@ gc()
 # Load libraries
 library("dplyr")
 library("ggplot2")
+library("ggtree")
 library("Hmsc")
 library("colorspace")
 library("corrplot")
 library("writexl")
 
+
 # Make script reproducible
 set.seed(1)
 
 # Graphical parameters
-effect_direction_palette <- c("positive"          = "#2C7796",
-                              "negative"          = "#D55763",
-                              "non_significant"   = "gray60")
+effect_direction_palette <- c("positive" = "#2C7796",
+                              "negative"= "#D55763",
+                              "non_significant" = "gray60")
 
 
 # Load saved elements ----
@@ -71,16 +73,17 @@ if(file.exists(filename)){
 #Make as a comment in order to explore all models, but last part of the script will not work
 # if(file.exists(filename)){
 # 
-#   models <- models[c("habitat_hostmodel")]
+#   models <- models[c("habitat_season_int")]
 # 
 # }
+
 nm = length(models)
 
 
 
 
 
-# Estimation parameters ----
+# Parameters ----
 
 #Setting Default parameter (Null implies default)
 
@@ -190,7 +193,7 @@ plotVP_gg <- function(VP, main = "", cols = NULL, ylim = c(0, 1)) {
 
 
 
-# Execute estimation ----
+# Execute estimates visualization ----
 
 if(is.null(support.level.beta)) support.level.beta = 0.95
 if(is.null(support.level.gamma)) support.level.gamma =  0.95
@@ -517,13 +520,13 @@ beta_coef %>%
              position = position_dodge(width = 0.85)) +
   scale_color_viridis_d(option = "magma", end = 0.9) +
   scale_fill_manual(
-    values = c("TRUE" = "grey20", "FALSE" = "white"),
+    values = c("TRUE" = "grey20", "FALSE" = "#F7F7F7"),
     labels = c("TRUE" = "P ≥ 0.95", "FALSE" = "P < 0.95")
   ) +
   labs(x = "β coefficients", y = NULL, color = NULL) +
   theme_bw() +
   theme(
-    strip.text = element_text(color = "white", face = "bold"),
+    strip.text = element_text(color = "#F7F7F7", face = "bold"),
     panel.grid = element_blank(),
     legend.position = "right"
   )
@@ -534,8 +537,8 @@ beta_coef %>%
   filter(covariate != "(Intercept)") %>%                           #REMOVING INTERCEPT FOR VISUALIZATION PURPOSES
   mutate(effect_direction = case_when(
     significant_support_unilateral == FALSE ~ "non_significant",
-    mean  > 0 ~ "positive",
-    mean  < 0 ~ "negative",
+    mean > 0 ~ "positive",
+    mean < 0 ~ "negative",
     TRUE ~ "problem")) %>% 
   ggplot(aes(x = mean, y = species, color = effect_direction)) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "grey40") +
@@ -549,10 +552,248 @@ beta_coef %>%
   theme_bw() +
   theme(
     strip.background = element_rect(fill = "grey40"),
-    strip.text = element_text(color = "white", face = "bold"),
+    strip.text = element_text(color = "#F7F7F7", face = "bold"),
     legend.position = "bottom"
   )
   
 
 #Small look at the distribution of one beta coefficients
 #plot(density(val[, "scale(poids)", "Leptospira"]))
+
+
+
+
+
+
+
+
+
+
+
+
+# Synthesis plot test ----
+
+
+### Tree panel ----
+#Clean the tree
+tree_clean <- m$phyloTree
+tree_clean$edge.length <- NULL   
+
+#Make the ggtree (discrete one)
+p_tree <- ggtree::ggtree(tree_clean, 
+                         branch.length = "none",
+                         size = 0.4,
+                         color = "grey30") +
+  theme_tree()
+
+
+
+
+### Beta coefficient panel ----
+
+# Make labels for covariates
+covariate_labels <- c(
+  # "(Intercept)" = "Intercept"
+  "seasonSpring" = "Season (Spring)",
+  "nb_apo" = "Local abundance",
+  "sexeM" = "Sex (M)",
+  "poids" = "Weight",
+  "maturitymature" = "Maturity (mature)",
+  "categoryhedgerows" = "Habitat (Hedgerows)",
+  "categorypine_edge" = "Habitat (Plantation)",
+  "categoryhedgerows:seasonSpring" = "Hedgerows-Spring",
+  "categorypine_edge:seasonSpring" = "Plantation-Spring"
+)
+
+#Apply labels to dataframe
+beta_plot_df <- beta_coef %>%
+  mutate(
+    covariate_label = factor(
+      covariate_labels[covariate],
+      levels = covariate_labels
+    ))
+
+
+#Make the heatmap of β coefficients
+
+#For legend max value:
+lim_beta <- max(abs(beta_plot_df %>% 
+                      filter(!is.na(covariate_label)) %>%  #BEWARE this will remove covariates without label
+                      pull(mean)
+                    ), na.rm = TRUE)
+
+p_beta <- beta_plot_df %>%
+  filter(!is.na(covariate_label)) %>%                      #BEWARE this will remove covariates without label
+  ggplot(aes(x = covariate_label, y = species)) +
+  geom_tile(aes(fill = mean), color = "#F7F7F7", linewidth = 0.5) +
+  geom_text(
+    data = . %>% filter(significant_support_unilateral),
+    aes(label = "*"),
+    color = "black", size = 4, vjust = 0.75
+  ) +
+  scale_fill_gradient2(
+    low = "#2C7796",
+    mid = "#F7F7F7",
+    high = "#D55763",
+    midpoint = 0,
+    name = "β coefficient",
+    limits = c(-lim_beta, lim_beta),
+  ) +
+  labs(x = NULL, y = NULL) +
+  scale_x_discrete(position = "bottom") +
+  theme_bw(base_size = 8) +
+  theme(
+    axis.text.y = element_text(size = 7),
+    axis.text.x = element_text(size = 7, angle = 90, hjust = 0.9, vjust = 0, color = "grey40"),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    panel.border = element_blank(),
+    legend.position = "bottom"
+  ) 
+
+
+
+
+
+### Variance partitioning panel ----
+
+#Palette of covariates
+vp_palette <- c(
+  "category" = "#ff9aa2",
+  "category:season" = "#feb7b1", 
+  "season" = "#ffdac0",   
+  "nb_apo" = "#e2f0cc",   
+  "sexe" = "#c7ceea",   
+  "poids"  = "#b7dbeb",  
+  "maturity" = "#b5ead6",  
+  "Random: site" = "#dbdbdb",
+  "Random: location" = "#b6b6b6",
+  "Random: mission" = "#929292",
+  "Random: individual" = "#6d6d6d"
+)
+
+#Covariates labels
+vp_labels <- c(
+  "category" = "Habitat",
+  "category:season" = "Habitat x Season",
+  "season"= "Season",
+  "nb_apo" = "Local abundance",
+  "poids" = "Weight",
+  "sexe" = "Sex",
+  "maturity" = "Maturity",
+  "Random: site" = "Random: site",
+  "Random: location" = "Random: Spatial",
+  "Random: mission" = "Random: mission",
+  "Random: individual" = "Random: individual"
+)
+
+#Generate long format dataframe for plotting
+vp_df <- as.data.frame(VP$vals) %>%
+  tibble::rownames_to_column("var_level") %>%
+  tidyr::pivot_longer(-var_level, names_to = "species", values_to = "proportion") %>%
+  mutate(
+    var_level = factor(var_level, levels = rev(names(vp_labels))) )
+
+#Generate var part plot
+p_vp <- vp_df %>%
+  ggplot(aes(x = proportion, y = species, fill = var_level)) +
+  geom_bar(stat = "identity", color = "grey60", linewidth = 0.5) +
+  scale_fill_manual(values = vp_palette,
+                    name = NULL,
+                    labels = vp_labels) +
+  scale_x_continuous(
+    limits = c(0, 1.01),
+    expand = c(0, 0),
+    breaks = c(0, 0.5, 1),
+    labels = c("0", "0.5", "1")
+  ) +
+  labs(x = "Variance proportion", 
+       y = NULL) +
+  theme_bw(base_size = 8) +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    panel.grid = element_blank(),
+    panel.border = element_blank(),
+    legend.position = "bottom",
+    legend.text = element_text(size = 7),
+    # plot.margin = margin(0, 5, 0, 5),
+    legend.key.size  = unit(0.4, "cm"),
+  )
+
+
+
+### Explanatory power panel ----
+
+#Prepare tjur R² data
+tjur_df <- data.frame(
+  species = m$spNames,
+  tjur_r2 = as.numeric(MF$TjurR2)
+)
+
+#Prepare R² plot
+p_r2 <- tjur_df %>%
+  ggplot(aes(x = 1, y = species, label = round(tjur_r2, 2))) +
+  geom_text(size = 2, color = "grey40") +
+  labs(x = "Tjur R²", y = NULL) +
+  scale_x_continuous(limits = c(0, 2), expand = c(0, 0)) +
+  theme_bw(base_size = 8) +
+  theme(
+    axis.text.y = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    panel.border= element_blank(),
+  )
+
+
+### Final assemblage ----
+#using aplot ensure everything is aligned
+
+#The problem is that I can not make legend work
+#so we have to use cowplot
+
+#no legend version
+p_beta_noleg <- p_beta + theme(legend.position = "none")
+
+
+p_vp_noleg <- p_vp + theme(legend.position = "none")
+p_r2_noleg <- p_r2 + theme(legend.position = "none")
+
+#extracted legends
+leg_beta <- cowplot::get_legend(p_beta + theme(legend.position = "bottom"))
+leg_vp   <- cowplot::get_legend(p_vp   + theme(legend.position = "bottom"))
+
+                           
+
+#Panel assemblage
+p_assembled <- p_beta_noleg +   coord_fixed(ratio = 1)
+
+p_assembled <- p_assembled  %>%
+  aplot::insert_left(p_tree , width = 0.1) %>%
+  aplot::insert_right(p_vp_noleg , width = 0.6) %>%
+  aplot::insert_right(p_r2_noleg +   coord_fixed(ratio = 1), width = 0.09) %>%
+  aplot::set_panel_spacing(spacing = 2) %>%
+  ggplotify::as.ggplot() #needed for cowplot combination
+
+
+#Combine legends 
+p_legends <- cowplot::plot_grid(
+  leg_beta, leg_vp,
+  nrow = 1,
+  rel_widths = c(0.4, 0.6)
+)
+
+# --- Final assemblage
+p_final <- cowplot::plot_grid(
+  p_assembled,
+  p_legends,
+  ncol = 1,
+  rel_heights = c(1, 0.15)
+)
+p_final
+
+ggsave(filename = here::here("figures", "parameters_probit_plot_.png"),
+       plot = p_final,
+       width = 3000, height = 2500, units = "px", dpi = 300, bg = NULL)
+

@@ -80,7 +80,7 @@ nm = length(models)
 
 
 
-# Estimation parameters ----
+# Parameters ----
 
 #Setting Default parameter (Null implies default)
 
@@ -190,7 +190,7 @@ plotVP_gg <- function(VP, main = "", cols = NULL, ylim = c(0, 1)) {
 
 
 
-# Execute estimation ----
+# Execute estimates visualization ----
 
 if(is.null(support.level.beta)) support.level.beta = 0.95
 if(is.null(support.level.gamma)) support.level.gamma =  0.95
@@ -556,3 +556,220 @@ beta_coef %>%
 
 #Small look at the distribution of one beta coefficients
 # plot(density(val[, "categoryhedgerows", "Neoehrlichia_mikurensis"]))
+
+
+
+
+# Synthesis plot test ----
+
+
+### Tree panel ----
+#Clean the tree
+tree_clean <- m$phyloTree
+tree_clean$edge.length <- NULL   
+
+#Make the ggtree (discrete one)
+p_tree <- ggtree::ggtree(tree_clean, 
+                         branch.length = "none",
+                         size = 0.4,
+                         color = "grey30") +
+  theme_tree()
+
+
+
+
+### Beta coefficient panel ----
+
+# Make labels for covariates
+covariate_labels <- c(
+  # "(Intercept)" = "Intercept"
+  "seasonSpring" = "Season (Spring)",
+  "maturitymature" = "Maturity (mature)",
+  "categoryhedgerows" = "Habitat (Hedgerows)",
+  "categorypine_edge" = "Habitat (Plantation)",
+  "categoryhedgerows:seasonSpring" = "Hedgerows-Spring",
+  "categorypine_edge:seasonSpring" = "Plantation-Spring"
+)
+
+#Apply labels to dataframe
+beta_plot_df <- beta_coef %>%
+  mutate(
+    covariate_label = factor(
+      covariate_labels[covariate],
+      levels = covariate_labels
+    ))
+
+
+#Make the heatmap of β coefficients
+
+#For legend max value:
+lim_beta <- max(abs(beta_plot_df %>% 
+                      filter(!is.na(covariate_label)) %>%  #BEWARE this will remove covariates without label
+                      pull(mean)
+), na.rm = TRUE)
+
+p_beta <- beta_plot_df %>%
+  filter(!is.na(covariate_label)) %>%                      #BEWARE this will remove covariates without label
+  ggplot(aes(x = covariate_label, y = species)) +
+  geom_tile(aes(fill = mean), color = "#F7F7F7", linewidth = 0.5) +
+  geom_text(
+    data = . %>% filter(significant_support_unilateral),
+    aes(label = "*"),
+    color = "black", size = 4, vjust = 0.75
+  ) +
+  scale_fill_gradient2(
+    low = "#2C7796",
+    mid = "#F7F7F7",
+    high = "#D55763",
+    midpoint = 0,
+    name = "β coefficient",
+    limits = c(-lim_beta, lim_beta),
+  ) +
+  labs(x = NULL, y = NULL) +
+  scale_x_discrete(position = "bottom") +
+  theme_bw(base_size = 8) +
+  theme(
+    axis.text.y = element_text(size = 7),
+    axis.text.x = element_text(size = 7, angle = 90, hjust = 0.9, vjust = 0, color = "grey40"),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    panel.border = element_blank(),
+    legend.position = "bottom"
+  ) 
+
+
+
+
+
+### Variance partitioning panel ----
+
+#Palette of covariates
+vp_palette <- c(
+  "category" = "#ff9aa2",
+  "category:season" = "#feb7b1", 
+  "season" = "#ffdac0",   
+  "Random: site" = "#dbdbdb",
+  "Random: location" = "#b6b6b6",
+  "Random: mission" = "#929292"
+)
+
+#Covariates labels
+vp_labels <- c(
+  "category" = "Habitat",
+  "category:season" = "Habitat x Season",
+  "season"= "Season",
+  "Random: site" = "Random: site",
+  "Random: location" = "Random: Spatial",
+  "Random: mission" = "Random: mission"
+)
+
+#Generate long format dataframe for plotting
+vp_df <- as.data.frame(VP$vals) %>%
+  tibble::rownames_to_column("var_level") %>%
+  tidyr::pivot_longer(-var_level, names_to = "species", values_to = "proportion") %>%
+  mutate(
+    var_level = factor(var_level, levels = rev(names(vp_labels))) )
+
+#Generate var part plot
+p_vp <- vp_df %>%
+  ggplot(aes(x = proportion, y = species, fill = var_level)) +
+  geom_bar(stat = "identity", color = "grey60", linewidth = 0.5) +
+  scale_fill_manual(values = vp_palette,
+                    name = NULL,
+                    labels = vp_labels) +
+  scale_x_continuous(
+    limits = c(0, 1.01),
+    expand = c(0, 0),
+    breaks = c(0, 0.5, 1),
+    labels = c("0", "0.5", "1")
+  ) +
+  labs(x = "Variance proportion", 
+       y = NULL) +
+  theme_bw(base_size = 8) +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    panel.grid = element_blank(),
+    panel.border = element_blank(),
+    legend.position = "bottom",
+    legend.text = element_text(size = 7),
+    # plot.margin = margin(0, 5, 0, 5),
+    legend.key.size  = unit(0.4, "cm"),
+  )
+
+
+
+### Explanatory power panel ----
+
+#Prepare SR² data
+sr2_df <- data.frame(
+  species = m$spNames,
+  sr2 = as.numeric(MF$SR2)
+)
+
+#Prepare R² plot
+p_r2 <- sr2_df %>%
+  ggplot(aes(x = 1, y = species, label = round(sr2, 2))) +
+  geom_text(size = 2, color = "grey40") +
+  labs(x = "SR²", y = NULL) +
+  scale_x_continuous(limits = c(0, 2), expand = c(0, 0)) +
+  theme_bw(base_size = 8) +
+  theme(
+    axis.text.y = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    panel.border= element_blank(),
+  )
+
+
+### Final assemblage ----
+#using aplot ensure everything is aligned
+
+#The problem is that I can not make legend work
+#so we have to use cowplot
+
+#no legend version
+p_beta_noleg <- p_beta + theme(legend.position = "none")
+
+
+p_vp_noleg <- p_vp + theme(legend.position = "none")
+p_r2_noleg <- p_r2 + theme(legend.position = "none")
+
+#extracted legends
+leg_beta <- cowplot::get_legend(p_beta + theme(legend.position = "bottom"))
+leg_vp   <- cowplot::get_legend(p_vp   + theme(legend.position = "bottom"))
+
+
+
+#Panel assemblage
+p_assembled <- p_beta_noleg +   coord_equal()
+
+p_assembled <- p_assembled  %>%
+  aplot::insert_left(p_tree , width = 0.1) %>%
+  aplot::insert_right(p_vp_noleg , width = 0.6) %>%
+  aplot::insert_right(p_r2_noleg +   coord_equal(), width = 0.09) %>%
+  aplot::set_panel_spacing(spacing = 2) %>%
+  ggplotify::as.ggplot() #needed for cowplot combination
+
+
+#Combine legends 
+p_legends <- cowplot::plot_grid(
+  leg_beta, leg_vp,
+  nrow = 1,
+  rel_widths = c(0.4, 0.6)
+)
+
+# --- Final assemblage
+p_final <- cowplot::plot_grid(
+  p_assembled,
+  p_legends,
+  ncol = 1,
+  rel_heights = c(1, 0.15)
+)
+p_final
+
+ggsave(filename = here::here("figures", "parameters_ab_plot_.png"),
+       plot = p_final,
+       width = 3000, height = 2500, units = "px", dpi = 300, bg = NULL)
+

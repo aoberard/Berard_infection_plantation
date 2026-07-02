@@ -125,11 +125,11 @@ df_heatmap_season <- df_heatmap_season %>%
 # #Version with diff mean (not on same scale)
 # plot_heatmap_season_diff <- df_heatmap_season %>%
 #   ggplot(aes(x = model , y = habitat, fill = diff_mean)) +
-#   geom_tile(color = "white") +
+#   geom_tile(color = "#F7F7F7") +
 #   geom_text(aes(label = if_else(significant, "*", "")), 
 #             size = 5, vjust = 0.75, color = "black") +
 #   scale_fill_gradient2(
-#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     low = "#2C7796", mid = "#F7F7F7", high = "#D55763", 
 #     midpoint = 0,
 #     name = "Mean difference"
 #   ) +
@@ -140,7 +140,7 @@ df_heatmap_season <- df_heatmap_season %>%
 #   theme(
 #     strip.text = element_text(face = "bold", size = 8),
 #     strip.background = element_rect(fill = "grey40", color = NA),
-#     strip.text.x = element_text(color = "white"),
+#     strip.text.x = element_text(color = "#F7F7F7"),
 #     axis.text.x = element_text(angle = 45, hjust = 1),
 #     panel.grid = element_blank()
 #   )
@@ -151,11 +151,11 @@ df_heatmap_season <- df_heatmap_season %>%
 # #Version with diff mean (initially scaled)
 # plot_heatmap_season_diffscaled <- df_heatmap_season %>%
 #   ggplot(aes(x = model , y = habitat, fill = diff_scaled)) +
-#   geom_tile(color = "white") +
+#   geom_tile(color = "#F7F7F7") +
 #   geom_text(aes(label = if_else(significant, "*", "")), 
 #             size = 5, vjust = 0.75, color = "black") +
 #   scale_fill_gradient2(
-#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     low = "#2C7796", mid = "#F7F7F7", high = "#D55763", 
 #     midpoint = 0,
 #     name = "Scaled mean difference"
 #   ) +
@@ -166,7 +166,7 @@ df_heatmap_season <- df_heatmap_season %>%
 #   theme(
 #     strip.text = element_text(face = "bold", size = 8),
 #     strip.background = element_rect(fill = "grey40", color = NA),
-#     strip.text.x = element_text(color = "white"),
+#     strip.text.x = element_text(color = "#F7F7F7"),
 #     axis.text.x = element_text(angle = 45, hjust = 1),
 #     panel.grid = element_blank()
 #   )
@@ -177,11 +177,11 @@ df_heatmap_season <- df_heatmap_season %>%
 # #version with support
 # plot_heatmap_season_support <- df_heatmap_season %>%
 #   ggplot(aes(x = model , y = habitat, fill = signed_support)) +
-#   geom_tile(color = "white") +
+#   geom_tile(color = "#F7F7F7") +
 #   geom_text(aes(label = if_else(significant, "*", "")), 
 #             size = 5, vjust = 0.75, color = "black") +
 #   scale_fill_gradient2(
-#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     low = "#2C7796", mid = "#F7F7F7", high = "#D55763", 
 #     midpoint = 0,
 #     name = "Signed support"
 #   ) +
@@ -192,7 +192,7 @@ df_heatmap_season <- df_heatmap_season %>%
 #   theme(
 #     strip.text = element_text(face = "bold", size = 8),
 #     strip.background = element_rect(fill = "grey40", color = NA),
-#     strip.text.x = element_text(color = "white"),
+#     strip.text.x = element_text(color = "#F7F7F7"),
 #     axis.text.x = element_text(angle = 45, hjust = 1),
 #     panel.grid = element_blank()
 #   )
@@ -212,7 +212,7 @@ plot_heatmap_season_dualscale <- ggplot() +
   #Infection prob tiles
   geom_tile(data = df_prob_season,
             aes(x = model, y = habitat, fill = diff_mean),
-            color = "white") +
+            color = "#F7F7F7") +
   scale_fill_gradient2(
     low = pal_prob["low"], mid = pal_prob["mid"], high = pal_prob["high"],
     midpoint = 0,
@@ -229,7 +229,7 @@ plot_heatmap_season_dualscale <- ggplot() +
   
   geom_tile(data = df_ab_season,
             aes(x = model, y = habitat, fill = diff_mean),
-            color = "white") +
+            color = "#F7F7F7") +
   scale_fill_gradient2(
     low = pal_ab["low"], mid = pal_ab["mid"], high = pal_ab["high"],
     midpoint = 0,
@@ -251,7 +251,7 @@ plot_heatmap_season_dualscale <- ggplot() +
     legend.text = element_text(size = 6),
     strip.text = element_text(face = "bold", size = 8),
     strip.background = element_rect(fill = "grey40", color = NA),
-    strip.text.x = element_text(color = "white"),
+    strip.text.x = element_text(color = "#F7F7F7"),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.grid = element_blank()
   )
@@ -310,11 +310,11 @@ df_heatmap_habitat <- df_heatmap_habitat %>%
 # #Version with diff mean (not on same scale)
 # plot_heatmap_habitat_diff <- df_heatmap_habitat %>%
 #   ggplot(aes(x = model, y = pair_label, fill = diff_mean)) +
-#   geom_tile(color = "white") +
+#   geom_tile(color = "#F7F7F7") +
 #   geom_text(aes(label = if_else(significant, "*", "")), 
 #             size = 5, vjust = 0.75, color = "black") +
 #   scale_fill_gradient2(
-#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     low = "#2C7796", mid = "#F7F7F7", high = "#D55763", 
 #     midpoint = 0,
 #     name = "Mean difference"
 #   ) +
@@ -326,8 +326,8 @@ df_heatmap_habitat <- df_heatmap_habitat %>%
 #   theme(
 #     strip.text = element_text(face = "bold", size = 8),
 #     strip.background = element_rect(fill = "grey40", color = NA),
-#     strip.text.x = element_text(color = "white"),
-#     strip.text.y = element_text(color = "white"),
+#     strip.text.x = element_text(color = "#F7F7F7"),
+#     strip.text.y = element_text(color = "#F7F7F7"),
 #     axis.text.x = element_text(angle = 45, hjust = 1),
 #     panel.grid = element_blank()
 #   )
@@ -337,11 +337,11 @@ df_heatmap_habitat <- df_heatmap_habitat %>%
 # #Version with diff mean (not on same scale)
 # plot_heatmap_habitat_diffscaled <- df_heatmap_habitat %>%
 #   ggplot(aes(x = model, y = pair_label, fill = diff_scaled)) +
-#   geom_tile(color = "white") +
+#   geom_tile(color = "#F7F7F7") +
 #   geom_text(aes(label = if_else(significant, "*", "")), 
 #             size = 5, vjust = 0.75, color = "black") +
 #   scale_fill_gradient2(
-#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     low = "#2C7796", mid = "#F7F7F7", high = "#D55763", 
 #     midpoint = 0,
 #     name = "Scaled mean difference"
 #   ) +
@@ -353,8 +353,8 @@ df_heatmap_habitat <- df_heatmap_habitat %>%
 #   theme(
 #     strip.text = element_text(face = "bold", size = 8),
 #     strip.background = element_rect(fill = "grey40", color = NA),
-#     strip.text.x = element_text(color = "white"),
-#     strip.text.y = element_text(color = "white"),
+#     strip.text.x = element_text(color = "#F7F7F7"),
+#     strip.text.y = element_text(color = "#F7F7F7"),
 #     axis.text.x = element_text(angle = 45, hjust = 1),
 #     panel.grid = element_blank()
 #   )
@@ -364,11 +364,11 @@ df_heatmap_habitat <- df_heatmap_habitat %>%
 # #Version with support 
 # plot_heatmap_habitat_support <- df_heatmap_habitat %>%
 #   ggplot(aes(x = model, y = pair_label, fill = signed_support)) +
-#   geom_tile(color = "white") +
+#   geom_tile(color = "#F7F7F7") +
 #   geom_text(aes(label = if_else(significant, "*", "")), 
 #             size = 5, vjust = 0.75, color = "black") +
 #   scale_fill_gradient2(
-#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     low = "#2C7796", mid = "#F7F7F7", high = "#D55763", 
 #     midpoint = 0,
 #     name = "Signed support"
 #   ) +
@@ -380,8 +380,8 @@ df_heatmap_habitat <- df_heatmap_habitat %>%
 #   theme(
 #     strip.text = element_text(face = "bold", size = 8),
 #     strip.background = element_rect(fill = "grey40", color = NA),
-#     strip.text.x = element_text(color = "white"),
-#     strip.text.y = element_text(color = "white"),
+#     strip.text.x = element_text(color = "#F7F7F7"),
+#     strip.text.y = element_text(color = "#F7F7F7"),
 #     axis.text.x = element_text(angle = 45, hjust = 1),
 #     panel.grid = element_blank()
 #   )
@@ -400,7 +400,7 @@ plot_heatmap_habitat_dualscale <- ggplot() +
   #Infection prob tiles
   geom_tile(data = df_prob_habitat,
             aes(x = model, y = pair_label, fill = diff_mean),
-            color = "white") +
+            color = "#F7F7F7") +
   scale_fill_gradient2(
     low = pal_prob["low"], mid = pal_prob["mid"], high = pal_prob["high"],
     midpoint = 0,
@@ -417,7 +417,7 @@ plot_heatmap_habitat_dualscale <- ggplot() +
   
   geom_tile(data = df_ab_habitat,
             aes(x = model, y = pair_label, fill = diff_mean),
-            color = "white") +
+            color = "#F7F7F7") +
   scale_fill_gradient2(
     low = pal_ab["low"], mid = pal_ab["mid"], high = pal_ab["high"],
     midpoint = 0,
@@ -438,8 +438,8 @@ plot_heatmap_habitat_dualscale <- ggplot() +
     legend.text = element_text(size = 6),
     strip.text = element_text(face = "bold", size = 8),
     strip.background = element_rect(fill = "grey40", color = NA),
-    strip.text.x = element_text(color = "white"),
-    strip.text.y = element_text(color = "white"),
+    strip.text.x = element_text(color = "#F7F7F7"),
+    strip.text.y = element_text(color = "#F7F7F7"),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.grid = element_blank()
   )
@@ -493,11 +493,11 @@ df_heatmap_interaction <- df_heatmap_interaction %>%
 # #Version with interaction mean (not on same scale)
 # plot_heatmap_interaction_diff <- df_heatmap_interaction %>%
 #   ggplot(aes(x = model, y = pair_label, fill = interaction_mean)) +
-#   geom_tile(color = "white") +
+#   geom_tile(color = "#F7F7F7") +
 #   geom_text(aes(label = if_else(significant, "*", "")), 
 #             size = 5, vjust = 0.75, color = "black") +
 #   scale_fill_gradient2(
-#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     low = "#2C7796", mid = "#F7F7F7", high = "#D55763", 
 #     midpoint = 0,
 #     name = "Difference of difference"
 #   ) +
@@ -508,7 +508,7 @@ df_heatmap_interaction <- df_heatmap_interaction %>%
 #   theme(
 #     strip.text = element_text(face = "bold", size = 8),
 #     strip.background = element_rect(fill = "grey40", color = NA),
-#     strip.text.x = element_text(color = "white"),
+#     strip.text.x = element_text(color = "#F7F7F7"),
 #     axis.text.x = element_text(angle = 45, hjust = 1),
 #     panel.grid = element_blank()
 #   )
@@ -518,11 +518,11 @@ df_heatmap_interaction <- df_heatmap_interaction %>%
 # #Version with interaction mean (scaled)
 # plot_heatmap_interaction_diffscaled <- df_heatmap_interaction %>%
 #   ggplot(aes(x = model, y = pair_label, fill = diff_scaled)) +
-#   geom_tile(color = "white") +
+#   geom_tile(color = "#F7F7F7") +
 #   geom_text(aes(label = if_else(significant, "*", "")), 
 #             size = 5, vjust = 0.75, color = "black") +
 #   scale_fill_gradient2(
-#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     low = "#2C7796", mid = "#F7F7F7", high = "#D55763", 
 #     midpoint = 0,
 #     name = "Scaled difference of difference"
 #   ) +
@@ -533,7 +533,7 @@ df_heatmap_interaction <- df_heatmap_interaction %>%
 #   theme(
 #     strip.text = element_text(face = "bold", size = 8),
 #     strip.background = element_rect(fill = "grey40", color = NA),
-#     strip.text.x = element_text(color = "white"),
+#     strip.text.x = element_text(color = "#F7F7F7"),
 #     axis.text.x = element_text(angle = 45, hjust = 1),
 #     panel.grid = element_blank()
 #   )
@@ -543,11 +543,11 @@ df_heatmap_interaction <- df_heatmap_interaction %>%
 # #Version with support
 # plot_heatmap_interaction_support <- df_heatmap_interaction %>%
 #   ggplot(aes(x = model, y = pair_label, fill = signed_support)) +
-#   geom_tile(color = "white") +
+#   geom_tile(color = "#F7F7F7") +
 #   geom_text(aes(label = if_else(significant, "*", "")), 
 #             size = 5, vjust = 0.75, color = "black") +
 #   scale_fill_gradient2(
-#     low = "#2C7796", mid = "white", high = "#D55763", 
+#     low = "#2C7796", mid = "#F7F7F7", high = "#D55763", 
 #     midpoint = 0,
 #     name = "Signed support"
 #   ) +
@@ -558,7 +558,7 @@ df_heatmap_interaction <- df_heatmap_interaction %>%
 #   theme(
 #     strip.text = element_text(face = "bold", size = 8),
 #     strip.background = element_rect(fill = "grey40", color = NA),
-#     strip.text.x = element_text(color = "white"),
+#     strip.text.x = element_text(color = "#F7F7F7"),
 #     axis.text.x = element_text(angle = 45, hjust = 1),
 #     panel.grid = element_blank()
 #   )
@@ -578,7 +578,7 @@ plot_heatmap_interaction_dualscale <- ggplot() +
   #Infection prob tiles
   geom_tile(data = df_prob_interaction,
             aes(x = model, y = pair_label, fill = interaction_mean),
-            color = "white") +
+            color = "#F7F7F7") +
   scale_fill_gradient2(
     low = pal_prob["low"], mid = pal_prob["mid"], high = pal_prob["high"],
     midpoint = 0,
@@ -595,7 +595,7 @@ plot_heatmap_interaction_dualscale <- ggplot() +
   
   geom_tile(data = df_ab_interaction,
             aes(x = model, y = pair_label, fill = interaction_mean),
-            color = "white") +
+            color = "#F7F7F7") +
   scale_fill_gradient2(
     low = pal_ab["low"], mid = pal_ab["mid"], high = pal_ab["high"],
     midpoint = 0,
@@ -615,7 +615,7 @@ plot_heatmap_interaction_dualscale <- ggplot() +
     legend.text = element_text(size = 6),
     strip.text = element_text(face = "bold", size = 8),
     strip.background = element_rect(fill = "grey40", color = NA),
-    strip.text.x = element_text(color = "white"),
+    strip.text.x = element_text(color = "#F7F7F7"),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.grid = element_blank()
   )

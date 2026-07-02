@@ -114,11 +114,10 @@ message("Matrix location.xy has been reordered to match studyDesign 'location' l
 ## Models' fixed effects formula ----
 XFormula.null = ~ 1
 XFormula.host = ~ sexe + poids + maturity 
-XFormula.hab_season = ~  season * category + nb_apo
-XFormula.hab_host = ~ category + nb_apo + sexe + poids + maturity 
-XFormula.season_host = ~ season + nb_apo + sexe + poids + maturity 
-XFormula.hab_season_host = ~  season * category + nb_apo + sexe + poids + maturity
-
+XFormula.hab = ~ category + nb_apo + sexe + poids + maturity 
+XFormula.season = ~ season + nb_apo + sexe + poids + maturity 
+XFormula.hab_season_add = ~  category + season + nb_apo + sexe + poids + maturity
+XFormula.hab_season_int = ~  category * season + nb_apo + sexe + poids + maturity
 
 ## Models' traits formula ----
 TrFormula = ~ non_vector_transmission + vector_transmission
@@ -183,25 +182,11 @@ m.host <- Hmsc::Hmsc(Y = Y,
                         individual = rL.ind
                         ))
 
-m.hab_season <- Hmsc::Hmsc(Y = Y,
-                     distr = "probit", 
-                     XData = X,
-                     XFormula = XFormula.hab_season,
-                     studyDesign = studyDesign, 
-                     TrData = Tm,
-                     TrFormula = TrFormula,
-                     phyloTree = taxonomicTree,
-                     ranLevels = list(
-                       site = rL.site,
-                       location = rL.location.xy,
-                       mission = rL.mission, 
-                       individual = rL.ind
-                     ))
 
-m.hab_host <- Hmsc::Hmsc(Y = Y,
+m.hab <- Hmsc::Hmsc(Y = Y,
                     distr = "probit", 
                     XData = X,
-                    XFormula = XFormula.hab_host,
+                    XFormula = XFormula.hab,
                     studyDesign = studyDesign, 
                     TrData = Tm,
                     TrFormula = TrFormula,
@@ -213,10 +198,10 @@ m.hab_host <- Hmsc::Hmsc(Y = Y,
                       individual = rL.ind
                     ))
 
-m.season_host <- Hmsc::Hmsc(Y = Y,
+m.season <- Hmsc::Hmsc(Y = Y,
                          distr = "probit", 
                          XData = X,
-                         XFormula = XFormula.season_host,
+                         XFormula = XFormula.season,
                          studyDesign = studyDesign, 
                          TrData = Tm,
                          TrFormula = TrFormula,
@@ -228,10 +213,10 @@ m.season_host <- Hmsc::Hmsc(Y = Y,
                            individual = rL.ind
                          ))
 
-m.hab_season_host <- Hmsc::Hmsc(Y = Y,
+m.hab_season_add<- Hmsc::Hmsc(Y = Y,
                          distr = "probit", 
                          XData = X,
-                         XFormula = XFormula.hab_season_host,
+                         XFormula = XFormula.hab_season_add,
                          studyDesign = studyDesign, 
                          TrData = Tm,
                          TrFormula = TrFormula,
@@ -243,6 +228,20 @@ m.hab_season_host <- Hmsc::Hmsc(Y = Y,
                            individual = rL.ind
                          ))
 
+m.hab_season_int <- Hmsc::Hmsc(Y = Y,
+                              distr = "probit", 
+                              XData = X,
+                              XFormula = XFormula.hab_season_int,
+                              studyDesign = studyDesign, 
+                              TrData = Tm,
+                              TrFormula = TrFormula,
+                              phyloTree = taxonomicTree,
+                              ranLevels = list(
+                                site = rL.site, 
+                                location = rL.location.xy,
+                                mission = rL.mission, 
+                                individual = rL.ind
+                              ))
 
 #Check models structure
 m.null
@@ -258,18 +257,18 @@ head(m.host$TrScaled)
 # Combining models ----
 models = list(m.null,
               m.host,
-              m.hab_season,
-              m.hab_host,
-              m.season_host,
-              m.hab_season_host
+              m.hab,
+              m.season,
+              m.hab_season_add,
+              m.hab_season_int
               )
 
-names(models) = c("null",
+names(models) = c("nullmodel",
                   "host",
-                  "habitat_season",
-                  "habitat_host",
-                  "season_host",
-                  "habitat_season_host"
+                  "habitat",
+                  "season",
+                  "habitat_season_add",
+                  "habitat_season_int"
                   )
 
 # Test run ----

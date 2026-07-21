@@ -204,10 +204,18 @@ if(showOmega & !is.null(ma.omega)){
 dev.off()
 
 
-#Quick coefficient convergence exploration ----
+# Quick coefficient convergence exploration ----
 
 #Trace plot
 plot(mpost$Beta)
 colnames(mpost$Beta[[1]])
 
 gelman.diag(mpost$Beta,multivariate=FALSE)$psrf
+
+
+# Mean psrf ----
+ma.beta
+
+ma.gamma
+
+ma.omega

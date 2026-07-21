@@ -23,6 +23,7 @@ library("writexl")
 # Make script reproducible
 set.seed(1)
 
+
 # Graphical parameters
 effect_direction_palette <- c("positive"          = "#2C7796",
                               "negative"          = "#D55763",
@@ -71,7 +72,7 @@ if(file.exists(filename)){
 #Make as a comment in order to explore all models, but last part of the script will not work
 # if(file.exists(filename)){
 # 
-#   models <- models[c("habitatxseason_spat")]
+#   models <- models[c("habitat_season_int")]
 # }
 
 nm = length(models)
@@ -407,15 +408,17 @@ if(file.exists(filename)){
 
 
 
-# Other plots ----
+# Manual plots ----
 #BEWARE BEWARE, model used for this plots may not be the right one if multiple models from "models" object were conserved
 m$call
 
-
-#Beta coefficient extraction (inspired from Hmsc::getPostEstimate function)
-
+# coefficient extraction (inspired from Hmsc::getPostEstimate function)
 #Pool MCMC chains
+
 postList_pooled <- Hmsc:::poolMcmcChains(m$postList)
+
+
+## Beta coefficient ----
 
 #Extract Beta of each chain into a list
 beta_list <- lapply(postList_pooled, function(a) a[["Beta"]])
@@ -499,6 +502,8 @@ beta_coef <- beta_coef %>%
             by = c("covariate", "species"))
 
 
+### Exploration plots ----
+
 #Making a forest plot
 beta_coef %>%
   filter(covariate != "(Intercept)") %>%                          #REMOVING INTERCEPT FOR VISUALIZATION PURPOSES
@@ -560,10 +565,10 @@ beta_coef %>%
 
 
 
-# Synthesis plot test ----
+### Synthesis plot  ----
 
 
-### Tree panel ----
+#### Tree panel ----
 #Clean the tree
 tree_clean <- m$phyloTree
 tree_clean$edge.length <- NULL   
@@ -578,7 +583,7 @@ p_tree <- ggtree::ggtree(tree_clean,
 
 
 
-### Beta coefficient panel ----
+#### Beta coefficient panel ----
 
 # Make labels for covariates
 covariate_labels <- c(
@@ -611,7 +616,8 @@ lim_beta <- max(abs(beta_plot_df %>%
 p_beta <- beta_plot_df %>%
   filter(!is.na(covariate_label)) %>%                      #BEWARE this will remove covariates without label
   ggplot(aes(x = covariate_label, y = species)) +
-  geom_tile(aes(fill = mean), color = "#F7F7F7", linewidth = 0.5) +
+  geom_tile(aes(fill = mean, alpha = support > 0.75 | supportNeg > 0.75), 
+            color = "white", linewidth = 0.5) +
   geom_text(
     data = . %>% filter(significant_support_unilateral),
     aes(label = "*"),
@@ -625,6 +631,7 @@ p_beta <- beta_plot_df %>%
     name = "β coefficient",
     limits = c(-lim_beta, lim_beta),
   ) +
+  scale_alpha_manual(values = c("TRUE" = 1, "FALSE" = 1), guide = "none") + # Decide if badly well supported tiles are transparent (to remove noise)
   labs(x = NULL, y = NULL) +
   scale_x_discrete(position = "bottom") +
   theme_bw(base_size = 8) +
@@ -641,7 +648,7 @@ p_beta <- beta_plot_df %>%
 
 
 
-### Variance partitioning panel ----
+#### Variance partitioning panel ----
 
 #Palette of covariates
 vp_palette <- c(
@@ -697,9 +704,13 @@ p_vp <- vp_df %>%
     legend.key.size  = unit(0.4, "cm"),
   )
 
+vp_df %>%
+  group_by(var_level) %>% 
+  summarise(mean_prop = mean(proportion)) %>% 
+  arrange(desc(mean_prop))
 
 
-### Explanatory power panel ----
+#### Explanatory power panel ----
 
 #Prepare SR² data
 sr2_df <- data.frame(
@@ -723,7 +734,7 @@ p_r2 <- sr2_df %>%
   )
 
 
-### Final assemblage ----
+#### Final assemblage ----
 #using aplot ensure everything is aligned
 
 #The problem is that I can not make legend work
@@ -769,7 +780,262 @@ p_final <- cowplot::plot_grid(
 )
 p_final
 
-ggsave(filename = here::here("figures", "parameters_ab_plot_.png"),
+
+
+if(!dir.exists(here::here("figures", "parameters"))) {
+  dir.create(here::here("figures", "parameters"), recursive = TRUE)
+}
+
+ggsave(filename = here::here("figures", "parameters", "parameters_beta_ab_plot_.png"),
        plot = p_final,
        width = 3000, height = 2500, units = "px", dpi = 300, bg = NULL)
+
+
+## Rho parameter ----
+
+#Extract Rho of each chain into a list
+rho_list <- lapply(postList_pooled, function(a) a[["rho"]])
+rhovals <- unlist(rho_list)
+
+
+mean(rhovals)
+mean(rhovals > 0)
+quantile(rhovals, c(0.025, 0.975))
+
+plot(density(rhovals))
+
+
+## Gamma parameter ----
+gamma_list <- lapply(postList_pooled, function(a) a[["Gamma"]])
+
+#Bind all values from each element within the list
+val_gamma <- abind::abind(gamma_list, along = 0)  
+
+#Quick renaming
+dimnames(val_gamma) <- list(
+  NULL, 
+  m$covNames,
+  m$trNames
+)
+
+#Compute means, distribution quantile and support
+gamma_mean <- colMeans(val_gamma)
+gamma_q025 <- apply(val_gamma, c(2,3), quantile, 0.025)
+gamma_q975 <- apply(val_gamma, c(2,3), quantile, 0.975)
+gamma_support <- apply(val_gamma > 0, c(2,3), mean)
+gamma_supportNeg <- apply(val_gamma < 0, c(2,3), mean)
+
+# Long format
+gamma_coef <- as.data.frame(gamma_mean) %>%
+  tibble::rownames_to_column("covariate") %>%
+  tidyr::pivot_longer(-covariate, names_to = "trait", values_to = "mean") %>%
+  left_join(
+    as.data.frame(gamma_q025) %>%
+      tibble::rownames_to_column("covariate") %>%
+      tidyr::pivot_longer(-covariate, names_to = "trait", values_to = "lower"),
+    by = c("covariate", "trait")
+  ) %>%
+  left_join(
+    as.data.frame(gamma_q975) %>%
+      tibble::rownames_to_column("covariate") %>%
+      tidyr::pivot_longer(-covariate, names_to = "trait", values_to = "upper"),
+    by = c("covariate", "trait")
+  ) %>%
+  left_join(
+    as.data.frame(gamma_support) %>%
+      tibble::rownames_to_column("covariate") %>%
+      tidyr::pivot_longer(-covariate, names_to = "trait", values_to = "support"),
+    by = c("covariate", "trait")
+  ) %>%
+  left_join(
+    as.data.frame(gamma_supportNeg) %>%
+      tibble::rownames_to_column("covariate") %>%
+      tidyr::pivot_longer(-covariate, names_to = "trait", values_to = "supportNeg"),
+    by = c("covariate", "trait")
+  ) %>%
+  mutate(
+    significant_support_unilateral = support > 0.95 | supportNeg > 0.95
+  )
+
+
+#Apply labels to dataframe
+gamma_plot_df <- gamma_coef %>%
+  mutate(
+    covariate_label = factor(
+      covariate_labels[covariate],
+      levels = covariate_labels
+    ))
+
+
+#Make the heatmap of Γ coefficients
+
+#For legend max value:
+lim_gamma <- max(abs(gamma_plot_df %>% 
+                       filter(!is.na(covariate_label)) %>%  #BEWARE this will remove covariates without label
+                       pull(mean)
+), na.rm = TRUE)
+
+p_gamma <- gamma_plot_df %>%
+  filter(!is.na(covariate_label)) %>%                      #BEWARE this will remove covariates without label
+  ggplot(aes(x = covariate_label, y = trait)) +
+  geom_tile(aes(fill = mean, alpha = support > 0.75 | supportNeg > 0.75), 
+            color = "white", linewidth = 0.4) +
+  geom_text(
+    data = . %>% filter(significant_support_unilateral),
+    aes(label = "*"),
+    color = "black", size = 4, vjust = 0.75
+  ) +
+  scale_fill_gradient2(
+    low = "#2C7796",
+    mid = "#F7F7F7",
+    high = "#D55763",
+    midpoint = 0,
+    name = "Γ coefficient",
+    limits = c(-lim_gamma, lim_gamma),
+  ) +
+  scale_alpha_manual(values = c("TRUE" = 1, "FALSE" = 0), guide = "none") + # to make not well supported things transparent
+  labs(x = NULL, y = NULL) +
+  scale_x_discrete(position = "bottom") +
+  coord_fixed() +
+  theme_bw(base_size = 8) +
+  theme(
+    axis.text.y = element_text(size = 7),
+    axis.text.x = element_text(size = 7, angle = 90, hjust = 0.9, vjust = 0, color = "grey40"),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    panel.border = element_blank(),
+    legend.position = "bottom"
+  ) 
+p_gamma
+
+
+if(!dir.exists(here::here("figures", "parameters"))) {
+  dir.create(here::here("figures", "parameters"), recursive = TRUE)
+}
+
+ggsave(filename = here::here("figures", "parameters", "parameters_gamma_ab_plot_.png"),
+       plot = p_gamma,
+       width = 2000, height = 1500, units = "px", dpi = 300, bg = NULL)
+
+
+
+
+gamma_plot_df %>%
+  # filter(!is.na(covariate_label)) %>%
+  ggplot(aes(x = mean, y = covariate_label, fill = trait, group = trait)) +
+  
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey40") +
+  geom_errorbarh(aes(xmin = lower, xmax = upper, color = trait),
+                 width = 0,
+                 linewidth = 0.9,
+                 position = position_dodge(width = 0.65)) +
+  geom_point(aes(fill = significant_support_unilateral,
+                 color = trait),
+             size = 2.5, shape = 21, stroke = 1.1,
+             position = position_dodge(width = 0.65)) +
+  scale_color_viridis_d(option = "magma", end = 0.9, begin = 0.2) +
+  scale_fill_manual(
+    values = c("TRUE" = "grey20", "FALSE" = "white"),
+    labels = c("TRUE" = "P ≥ 0.95", "FALSE" = "P < 0.95")
+  ) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(color = "white", face = "bold"),
+    panel.grid = element_blank(),
+    legend.position = "right"
+  )
+
+
+
+## Omega parameter ----
+
+#Extract residual associations
+Omega_assoc <- Hmsc::computeAssociations(m)
+
+#Matrix to long format (for every random effects)
+omega_df <- purrr::map_dfr(1:length(Omega_assoc), function(r) {
+  
+  omega <- Omega_assoc[[r]]
+  support_neg <- 1 - omega$support
+  
+  as.data.frame(omega$mean) %>%
+    tibble::rownames_to_column("species_1") %>%
+    tidyr::pivot_longer(-species_1, names_to = "species_2", values_to = "mean") %>%
+    left_join(
+      as.data.frame(omega$support) %>%
+        tibble::rownames_to_column("species_1") %>%
+        tidyr::pivot_longer(-species_1, names_to = "species_2", values_to = "support"),
+      by = c("species_1", "species_2")
+    ) %>%
+    mutate(
+      supportNeg  = 1 - support,
+      significant = support > 0.95 | supportNeg > 0.95,
+      random_level = names(m$ranLevels)[r]
+    )
+})
+
+head(omega_df)
+
+
+#Extract species order (same as tree used for beta plot)
+sp_order <- ggtree::ggtree(tr = tree_clean)$data %>%
+  dplyr::filter(isTip) %>%
+  dplyr::arrange(y) %>%
+  dplyr::pull(label)
+
+#reorder dataframe according to species order from tree
+omega_plot_df <- omega_df %>%
+  mutate(
+    species_1 = factor(species_1, levels = sp_order),
+    species_2 = factor(species_2, levels = sp_order)
+  ) 
+
+#Generate heatmaps
+p_omega <- omega_plot_df %>%
+  filter(species_1 != species_2) %>%  # to remove diagonal
+  # filter(as.integer(species_1) > as.integer(species_2)) %>%  # to remove bottom triangle
+  # filter(support > 0.75 | supportNeg > 0.75) %>%  # to remove noise
+  ggplot(aes(x = species_2, y = species_1, fill = mean)) +
+  geom_tile(aes(fill = mean, alpha = support > 0.75 | supportNeg > 0.75), 
+            color = "white", linewidth = 0.4) +
+  geom_text(
+    data = . %>% filter(significant),
+    aes(label = "*"),
+    color = "black", size = 3, vjust = 0.75
+  ) +
+  scale_fill_gradient2(
+    low = "#2C7796",
+    mid = "#F7F7F7",
+    high= "#D55763",
+    midpoint = 0,
+    limits= c(-1, 1),
+    name= "Residual association"
+  ) +
+  scale_alpha_manual(values = c("TRUE" = 1, "FALSE" = 0), guide = "none") + # to make not well supported things transparent
+  facet_wrap(~ random_level) +
+  coord_fixed() +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 8) +
+  theme(
+    axis.text.x= element_text(angle = 45, hjust = 1, size = 7, color = "grey40"),
+    axis.text.y = element_text(size = 7, color = "grey40"),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    panel.border = element_blank(),
+    strip.background = element_rect(fill = "grey30"),
+    strip.text = element_text(color = "white", size = 7),
+    legend.position  = "bottom"
+  )
+
+p_omega
+
+
+if(!dir.exists(here::here("figures", "parameters"))) {
+  dir.create(here::here("figures", "parameters"), recursive = TRUE)
+}
+
+ggsave(filename = here::here("figures", "parameters", "parameters_omega_ab_plot_.png"),
+       plot = p_omega,
+       width = 3000, height = 2500, units = "px", dpi = 300, bg = NULL)
+
 

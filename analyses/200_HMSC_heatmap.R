@@ -624,16 +624,116 @@ plot_heatmap_interaction_dualscale
 
 
 # Save plots ----
-ggsave(filename = here::here("figures", "heatmap_season.png"),
+
+if(!dir.exists(here::here("figures", "prediction_heatmaps"))) {
+  dir.create(here::here("figures", "prediction_heatmaps"), recursive = TRUE)
+}
+
+ggsave(filename = here::here("figures", "prediction_heatmaps", "heatmap_season.png"),
        plot = plot_heatmap_season_dualscale + coord_equal(),
        width = 2700, height = 2500, units = "px", dpi = 300, bg = NULL)
 
-ggsave(filename = here::here("figures",  "heatmap_habitat.png"),
+ggsave(filename = here::here("figures", "prediction_heatmaps", "heatmap_habitat.png"),
        plot = plot_heatmap_habitat_dualscale + coord_equal(),
        width = 6300, height = 1750, units = "px", dpi = 300, bg = NULL)
 
-ggsave(filename = here::here("figures", "heatmap_interaction.png"),
+ggsave(filename = here::here("figures", "prediction_heatmaps", "heatmap_interaction.png"),
        plot = plot_heatmap_interaction_dualscale + coord_equal(),
        width = 2900, height = 2500, units = "px", dpi = 300, bg = NULL)
 
 
+
+# 
+# # ECCB version ----
+# 
+# 
+# ##Seasoon ----
+# 
+# df_prob_season <- df_heatmap_season %>% filter(model == "Probability")
+# 
+# lim_prob_season <- max(abs(df_prob_season$diff_mean), na.rm = TRUE)
+# 
+# plot_heatmap_season_eccb <- ggplot() +
+#   
+#   #Infection prob tiles
+#   geom_tile(data = df_prob_season,
+#             aes(x = model, y = habitat, fill = diff_mean),
+#             color = "#F7F7F7") +
+#   scale_fill_gradient2(
+#     low = pal_prob["low"], mid = pal_prob["mid"], high = pal_prob["high"],
+#     midpoint = 0,
+#     limits = c(-lim_prob_season, lim_prob_season),
+#     name = "Δ P(infection)"
+#   ) +
+#   geom_text(data = df_prob_season,
+#             aes(x = model, y = habitat,
+#                 label = if_else(significant, "*", "")),
+#             size = 5, vjust = 0.75, color = "black") +
+#   
+#   facet_wrap(~ species,
+#              labeller = labeller(species = function(x) gsub("_", " ", x))) +
+#   labs(x = NULL, y = NULL,
+#        title = "Season effect (Spring - Autumn)") +
+#   theme_bw() +
+#   theme(
+#     legend.title = element_text(size = 7),
+#     legend.text = element_text(size = 6),
+#     strip.text = element_text(face = "bold", size = 8),
+#     strip.background = element_rect(fill = "grey40", color = NA),
+#     strip.text.x = element_text(color = "#F7F7F7"),
+#     axis.text.x = element_text(angle = 45, hjust = 1),
+#     panel.grid = element_blank()
+#   )
+# plot_heatmap_season_eccb
+# 
+# ggsave(filename = here::here("heatmap_season_eccb.png"),
+#        plot = plot_heatmap_season_eccb + coord_equal(),
+#        width = 3500, height = 2000, units = "px", dpi = 300, bg = NULL)
+# 
+# 
+# 
+# ##Habitat ----
+# 
+# #Version with dual scale
+# df_prob_habitat <- df_heatmap_habitat %>% filter(model == "Probability")
+# 
+# lim_prob_habitat <- max(abs(df_prob_habitat$diff_mean), na.rm = TRUE)
+# 
+# plot_heatmap_habitat_eccb <- ggplot() +
+#   
+#   #Infection prob tiles
+#   geom_tile(data = df_prob_habitat,
+#             aes(x = model, y = pair_label, fill = diff_mean),
+#             color = "#F7F7F7") +
+#   scale_fill_gradient2(
+#     low = pal_prob["low"], mid = pal_prob["mid"], high = pal_prob["high"],
+#     midpoint = 0,
+#     limits = c(-lim_prob_habitat, lim_prob_habitat),
+#     name = "Δ P(infection)"
+#   ) +
+#   geom_text(data = df_prob_habitat,
+#             aes(x = model, y = pair_label,
+#                 label = if_else(significant, "*", "")),
+#             size = 5, vjust = 0.75, color = "black") +
+#   
+#   facet_grid(season ~ species, 
+#              labeller = labeller(species = function(x) gsub("_", " ", x))) +
+#   labs(x = NULL, y = NULL, 
+#        title = "Habitat effect across species, season and model") +
+#   theme_bw() +
+#   theme(
+#     legend.title = element_text(size = 7),
+#     legend.text = element_text(size = 6),
+#     strip.text = element_text(face = "bold", size = 8),
+#     strip.background = element_rect(fill = "grey40", color = NA),
+#     strip.text.x = element_text(color = "#F7F7F7"),
+#     strip.text.y = element_text(color = "#F7F7F7"),
+#     axis.text.x = element_text(angle = 45, hjust = 1),
+#     panel.grid = element_blank()
+#   )
+# plot_heatmap_habitat_eccb
+# 
+# ggsave(filename = here::here("heatmap_habitat_eccb.png"),
+#        plot = plot_heatmap_habitat_eccb + coord_equal(),
+#        width = 3500, height = 1700, units = "px", dpi = 300, bg = NULL)
+# 

@@ -67,7 +67,7 @@ if(file.exists(filename)){
 #Make as a comment in order to explore all models, but last part of the script will not work
 if(file.exists(filename)){
   
-  models <- models[c("habitatxseason_spat")]
+  models <- models[c("habitat_season_int")]
 }
 
 nm = length(models)

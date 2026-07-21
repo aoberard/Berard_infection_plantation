@@ -400,7 +400,7 @@ plot_pred_ordered
 # ggsave(filename = here::here(resultDir, "plot_pred_ordered.png"),
 #        plot = plot_pred_ordered,
 #        width = 3000, height = 2000, units = "px", dpi = 300, bg = NULL)
-# 
+
 
 
 ## Statistical investigation ----
@@ -619,3 +619,56 @@ save(df_season,
 # 
 # 
 # plotGradient(m, Gradient_abundance, pred = predY_abundance, measure = "Y", index = which(colnames(m$Y) == "Eperythrozoon_coccoides"))
+
+
+
+
+
+
+
+
+
+
+#ECCB plot -----
+
+
+
+#Extract right species order
+model_name <- names(models)[length(names(models))]
+sp_info <- species_order[[model_name]]
+order <- sp_info$species_order
+tjur_cv <- sp_info$tjur_cv
+
+plot_pred_ordered <- pred_distributions %>% 
+  mutate(species_label = paste0(gsub("_", " ", species)),
+         species_label = factor(species_label, levels = paste0(gsub("_", " ", order)))) %>% 
+  ggplot(aes(x = mean, y = season, color = category, group = category)) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey40") +
+  geom_errorbarh(aes(xmin = lower, xmax = upper),
+                 width = 0,
+                 linewidth = 0.9,
+                 position = position_dodge(width = 0.85)) +
+  geom_errorbarh(aes(xmin = q25, xmax = q75),
+                 width = 0, linewidth = 1.2,
+                 position = position_dodge(width = 0.85)) +
+  geom_point(aes(color = category),
+             size = 2.5,
+             position = position_dodge(width = 0.85)) +
+  scale_color_manual(values = category_palette) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(color = "white", face = "bold"),
+    strip.background = element_rect(fill = "grey40"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.major.x = element_line(color = "gray90", linewidth = 0.5),
+    legend.position = "bottom" ) +
+  facet_wrap( .~ species_label, 
+              #scales = "free_x"
+  )
+plot_pred_ordered
+
+ggsave(filename = here::here(resultDir, "plot_pred_ordered.png"),
+       plot = plot_pred_ordered,
+       width = 4500, height = 3200, units = "px", dpi = 600, bg = NULL)
+

@@ -232,6 +232,25 @@ ggplot(df_spfit, aes(x = prevalence, y = AUC_cv, color = model, label = species)
 
 
 
+#Save performance per taxa
+data.table::fwrite(x = df_spfit, file = here::here(resultDir, "taxa_performance.csv"))
+
+#Save prevalence - explanatory performance relationship for model of choice
+relationship_plot <- ggplot(df_spfit %>% filter(model == "habitat_season_int"),
+       aes(x = prevalence, y = TjurR2, color = model, label = species)) +
+  geom_point(size = 2) +
+  ggrepel::geom_text_repel(size = 2.5, max.overlaps = 15) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey40") +
+  labs(
+    x = "Infectious agent prevalence",
+    y = "Tjur R²") +
+  theme_bw() +
+  theme(legend.position = "none")
+
+ggsave(filename = here::here("figures", "performance_relationship_probit_plot.png"),
+       plot = relationship_plot,
+       width = 1500, height = 1500, units = "px", dpi = 300, bg = NULL)
+
 
 # Model selection ----
 

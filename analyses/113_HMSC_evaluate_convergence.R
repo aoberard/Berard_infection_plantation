@@ -33,12 +33,12 @@ showRho = NULL #Default: showRho = FALSE, convergence not shown for rho-paramete
 showAlpha = NULL #Default: showAlpha = FALSE, convergence not shown for alpha-parameters
 
 #Change default parameters by removing comments and setting value
-#Typically only section of the script that nee to be modified     ▲
+#Typically only section of the script that needs to be modified     ▲
 showBeta = TRUE
 showGamma = TRUE
 showOmega = TRUE
 maxOmega = 100
-showRho = TRUE
+showRho = FALSE
 showAlpha = TRUE
 
 

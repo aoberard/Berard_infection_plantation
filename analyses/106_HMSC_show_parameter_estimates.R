@@ -20,6 +20,7 @@ library("Hmsc")
 library("colorspace")
 library("corrplot")
 library("writexl")
+library("patchwork")
 
 
 # Make script reproducible
@@ -611,12 +612,12 @@ beta_plot_df <- beta_coef %>%
 #Make the heatmap of β coefficients
 
 #For legend max value:
-lim_beta <- max(abs(beta_plot_df %>% 
+lim_probit_beta <- max(abs(beta_plot_df %>% 
                       filter(!is.na(covariate_label)) %>%  #BEWARE this will remove covariates without label
                       pull(mean)
                     ), na.rm = TRUE)
 
-p_beta <- beta_plot_df %>%
+p_probit_beta <- beta_plot_df %>%
   filter(!is.na(covariate_label)) %>%                      #BEWARE this will remove covariates without label
   ggplot(aes(x = covariate_label, y = species)) +
   geom_tile(aes(fill = mean, alpha = support > 0.75 | supportNeg > 0.75), 
@@ -632,7 +633,7 @@ p_beta <- beta_plot_df %>%
     high = "#D55763",
     midpoint = 0,
     name = "β coefficient",
-    limits = c(-lim_beta, lim_beta),
+    limits = c(-lim_probit_beta, lim_probit_beta),
   ) +
   scale_alpha_manual(values = c("TRUE" = 1, "FALSE" = 1), guide = "none") + # Decide if badly well supported tiles are transparent (to remove noise)
   labs(x = NULL, y = NULL) +
@@ -691,7 +692,7 @@ vp_df <- as.data.frame(VP$vals) %>%
     var_level = factor(var_level, levels = rev(names(vp_labels))) )
 
 #Generate var part plot
-p_vp <- vp_df %>%
+p_probit_vp <- vp_df %>%
   ggplot(aes(x = proportion, y = species, fill = var_level)) +
   geom_bar(stat = "identity", color = "grey60", linewidth = 0.5) +
   scale_fill_manual(values = vp_palette,
@@ -732,7 +733,7 @@ tjur_df <- data.frame(
 )
 
 #Prepare R² plot
-p_r2 <- tjur_df %>%
+p_probit_r2 <- tjur_df %>%
   ggplot(aes(x = 1, y = species, label = round(tjur_r2, 2))) +
   geom_text(size = 2, color = "grey40") +
   labs(x = "Tjur R²", y = NULL) +
@@ -754,53 +755,62 @@ p_r2 <- tjur_df %>%
 #so we have to use cowplot
 
 #no legend version
-p_beta_noleg <- p_beta + theme(legend.position = "none")
+p_probit_beta_noleg <- p_probit_beta + theme(legend.position = "none")
 
+p_probit_vp_noleg <- p_probit_vp + theme(legend.position = "none")
+p_probit_r2_noleg <- p_probit_r2 + theme(legend.position = "none")
 
-p_vp_noleg <- p_vp + theme(legend.position = "none")
-p_r2_noleg <- p_r2 + theme(legend.position = "none")
+#Extracted legends
+leg_probit_beta <- cowplot::get_legend(p_probit_beta + theme(legend.position = "bottom"))
+leg_probit_vp <- cowplot::get_legend(p_probit_vp + theme(legend.position = "bottom"))
 
-#extracted legends
-leg_beta <- cowplot::get_legend(p_beta + theme(legend.position = "bottom"))
-leg_vp   <- cowplot::get_legend(p_vp   + theme(legend.position = "bottom"))
-
-                           
 
 #Panel assemblage
-p_assembled <- p_beta_noleg +   coord_fixed(ratio = 1)
+p_assembled <- p_probit_beta_noleg +coord_fixed(ratio = 1)
 
 p_assembled <- p_assembled  %>%
-  aplot::insert_left(p_tree , width = 0.1) %>%
-  aplot::insert_right(p_vp_noleg , width = 0.6) %>%
-  aplot::insert_right(p_r2_noleg +   coord_fixed(ratio = 1), width = 0.09) %>%
+  aplot::insert_left(p_tree, width = 0.1) %>%
+  aplot::insert_right(p_probit_vp_noleg, width = 0.6) %>%
+  aplot::insert_right(p_probit_r2_noleg + coord_fixed(ratio = 1), width = 0.09) %>%
   aplot::set_panel_spacing(spacing = 2) %>%
   ggplotify::as.ggplot() #needed for cowplot combination
 
 
 #Combine legends 
-p_legends <- cowplot::plot_grid(
-  leg_beta, leg_vp,
+p_probit_legends <- cowplot::plot_grid(
+  leg_probit_beta, leg_probit_vp,
   nrow = 1,
   rel_widths = c(0.4, 0.6)
 )
 
-# --- Final assemblage
-p_final <- cowplot::plot_grid(
+#Final assemblage
+p_probit_final <- cowplot::plot_grid(
   p_assembled,
-  p_legends,
+  p_probit_legends,
   ncol = 1,
   rel_heights = c(1, 0.15)
 )
-p_final
+p_probit_final
 
 
+
+#Save assembled plot
 if(!dir.exists(here::here("figures", "parameters"))) {
   dir.create(here::here("figures", "parameters"), recursive = TRUE)
 }
-
-ggsave(filename = here::here("figures", "parameters", "parameters_beta_probit_plot_.png"),
-       plot = p_final,
+ggsave(filename = here::here("figures", "parameters", "parameters_beta_probit_plot.png"),
+       plot = p_probit_final,
        width = 3000, height = 2500, units = "px", dpi = 300, bg = NULL)
+
+
+#Save element of assembled plot for use in next script
+save(p_probit_final,
+     p_tree,
+     lim_probit_beta,
+     p_probit_beta,
+     p_probit_vp,
+     p_probit_r2,
+     file = here::here(resultDir, "parameters_beta_probit_plot.RData"))
 
 
 ## Rho parameter ----

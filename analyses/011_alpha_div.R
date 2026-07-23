@@ -282,6 +282,7 @@ confint(m.hab_season_int)
 em_inf <- emmeans::emmeans(m.hab_season_int, ~  category | season, type = "response")
 emmeans::contrast(em_inf, "pairwise", adjust = "Tukey")
 
+
 em_summary_inf <- as.data.frame(em_inf)
 
 
@@ -311,8 +312,8 @@ em_inf_plot <- em_summary_inf %>%
 
 em_inf_plot 
 
-ggsave(filename = here::here("figures","richness_trend_plot.png"),
+ggsave(filename = here::here("figures","richness_trend_plot.pdf"),
        plot = em_inf_plot,
-       width = 2150, height = 1000, units = "px", dpi = 300, bg = NULL)
+       width = 2250, height = 1350, units = "px", dpi = 300, bg = NULL)
 
 

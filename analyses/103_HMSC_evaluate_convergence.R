@@ -38,7 +38,7 @@ showBeta = TRUE
 showGamma = TRUE
 showOmega = TRUE
 maxOmega = 100
-showRho = TRUE
+showRho = FALSE
 showAlpha = TRUE
 
 

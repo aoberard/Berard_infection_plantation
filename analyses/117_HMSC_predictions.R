@@ -495,6 +495,7 @@ df_ab_habitat %>% filter(species == "Neoehrlichia_mikurensis")
 df_ab_habitat %>% filter(species == "Bartonella_grahamii")
 df_ab_habitat %>% filter(species == "Bartonella_birtlesii")
 
+
 ### Interaction effect ----
 #Testing if the interaction between season and habitat is significant
 
@@ -574,10 +575,134 @@ df_ab_interaction %>%
         panel.grid = element_blank())
 
 
-### Save pairwise comparison ----
+## Trait based analysis gamma (CWM) ----
+#Like for the beta paramater, interaction generates issues to interpret the relationship with gamma
+#So we compute community weighted means
+
+#Compute CWM for each MCMC samples of preds (based on script section from Hmsc::plotGradient() )
+cwm_list <- lapply(preds, function(a){
+  
+  (a %*% m$Tr) /
+    matrix(
+      rowSums(a),
+      nrow = nrow(a),
+      ncol = m$nt
+    )
+  
+})
+
+#Bind all values from each element within the list of matrices into an array
+cwm_array <- abind::abind(cwm_list, along = 0)
+
+#Quick renaming
+dimnames(cwm_array) <- list(
+  NULL,
+  interaction(XNew$category, XNew$season),
+  m$trNames
+)
+
+
+### Season effect comparison across habitats ----
+#For each habitat - are there differences in community averaged trait ?
+
+results_season_cwm <- list()
+
+#For each habitat
+for(hab in levels(XNew$category)){
+  
+  #Identify which row of XNew correspond to the right season and habitat
+  idx_spring <- which(
+    XNew$season == "Spring" & XNew$category == hab)
+  
+  idx_autumn <- which(
+    XNew$season == "Autumn" & XNew$category == hab)
+  
+  #For each habitat
+  #Substract autumn prediction from spring prediction (for every trait)
+  diff_samples <- cwm_array[, idx_spring, ] - cwm_array[, idx_autumn, ]
+  
+  #Save it into a dataframe saved within a list (one element per habitat)
+  results_season_cwm[[hab]] <- data.frame(
+    habitat = hab,
+    trait = colnames(diff_samples),
+    diff_mean = colMeans(diff_samples),
+    lower95 = apply(diff_samples, 2, quantile, 0.025),
+    upper95 = apply(diff_samples, 2, quantile, 0.975),
+    #P(Spring > Autumn)
+    support_pos = colMeans(diff_samples > 0),
+    #P(Spring < Autumn)
+    support_neg = colMeans(diff_samples < 0),
+    #Significance
+    significant = if_else(colMeans(diff_samples > 0) >= 0.95 | colMeans(diff_samples < 0) >= 0.95, true = TRUE, false = FALSE)
+    
+  )
+}
+
+
+df_ab_season_cwm <- do.call(rbind, results_season_cwm)
+
+
+
+
+### Habitat effect comparison across season ----
+#For each season - are there differences in community averaged trait ?
+
+hab_pairs <- combn(levels(XNew$category), 2, simplify = FALSE)
+results_habitat_cwm <- list()
+k <- 1
+
+#For each season
+for(season_i in levels(XNew$season)){
+  
+  #For each combination of habitats
+  for(pair in hab_pairs){
+    
+    hab1 <- pair[1]
+    hab2 <- pair[2]
+    
+    #Identify which row of XNew correspond to the right season and habitat OF THE PAIR of interest
+    idx1 <- which(
+      XNew$season == season_i & XNew$category == hab1)
+    
+    idx2 <- which(
+      XNew$season == season_i & XNew$category == hab2)
+    
+    #For each season, and each pair of habitat
+    #Substract prediction between habitat from the pair 
+    diff_samples <- cwm_array[ , idx1, ] - cwm_array[ , idx2, ]
+    
+    #Save it into a dataframe saved within a list (one element per pair of habitat)
+    results_habitat_cwm[[k]] <- data.frame(
+      season = season_i,
+      habitat1 = hab1,
+      habitat2 = hab2,
+      trait = m$trNames,
+      
+      diff_mean = colMeans(diff_samples),
+      
+      lower95 = apply(diff_samples, 2, quantile, 0.025),
+      upper95 = apply(diff_samples, 2, quantile, 0.975),
+      
+      support_pos = colMeans(diff_samples > 0),
+      support_neg = colMeans(diff_samples < 0),
+      significant = if_else(colMeans(diff_samples > 0) >= 0.95 | colMeans(diff_samples < 0) >= 0.95, true = TRUE, false = FALSE))
+    
+    k <- k + 1
+  }
+}
+df_ab_habitat_cwm <- do.call(rbind, results_habitat_cwm)
+
+# df_ab_habitat_cwm
+# df_ab_habitat_cwm %>% filter(trait == "non_vector_transmission1")
+
+
+
+## Save pairwise comparison ----
 save(df_ab_season,
      df_ab_habitat,
      df_ab_interaction,
+     df_ab_season_cwm,
+     df_ab_habitat_cwm,
      file = here::here(resultDir, "pairwise_comparisons.RData"))
 
 

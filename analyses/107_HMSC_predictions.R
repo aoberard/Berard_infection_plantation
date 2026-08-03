@@ -249,7 +249,8 @@ rLNew <- constructGradient(m, focalVariable = "season")$rLNew
 #For each MCMC samples (samples * nbChains)
 #Predict occurence probability for every combination of XNew and every species
 #So gives n_samplesMCMC matrices of probability (samples*nbChains matrices of [nrow(XNew) x n_species])
-preds <- predict(m,
+#predict.Hmsc {Hmsc}
+preds <- predict(m,  
                  XData = XNew,
                  studyDesign = studyDesignNew,
                  ranLevels = rLNew,
@@ -405,6 +406,8 @@ plot_pred_ordered
 
 ## Statistical investigation ----
 
+
+
 ### Season effect comparison across habitats ----
 #For each habitat - are there differences in infection probability between seasons (for each species)
 
@@ -497,6 +500,8 @@ df_habitat %>% filter(species == "Neoehrlichia_mikurensis")
 df_habitat %>% filter(species == "Bartonella_grahamii")
 
 
+
+
 ### Interaction effect ----
 #Testing if the interaction between season and habitat is significant
 
@@ -575,100 +580,135 @@ df_interaction %>%
     panel.grid = element_blank())
 
 
-### Save pairwise comparison ----
+
+## Trait based analysis gamma (CWM) ----
+#Like for the beta paramater, interaction generates issues to interpret the relationship with gamma
+#So we compute community weighted means
+
+#Compute CWM for each MCMC samples of preds (based on script section from Hmsc::plotGradient() )
+cwm_list <- lapply(preds, function(a){
+  
+  (a %*% m$Tr) /
+    matrix(
+      rowSums(a),
+      nrow = nrow(a),
+      ncol = m$nt
+    )
+  
+})
+
+#Bind all values from each element within the list of matrices into an array
+cwm_array <- abind::abind(cwm_list, along = 0)
+
+#Quick renaming
+dimnames(cwm_array) <- list(
+  NULL,
+  interaction(XNew$category, XNew$season),
+  m$trNames
+)
+
+
+### Season effect comparison across habitats ----
+#For each habitat - are there differences in community averaged trait ?
+
+results_season_cwm <- list()
+
+#For each habitat
+for(hab in levels(XNew$category)){
+  
+  #Identify which row of XNew correspond to the right season and habitat
+  idx_spring <- which(
+    XNew$season == "Spring" & XNew$category == hab)
+  
+  idx_autumn <- which(
+    XNew$season == "Autumn" & XNew$category == hab)
+  
+  #For each habitat
+  #Substract autumn prediction from spring prediction (for every trait)
+  diff_samples <- cwm_array[, idx_spring, ] - cwm_array[, idx_autumn, ]
+  
+  #Save it into a dataframe saved within a list (one element per habitat)
+  results_season_cwm[[hab]] <- data.frame(
+    habitat = hab,
+    trait = colnames(diff_samples),
+    diff_mean = colMeans(diff_samples),
+    lower95 = apply(diff_samples, 2, quantile, 0.025),
+    upper95 = apply(diff_samples, 2, quantile, 0.975),
+    #P(Spring > Autumn)
+    support_pos = colMeans(diff_samples > 0),
+    #P(Spring < Autumn)
+    support_neg = colMeans(diff_samples < 0),
+    #Significance
+    significant = if_else(colMeans(diff_samples > 0) >= 0.95 | colMeans(diff_samples < 0) >= 0.95, true = TRUE, false = FALSE)
+    
+  )
+}
+
+
+df_season_cwm <- do.call(rbind, results_season_cwm)
+
+
+
+
+### Habitat effect comparison across season ----
+#For each season - are there differences in community averaged trait ?
+
+hab_pairs <- combn(levels(XNew$category), 2, simplify = FALSE)
+results_habitat_cwm <- list()
+k <- 1
+
+#For each season
+for(season_i in levels(XNew$season)){
+  
+  #For each combination of habitats
+  for(pair in hab_pairs){
+    
+    hab1 <- pair[1]
+    hab2 <- pair[2]
+    
+    #Identify which row of XNew correspond to the right season and habitat OF THE PAIR of interest
+    idx1 <- which(
+      XNew$season == season_i & XNew$category == hab1)
+    
+    idx2 <- which(
+      XNew$season == season_i & XNew$category == hab2)
+    
+    #For each season, and each pair of habitat
+    #Substract prediction between habitat from the pair 
+    diff_samples <- cwm_array[ , idx1, ] - cwm_array[ , idx2, ]
+    
+    #Save it into a dataframe saved within a list (one element per pair of habitat)
+    results_habitat_cwm[[k]] <- data.frame(
+      season = season_i,
+      habitat1 = hab1,
+      habitat2 = hab2,
+      trait = m$trNames,
+      
+      diff_mean = colMeans(diff_samples),
+      
+      lower95 = apply(diff_samples, 2, quantile, 0.025),
+      upper95 = apply(diff_samples, 2, quantile, 0.975),
+      
+      support_pos = colMeans(diff_samples > 0),
+      support_neg = colMeans(diff_samples < 0),
+      significant = if_else(colMeans(diff_samples > 0) >= 0.95 | colMeans(diff_samples < 0) >= 0.95, true = TRUE, false = FALSE))
+    
+    k <- k + 1
+  }
+}
+df_habitat_cwm <- do.call(rbind, results_habitat_cwm)
+
+# df_habitat_cwm
+# df_habitat_cwm %>% filter(trait == "non_vector_transmission1")
+
+
+
+
+## Save pairwise comparison ----
 save(df_season,
      df_habitat,
      df_interaction,
+     df_season_cwm,
+     df_habitat_cwm,
      file = here::here(resultDir, "pairwise_comparisons.RData"))
-
-
-
-
-# TO REMOVE 
-# Gradient_abundance <- constructGradient(m, focalVariable = "nb_apo")
-# 
-# Gradient_spring <- constructGradient(m, focalVariable = "category",
-#                                      non.focalVariables = list('season' = list(3, "Spring")))
-# 
-# Gradient_autumn <- constructGradient(m, focalVariable = "category",
-#                                      non.focalVariables = list('season' = list(3, "Autumn")))
-# 
-# 
-# predY_abundance <- predict(m, XData = Gradient_abundance$XDataNew,
-#                         studyDesign = Gradient_abundance$studyDesignNew,
-#                         ranLevels = Gradient_abundance$rLNew, expected = TRUE)
-# 
-# predY_spring <- predict(m, XData = Gradient_spring$XDataNew, 
-#                         studyDesign = Gradient_spring$studyDesignNew,
-#                         ranLevels = Gradient_spring$rLNew, expected = TRUE)
-# 
-# predY_autumn <- predict(m, XData = Gradient_autumn$XDataNew,
-#                         studyDesign = Gradient_autumn$studyDesignNew,
-#                         ranLevels = Gradient_autumn$rLNew, expected = TRUE)
-# 
-# 
-# 
-# 
-# # Réponse de toute la communauté
-# plotGradient(m, Gradient_spring, pred = predY_spring, measure = "S", showData = FALSE)
-# plotGradient(m, Gradient_autumn, pred = predY_autumn, measure = "S", showData = FALSE)
-# 
-# # Pour une espèce spécifique (vérifier l'ordre avec colnames(m$Y))
-# colnames(m$Y)
-# plotGradient(m, Gradient_spring, pred = predY_spring, measure = "Y", index = which(colnames(m$Y) == "Bartonella_grahamii"))
-# 
-# 
-# plotGradient(m, Gradient_abundance, pred = predY_abundance, measure = "Y", index = which(colnames(m$Y) == "Eperythrozoon_coccoides"))
-
-
-
-
-
-
-
-
-
-
-#ECCB plot -----
-
-
-
-#Extract right species order
-model_name <- names(models)[length(names(models))]
-sp_info <- species_order[[model_name]]
-order <- sp_info$species_order
-tjur_cv <- sp_info$tjur_cv
-
-plot_pred_ordered <- pred_distributions %>% 
-  mutate(species_label = paste0(gsub("_", " ", species)),
-         species_label = factor(species_label, levels = paste0(gsub("_", " ", order)))) %>% 
-  ggplot(aes(x = mean, y = season, color = category, group = category)) +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "grey40") +
-  geom_errorbarh(aes(xmin = lower, xmax = upper),
-                 width = 0,
-                 linewidth = 0.9,
-                 position = position_dodge(width = 0.85)) +
-  geom_errorbarh(aes(xmin = q25, xmax = q75),
-                 width = 0, linewidth = 1.2,
-                 position = position_dodge(width = 0.85)) +
-  geom_point(aes(color = category),
-             size = 2.5,
-             position = position_dodge(width = 0.85)) +
-  scale_color_manual(values = category_palette) +
-  theme_bw() +
-  theme(
-    strip.text = element_text(color = "white", face = "bold"),
-    strip.background = element_rect(fill = "grey40"),
-    panel.grid.minor = element_blank(),
-    panel.grid.major.y = element_blank(),
-    panel.grid.major.x = element_line(color = "gray90", linewidth = 0.5),
-    legend.position = "bottom" ) +
-  facet_wrap( .~ species_label, 
-              #scales = "free_x"
-  )
-plot_pred_ordered
-
-ggsave(filename = here::here(resultDir, "plot_pred_ordered.png"),
-       plot = plot_pred_ordered,
-       width = 4500, height = 3200, units = "px", dpi = 600, bg = NULL)
 

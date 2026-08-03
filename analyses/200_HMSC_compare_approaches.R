@@ -577,6 +577,181 @@ plot_varpart_final
 
 
 
+# Supplementary CWM heatmap ----
+
+## Generate dataframes ----
+
+#Season comparison heatmap
+##Generate dataframe
+#Combine the two modelling approaches into one long dataframe
+df_heatmap_season_cwm <- bind_rows(
+  df_season_cwm %>% 
+    mutate(model = "probability"),
+  df_ab_season_cwm %>% 
+    mutate(model = "abundance")
+)
+
+#Factorize and add labels
+df_heatmap_season_cwm <- df_heatmap_season_cwm %>%
+  mutate(trait = factor(trait),
+         model = factor(model, levels = c("probability", "abundance"),
+                        labels = c("Probability", "Abundance")),
+         habitat = factor(habitat, levels = c("pine_edge", "hedgerows", "broadleaved_forest"),
+                          labels = c("Pine edges", "Hedgerows", "Broadleaved forests")))
+
+
+# Habitat comparison heatmap 
+##Generate dataframe 
+
+#Combine the two modelling approaches into one long dataframe
+df_heatmap_habitat_cwm <- bind_rows(
+  df_habitat_cwm %>% 
+    mutate(model = "probability"),
+  df_ab_habitat_cwm %>% 
+    mutate(model = "abundance"))
+
+#Create pair label
+df_heatmap_habitat_cwm <- df_heatmap_habitat_cwm %>%
+  mutate(pair_label = paste(habitat1, "-", habitat2))
+
+#Factorize and add labels
+df_heatmap_habitat_cwm <- df_heatmap_habitat_cwm %>%
+  mutate(
+    trait = factor(trait),
+    model = factor(model, levels = c("probability", "abundance"),
+                   labels = c("Probability", "Abundance")),
+    season = factor(season, levels = c("Spring", "Autumn")))
+
+
+#Remove intercept from both dataframe (optional)
+df_heatmap_season_cwm <- df_heatmap_season_cwm %>% 
+  filter(! trait == "(Intercept)")
+df_heatmap_habitat_cwm <- df_heatmap_habitat_cwm %>% 
+  filter(! trait == "(Intercept)")
+
+
+#Order trait for COMBINED plot version
+#This time considering both season mean differences and habitat mean differences (still both approaches)
+trait_order_combined <- bind_rows(
+  df_heatmap_habitat_cwm %>% select(trait, diff_mean),
+  df_heatmap_season_cwm %>% select(trait, diff_mean)
+) %>%
+  group_by(trait) %>%
+  summarise(mean_effect = mean(abs(diff_mean), na.rm = TRUE)) %>%
+  arrange(desc(mean_effect)) %>%
+  pull(trait)
+
+df_heatmap_habitat_cwm <- df_heatmap_habitat_cwm %>%
+  mutate(trait = factor(trait, levels = trait_order_combined))
+df_heatmap_season_cwm <- df_heatmap_season_cwm %>%
+  mutate(trait = factor(trait, levels = trait_order_combined))
+
+#Split back dataframes that were previously pooled in previous section of the script
+df_prob_habitat_cwm <- df_heatmap_habitat_cwm %>% filter(model == "Probability")
+df_ab_habitat_cwm <- df_heatmap_habitat_cwm %>% filter(model == "Abundance")
+df_prob_season_cwm <- df_heatmap_season_cwm  %>% filter(model == "Probability")
+df_ab_season_cwm <- df_heatmap_season_cwm  %>% filter(model == "Abundance")
+
+
+#Choose limits for legend based (in order to make only one shared legend after)
+lim_global_cwm <- max(
+  abs(df_heatmap_season_cwm$diff_mean),
+  abs(df_heatmap_habitat_cwm$diff_mean))
+
+#Modify trait label:
+trait_labels <- c(
+  '(Intercept)' =  "Intercept",
+  non_vector_transmission1 = "Occurs without vector",
+  vector_transmission1 = "Occurs with vector"
+)
+
+
+## Heatmap plotting (combined)----
+
+#Rebuild heatmaps, but with common limits / legend here :
+
+#First panel : Season effect
+plot_heatmap_season_dualscale_sharedlegend_cwm <- ggplot() +
+  geom_tile(data = df_prob_season_cwm,
+            aes(x = model, y = habitat, fill = diff_mean),
+            color = "#F7F7F7") +
+  geom_text(data = df_prob_season_cwm,
+            aes(x = model, y = habitat, label = if_else(significant, "*", "")),
+            size = 5, vjust = 0.75, color = "black") +
+  geom_tile(data = df_ab_season_cwm,
+            aes(x = model, y = habitat, fill = diff_mean),
+            color = "#F7F7F7") +
+  scale_fill_gradient2(
+    low = pal_prob["low"], mid = pal_prob["mid"], high = pal_prob["high"],
+    midpoint = 0, limits = c(-lim_global_cwm, lim_global_cwm),
+    name = "Δ CWM"
+  ) +
+  geom_text(data = df_ab_season_cwm,
+            aes(x = model, y = habitat, label = if_else(significant, "*", "")),
+            size = 5, vjust = 0.75, color = "black") +
+  facet_grid(. ~ trait,
+             labeller = labeller(trait = trait_labels)) +
+  labs(x = NULL, y = NULL) +
+  theme_bw() +
+  theme(
+    legend.title = element_text(size = 7),
+    legend.text = element_text(size = 6),
+    strip.text = element_text(face = "bold", size = 8),
+    strip.background = element_rect(fill = "grey40", color = NA),
+    strip.text.x = element_text(color = "#F7F7F7"),
+    axis.text.x = element_blank(),   # repeated after so masked here
+    axis.ticks.x = element_blank(),
+    panel.grid = element_blank()
+  )
+
+#Second panel : Habitat effect across season
+plot_heatmap_habitat_dualscale_sharedlegend_cwm <- ggplot() +
+  geom_tile(data = df_prob_habitat_cwm,
+            aes(x = model, y = pair_label, fill = diff_mean),
+            color = "#F7F7F7") +
+  geom_text(data = df_prob_habitat_cwm,
+            aes(x = model, y = pair_label, label = if_else(significant, "*", "")),
+            size = 5, vjust = 0.75, color = "black") +
+  geom_tile(data = df_ab_habitat_cwm,
+            aes(x = model, y = pair_label, fill = diff_mean),
+            color = "#F7F7F7") +
+  scale_fill_gradient2(
+    low = pal_prob["low"], mid = pal_prob["mid"], high = pal_prob["high"],
+    midpoint = 0, limits = c(-lim_global_cwm, lim_global_cwm),
+    name = "Δ CWM"
+  ) +
+  geom_text(data = df_ab_habitat_cwm,
+            aes(x = model, y = pair_label, label = if_else(significant, "*", "")),
+            size = 5, vjust = 0.75, color = "black") +
+  facet_grid(season ~ trait,
+             labeller = labeller(trait = trait_labels)) +
+  labs(x = NULL, y = NULL) +
+  theme_bw() +
+  theme(
+    legend.title = element_text(size = 7),
+    legend.text = element_text(size = 6),
+    strip.text = element_text(face = "bold", size = 8),
+    strip.background = element_rect(fill = "grey40", color = NA),
+    strip.text.x = element_text(color = "#F7F7F7"),
+    strip.text.y = element_text(color = "#F7F7F7"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid = element_blank()
+  )
+
+
+# Assemble both panel
+plot_composed_cwm <- plot_heatmap_season_dualscale_sharedlegend_cwm / plot_heatmap_habitat_dualscale_sharedlegend_cwm +
+  plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = "A") &
+  theme(legend.position = "bottom",
+        plot.tag = element_text(face = "bold"))
+
+plot_composed_cwm
+
+
+
+
+
 # Save plots ----
 
 if(!dir.exists(here::here("figures", "prediction_heatmaps"))) {
@@ -603,5 +778,7 @@ ggsave(filename = here::here("figures", "parameters", "varpart_composed.png"),
        plot = plot_varpart_final,
        width = 3000, height = 2000, units = "px", dpi = 300, bg = NULL)
 
-
+ggsave(filename = here::here("figures", "parameters", "heatmap_cwm_composed.png"),
+       plot = plot_composed_cwm & coord_equal(),
+       width = 4500, height = 2500, units = "px", dpi = 300, bg = NULL)
 

@@ -661,8 +661,8 @@ lim_global_cwm <- max(
 #Modify trait label:
 trait_labels <- c(
   '(Intercept)' =  "Intercept",
-  non_vector_transmission1 = "Occurs without vector",
-  vector_transmission1 = "Occurs with vector"
+  non_vector_transmission1 = "Without vector",
+  vector_transmission1 = "With vector"
 )
 
 
@@ -741,7 +741,8 @@ plot_heatmap_habitat_dualscale_sharedlegend_cwm <- ggplot() +
 
 # Assemble both panel
 plot_composed_cwm <- plot_heatmap_season_dualscale_sharedlegend_cwm / plot_heatmap_habitat_dualscale_sharedlegend_cwm +
-  plot_layout(guides = "collect") +
+  plot_layout(guides = "collect",
+              heights = c(1, 2)) +
   plot_annotation(tag_levels = "A") &
   theme(legend.position = "bottom",
         plot.tag = element_text(face = "bold"))
@@ -780,5 +781,5 @@ ggsave(filename = here::here("figures", "parameters", "varpart_composed.png"),
 
 ggsave(filename = here::here("figures", "parameters", "heatmap_cwm_composed.png"),
        plot = plot_composed_cwm & coord_equal(),
-       width = 4500, height = 2500, units = "px", dpi = 300, bg = NULL)
+       width = 1500, height = 2500, units = "px", dpi = 300, bg = NULL)
 

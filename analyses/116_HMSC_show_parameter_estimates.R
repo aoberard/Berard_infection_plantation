@@ -19,6 +19,11 @@ library("Hmsc")
 library("colorspace")
 library("corrplot")
 library("writexl")
+if (!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+if (!require("ggtree", quietly = TRUE))
+BiocManager::install("ggtree")
 
 # Make script reproducible
 set.seed(1)
@@ -781,22 +786,6 @@ p_ab_final <- cowplot::plot_grid(
 p_ab_final
 
 
-#Save assembled plot
-if(!dir.exists(here::here("figures", "parameters"))) {
-  dir.create(here::here("figures", "parameters"), recursive = TRUE)
-}
-ggsave(filename = here::here("figures", "parameters", "parameters_beta_ab_plot.png"),
-       plot = p_ab_final,
-       width = 3000, height = 2500, units = "px", dpi = 300, bg = NULL)
-
-#Save element of assembled plot for use in next script
-save(p_ab_final, 
-     lim_ab_beta,
-     p_ab_beta,
-     p_ab_vp,
-     p_ab_r2,
-     file = here::here(resultDir, "parameters_beta_ab_plot.RData"))
-
 ## Rho parameter ----
 
 #Extract Rho of each chain into a list
@@ -915,14 +904,6 @@ p_gamma <- gamma_plot_df %>%
 p_gamma
 
 
-if(!dir.exists(here::here("figures", "parameters"))) {
-  dir.create(here::here("figures", "parameters"), recursive = TRUE)
-}
-
-ggsave(filename = here::here("figures", "parameters", "parameters_gamma_ab_plot_.png"),
-       plot = p_gamma,
-       width = 2000, height = 1500, units = "px", dpi = 300, bg = NULL)
-
 
 
 
@@ -959,7 +940,7 @@ gamma_plot_df %>%
 Omega_assoc <- Hmsc::computeAssociations(m)
 
 #Matrix to long format (for every random effects)
-omega_df <- purrr::map_dfr(1:length(Omega_assoc), function(r) {
+omega_ab_df <- purrr::map_dfr(1:length(Omega_assoc), function(r) {
   
   omega <- Omega_assoc[[r]]
   support_neg <- 1 - omega$support
@@ -980,7 +961,7 @@ omega_df <- purrr::map_dfr(1:length(Omega_assoc), function(r) {
     )
 })
 
-head(omega_df)
+head(omega_ab_df)
 
 
 #Extract species order (same as tree used for beta plot)
@@ -990,14 +971,14 @@ sp_order <- ggtree::ggtree(tr = tree_clean)$data %>%
   dplyr::pull(label)
 
 #reorder dataframe according to species order from tree
-omega_plot_df <- omega_df %>%
+omega_ab_plot_df <- omega_ab_df %>%
   mutate(
     species_1 = factor(species_1, levels = sp_order),
     species_2 = factor(species_2, levels = sp_order)
   ) 
 
 #Generate heatmaps
-p_omega <- omega_plot_df %>%
+p_omega <- omega_ab_plot_df %>%
   filter(species_1 != species_2) %>%  # to remove diagonal
   # filter(as.integer(species_1) > as.integer(species_2)) %>%  # to remove bottom triangle
   # filter(support > 0.75 | supportNeg > 0.75) %>%  # to remove noise
@@ -1036,12 +1017,31 @@ p_omega <- omega_plot_df %>%
 p_omega
 
 
+# Save outputs ----
+#Save figures and elements to make assembled plot in next script
+
+#Save plots
 if(!dir.exists(here::here("figures", "parameters"))) {
   dir.create(here::here("figures", "parameters"), recursive = TRUE)
 }
+ggsave(filename = here::here("figures", "parameters", "parameters_beta_ab_plot.png"),
+       plot = p_ab_final,
+       width = 3000, height = 2500, units = "px", dpi = 300, bg = NULL)
+
+ggsave(filename = here::here("figures", "parameters", "parameters_gamma_ab_plot_.png"),
+       plot = p_gamma,
+       width = 2000, height = 1500, units = "px", dpi = 300, bg = NULL)
 
 ggsave(filename = here::here("figures", "parameters", "parameters_omega_ab_plot_.png"),
        plot = p_omega,
        width = 3000, height = 2500, units = "px", dpi = 300, bg = NULL)
 
+#Save elements for combined plots
+save(p_ab_final, 
+     lim_ab_beta,
+     p_ab_beta,
+     p_ab_vp,
+     p_ab_r2,
+     omega_ab_plot_df,
+     file = here::here(resultDir, "parameters_beta_ab_plot.RData"))
 

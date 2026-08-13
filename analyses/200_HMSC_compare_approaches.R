@@ -750,7 +750,55 @@ plot_composed_cwm <- plot_heatmap_season_dualscale_sharedlegend_cwm / plot_heatm
 plot_composed_cwm
 
 
+# Supplementary Omega plot ----
 
+## Generate dataframes ----
+omega_combined_df <- bind_rows(
+  omega_ab_plot_df %>% mutate(model = "Probability"),
+  omega_probit_plot_df %>% mutate(model = "Abundance")
+)
+  
+## Heatmap plotting ----
+
+#Generate heatmaps
+p_omega_combined <- omega_combined_df %>%
+  filter(species_1 != species_2) %>%  # to remove diagonal
+  # filter(as.integer(species_1) > as.integer(species_2)) %>%  # to remove bottom triangle
+  ggplot(aes(x = species_2, y = species_1, fill = mean)) +
+  geom_tile(aes(fill = mean, alpha = support > 0 | supportNeg > 0), 
+            color = "white", linewidth = 0.4) +
+  geom_text(
+    data = . %>% filter(significant),
+    aes(label = "*"),
+    color = "black", size = 3, vjust = 0.75
+  ) +
+  scale_fill_gradient2(
+    low = "#2C7796",
+    mid = "#F7F7F7",
+    high= "#D55763",
+    midpoint = 0,
+    limits= c(-1, 1),
+    name= "Residual association"
+  ) +
+  scale_alpha_manual(values = c("TRUE" = 1, "FALSE" = 0), guide = "none") + # to make not well supported things transparent
+  facet_grid(
+    rows = vars(model),
+    cols = vars(random_level))+
+  coord_fixed() +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 8) +
+  theme(
+    axis.text.x= element_text(angle = 45, hjust = 1, size = 7, color = "grey40"),
+    axis.text.y = element_text(size = 7, color = "grey40"),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    panel.border = element_blank(),
+    strip.background = element_rect(fill = "grey30"),
+    strip.text = element_text(color = "white", size = 7),
+    legend.position  = "bottom"
+  )
+
+p_omega_combined
 
 
 # Save plots ----
@@ -782,4 +830,8 @@ ggsave(filename = here::here("figures", "parameters", "varpart_composed.png"),
 ggsave(filename = here::here("figures", "parameters", "heatmap_cwm_composed.png"),
        plot = plot_composed_cwm & coord_equal(),
        width = 1500, height = 2500, units = "px", dpi = 300, bg = NULL)
+
+ggsave(filename = here::here("figures", "parameters", "omega_composed.png"),
+       plot = p_omega_combined ,
+       width = 2500, height = 1500, units = "px", dpi = 300, bg = NULL)
 

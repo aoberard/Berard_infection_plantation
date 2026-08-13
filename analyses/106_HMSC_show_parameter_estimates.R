@@ -794,25 +794,6 @@ p_probit_final
 
 
 
-#Save assembled plot
-if(!dir.exists(here::here("figures", "parameters"))) {
-  dir.create(here::here("figures", "parameters"), recursive = TRUE)
-}
-ggsave(filename = here::here("figures", "parameters", "parameters_beta_probit_plot.png"),
-       plot = p_probit_final,
-       width = 3000, height = 2500, units = "px", dpi = 300, bg = NULL)
-
-
-#Save element of assembled plot for use in next script
-save(p_probit_final,
-     p_tree,
-     lim_probit_beta,
-     p_probit_beta,
-     p_probit_vp,
-     p_probit_r2,
-     file = here::here(resultDir, "parameters_beta_probit_plot.RData"))
-
-
 ## Rho parameter ----
 
 #Extract Rho of each chain into a list
@@ -931,15 +912,6 @@ p_gamma <- gamma_plot_df %>%
 p_gamma
 
 
-if(!dir.exists(here::here("figures", "parameters"))) {
-  dir.create(here::here("figures", "parameters"), recursive = TRUE)
-}
-
-ggsave(filename = here::here("figures", "parameters", "parameters_gamma_probit_plot_.png"),
-       plot = p_gamma,
-       width = 2000, height = 1500, units = "px", dpi = 300, bg = NULL)
-
-
 
 ## Omega parameter ----
 
@@ -947,7 +919,7 @@ ggsave(filename = here::here("figures", "parameters", "parameters_gamma_probit_p
 Omega_assoc <- Hmsc::computeAssociations(m)
 
 #Matrix to long format (for every random effects)
-omega_df <- purrr::map_dfr(1:length(Omega_assoc), function(r) {
+omega_probit_df <- purrr::map_dfr(1:length(Omega_assoc), function(r) {
   
   omega <- Omega_assoc[[r]]
   support_neg <- 1 - omega$support
@@ -968,7 +940,7 @@ omega_df <- purrr::map_dfr(1:length(Omega_assoc), function(r) {
     )
 })
 
-head(omega_df)
+head(omega_probit_df)
 
 
 #Extract species order (same as tree used for beta plot)
@@ -978,14 +950,14 @@ sp_order <- ggtree::ggtree(tr = tree_clean)$data %>%
   dplyr::pull(label)
 
 #reorder dataframe according to species order from tree
-omega_plot_df <- omega_df %>%
+omega_probit_plot_df <- omega_probit_df %>%
   mutate(
     species_1 = factor(species_1, levels = sp_order),
     species_2 = factor(species_2, levels = sp_order)
   ) 
 
 #Generate heatmaps
-p_omega <- omega_plot_df %>%
+p_omega <- omega_probit_plot_df %>%
   filter(species_1 != species_2) %>%  # to remove diagonal
   # filter(as.integer(species_1) > as.integer(species_2)) %>%  # to remove bottom triangle
   # filter(support > 0.75 | supportNeg > 0.75) %>%  # to remove noise
@@ -1024,39 +996,35 @@ p_omega <- omega_plot_df %>%
 p_omega
 
 
+
+
+
+# Save outputs ----
+#Save figures and elements to make assembled plot in next script
+
+#Save plots
 if(!dir.exists(here::here("figures", "parameters"))) {
   dir.create(here::here("figures", "parameters"), recursive = TRUE)
 }
+ggsave(filename = here::here("figures", "parameters", "parameters_beta_probit_plot.png"),
+       plot = p_probit_final,
+       width = 3000, height = 2500, units = "px", dpi = 300, bg = NULL)
+
+ggsave(filename = here::here("figures", "parameters", "parameters_gamma_probit_plot_.png"),
+       plot = p_gamma,
+       width = 2000, height = 1500, units = "px", dpi = 300, bg = NULL)
 
 ggsave(filename = here::here("figures", "parameters", "parameters_omega_probit_plot_.png"),
        plot = p_omega,
        width = 3000, height = 2500, units = "px", dpi = 300, bg = NULL)
 
 
-
-
-# #ECCB plot ----
-# 
-# beta_coef %>%
-#   filter(covariate == "seasonSpring") %>%    
-#   filter(species %in% c("Bartonella_grahamii" , "Bartonella_taylorii", "Bartonella_birtlesii","Eperythrozoon_coccoides", "Neoehrlichia_mikurensis")) %>% 
-#   mutate(effect_direction = case_when(
-#     significant_support_unilateral == FALSE ~ "non_significant",
-#     mean > 0 ~ "positive",
-#     mean < 0 ~ "negative",
-#     TRUE ~ "problem")) %>% 
-#   ggplot(aes(x = mean, y = species, color = effect_direction)) +
-#   geom_vline(xintercept = 0, linetype = "dashed", color = "grey40") +
-#   geom_errorbarh(aes(xmin = lower, xmax = upper), width = 0.3, linewidth = 2) +
-#   geom_point(size = 5) +
-#   facet_wrap(~ covariate, 
-#              #scales = "free_x"
-#   ) +
-#   scale_color_manual(values = effect_direction_palette) +
-#   labs(x = "Coefficient β", y = NULL, color = NULL) +
-#   theme_bw() +
-#   theme(
-#     strip.background = element_rect(fill = "grey40"),
-#     strip.text = element_text(color = "#F7F7F7", face = "bold"),
-#     legend.position = "bottom"
-#   )
+#Save element of assembled plot for use in next script
+save(p_probit_final,
+     p_tree,
+     lim_probit_beta,
+     p_probit_beta,
+     p_probit_vp,
+     p_probit_r2,
+     omega_probit_plot_df,
+     file = here::here(resultDir, "parameters_beta_probit_plot.RData"))

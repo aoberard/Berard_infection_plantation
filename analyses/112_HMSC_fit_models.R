@@ -49,9 +49,9 @@ load(file = here::here(modelDir, "unfitted_models.RData"))
 ## Fitting parameters ----
 #Choose fitting parameters
 nm <- length(models)
-samples_list <- c(300)    
+samples_list <- c(800)    
 thin_list <- c(1000)       
-nChains <- 6
+nChains <- 4
 
 if(is.null(nParallel)) nParallel = nChains
 Lst = 1

@@ -207,16 +207,39 @@ dev.off()
 #Quick coefficient convergence exploration ----
 
 #Trace plot
-plot(mpost$Beta)
+# plot(mpost$Beta)
 colnames(mpost$Beta[[1]])
 
-gelman.diag(mpost$Beta,multivariate=FALSE)$psrf
+gelman.diag(mpost$Beta, multivariate=FALSE)$psrf
 
 
 
 # Mean psrf ----
 ma.beta
 
+rbind(mean = apply(ma.beta, 2, mean, na.rm = TRUE),
+      max = apply(ma.beta, 2, max, na.rm = TRUE))
+
 ma.gamma
+rbind(mean = apply(ma.gamma, 2, mean, na.rm = TRUE),
+      max = apply(ma.gamma, 2, max, na.rm = TRUE))
+
 
 ma.omega
+cn <- character()
+
+for (j in seq_along(models)) {
+  for (k in seq_along(models[[j]]$ranLevels)) {
+    cn <- c(cn, paste(names(models)[j],
+                      names(models[[j]]$ranLevels)[k],
+                      sep = "_"))
+  }
+}
+
+colnames(ma.omega) <- cn
+
+colnames(ma.omega)
+rbind(
+  mean = apply(ma.omega, 2, mean, na.rm = TRUE),
+  max = apply(ma.omega, 2, max, na.rm = TRUE)
+)

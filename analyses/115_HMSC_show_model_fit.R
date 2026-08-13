@@ -330,7 +330,7 @@ write.csv(performances,
 # for each model
 species_order <- lapply(names(MFCV), function(model_name) {
   cMFCV <- MFCV[[model_name]]
-  cMF   <- MF[[model_name]]
+  cMF <- MF[[model_name]]
   m <- models[[model_name]]
   
   res <- list()

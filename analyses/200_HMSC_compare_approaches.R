@@ -819,19 +819,19 @@ ggsave(filename = here::here("figures", "prediction_heatmaps", "heatmap_interact
        plot = plot_heatmap_interaction_dualscale + coord_equal(),
        width = 2900, height = 2500, units = "px", dpi = 300, bg = NULL)
 
-ggsave(filename = here::here("figures", "prediction_heatmaps", "heatmap_composed.png"),
+ggsave(filename = here::here("figures", "prediction_heatmaps", "heatmap_composed.pdf"),
        plot = plot_composed & coord_equal(),
        width = 4500, height = 2500, units = "px", dpi = 300, bg = NULL)
 
-ggsave(filename = here::here("figures", "parameters", "varpart_composed.png"),
+ggsave(filename = here::here("figures", "parameters", "varpart_composed.pdf"),
        plot = plot_varpart_final,
        width = 3000, height = 2000, units = "px", dpi = 300, bg = NULL)
 
-ggsave(filename = here::here("figures", "parameters", "heatmap_cwm_composed.png"),
+ggsave(filename = here::here("figures", "parameters", "heatmap_cwm_composed.pdf"),
        plot = plot_composed_cwm & coord_equal(),
        width = 1500, height = 2500, units = "px", dpi = 300, bg = NULL)
 
-ggsave(filename = here::here("figures", "parameters", "omega_composed.png"),
+ggsave(filename = here::here("figures", "parameters", "omega_composed.pdf"),
        plot = p_omega_combined ,
        width = 2500, height = 1500, units = "px", dpi = 300, bg = NULL)
 

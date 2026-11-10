@@ -1,25 +1,7 @@
-# macOS files ----
-.DS_Store
-
-# History files ----
+.Rproj.user
 .Rhistory
-.Rapp.history
-
-# Session Data files ----
 .RData
 .Ruserdata
-
-# RStudio files ----
-*.Rproj
-.Rproj.user/
-
-# R Environment Variables ----
-.Renviron
-
-# User-specific files ----
-README.html
-inst/doc
-man/
-NAMESPACE
-
-data/derived-data/
+.httr-oauth
+.DS_Store
+.quarto

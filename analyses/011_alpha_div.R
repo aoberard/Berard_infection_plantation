@@ -79,7 +79,7 @@ df_alpha2 <- df_alpha %>%
              .default = category
            ))
 
-# Visualization ----
+# Visualization of distribtion ----
 
 # Calculate percentage
 percent_at_least_2 <- mean(df_alpha$rich >= 2) * 100
@@ -109,75 +109,6 @@ richness_plot <- ggplot(df_alpha, aes(x = rich)) +
     color = "#7a6a55"
   ) 
 richness_plot
-
-ggstatsplot::gghistostats(data = df_alpha,
-                          x = rich,
-                          binwidth = 1)
-
-
-#Richness across category
-df_alpha %>% 
-  ggplot(mapping = aes(x = category, y = rich, colour = category)) +
-  geom_boxplot(outliers = FALSE , 
-               size = 2.5) +
-  scale_color_manual(values = category_palette) +
-  theme_classic(base_size = 14) +
-  theme(
-    plot.title = element_text(size = 16, face = "bold"),
-    axis.title = element_text(size = 14),
-    axis.text = element_text(size = 12)
-  )
-
-ggstatsplot::ggbetweenstats(data = df_alpha,
-                            x = category,
-                            y = rich)
-
-#Richness across season
-df_alpha %>% 
-  ggplot(mapping = aes(x = season, y = rich, colour = season)) +
-  geom_boxplot(outliers = FALSE , 
-               size = 2.5) +
-  scale_color_manual(values = season_palette) +
-  theme_classic(base_size = 14) +
-  theme(
-    plot.title = element_text(size = 16, face = "bold"),
-    axis.title = element_text(size = 14),
-    axis.text = element_text(size = 12)
-  )
-
-ggstatsplot::ggbetweenstats(data = df_alpha,
-                            x = season,
-                            y = rich)
-
-
-#Richness across category-season
-df_alpha %>% 
-  ggplot(mapping = aes(x = category, y = rich, colour = category)) +
-  geom_boxplot(outliers = FALSE , 
-               size = 2.5) +
-  scale_color_manual(values = category_palette) +
-  theme_classic(base_size = 14) +
-  theme(
-    plot.title = element_text(size = 16, face = "bold"),
-    axis.title = element_text(size = 14),
-    axis.text = element_text(size = 12)
-  ) +
-  facet_wrap(.~season)
-
-
-df_alpha %>% 
-  ggplot(mapping = aes(x = category, y = rich, colour = category)) +
-  geom_violin(trim = TRUE, linewidth = 1.5) +
-  geom_boxplot(outliers = FALSE ,
-               width = 0.2, size = 1) +
-  scale_color_manual(values = category_palette) +
-  theme_classic(base_size = 14) +
-  theme(
-    plot.title = element_text(size = 16, face = "bold"),
-    axis.title = element_text(size = 14),
-    axis.text = element_text(size = 12)
-  ) +
-  facet_wrap(.~season)
 
 
 
@@ -315,5 +246,4 @@ em_inf_plot
 ggsave(filename = here::here("figures","richness_trend_plot.pdf"),
        plot = em_inf_plot,
        width = 2250, height = 1350, units = "px", dpi = 300, bg = NULL)
-
 

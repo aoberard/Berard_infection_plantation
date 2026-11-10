@@ -24,7 +24,11 @@ The use of a high-performance computing cluster is strongly recommended for the 
 
 All data files are stored in the data/ folder.
 
+
+
 \## Raw data (data/raw-data/)
+
+
 The raw-data/ folder contains the following input files:
 
 
@@ -36,6 +40,8 @@ dissected\_indiv.csv: Individual-level data for dissected Apodemus sylvaticus sp
 apodemus\_number.csv: Total number of Apodemus sylvaticus sampled per site-session, including individuals that were not dissected.
 lines\_variability.csv: Site-session metadata.
 agents\_traits: Trait and taxonomic information for the infectious agents included in the HMSC analyses.
+
+
 
 \## Metabarcoding data
 
